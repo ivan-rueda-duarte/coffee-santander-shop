@@ -1,0 +1,3 @@
+Cuatro láminas de referencia (1080 × 1350) de las que viene la dirección visual de la v3 y, a través de ella, la de la v4: portada "Café de Santander" con cifras y hojas, dos láminas de provincias con tarjetas tintadas y una de variedades sobre verde monte.
+
+Se conservan como referencia de estilo: paleta, tipografía geométrica en negrita, tarjetas de esquinas amplias, ficha blanca de dato, franja de bandera al pie. **No se publican tal cual**: usan "Café de Santander" como título (denominación de origen de la FNC) y datos sin fecha. Al adaptarlas, reemplazar el titular por "De Santander" o "café santandereano", conservar la nota de fuentes y añadir la fecha de los datos.

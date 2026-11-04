@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>De Santander — ejemplo de uso del sistema v4.1</title>
+<!-- 1. Tokens (colores, tipografía, espaciado, texturas) y fuentes -->
+<link rel="stylesheet" href="tokens.css">
+<!-- 2. Componentes (botones, etiquetas, sello SCA, tarjetas, banners, franja, tramas) -->
+<link rel="stylesheet" href="components/bundle.css">
+<style>
+  body{margin:0;background:var(--surface);color:var(--ink);font-family:var(--font-sans)}
+  main{max-width:1100px;margin:0 auto;padding:var(--space-8) var(--space-5)}
+</style>
+</head>
+<body class="ds-root">
+<main>
+  <section class="ds-banner ds-topo ds-topo--oscuro ds-grano" style="aspect-ratio:auto;background:var(--monte-900);color:var(--pergamino-50);padding:var(--space-8) var(--space-7);display:block">
+    <p class="overline" style="margin:0;color:var(--oro-500)">Santander · Colombia</p>
+    <h1 class="display-l" style="margin:var(--space-2) 0 var(--space-4)">Del cañón <em style="font-weight:400">a tu taza</em></h1>
+    <p class="body-l" style="margin:0 0 var(--space-5);max-width:520px;color:var(--menta-50)">Lotes de pequeños caficultores santandereanos, tostados por pedido y con su ficha de origen.</p>
+    <a class="ds-btn ds-btn--gold" href="#">Comprar café</a>
+    <div class="ds-franja" style="position:absolute;left:0;right:0;bottom:0"><span class="ds-franja__rojo"></span><span class="ds-franja__lineas"><span></span><span></span><span></span><span></span><span></span></span></div>
+  </section>
+
+  <h2 class="h2" style="color:var(--ink-title);margin:var(--space-8) 0 var(--space-5)">Nuestros cafés</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--space-6)">
+    <article class="ds-card" style="max-width:360px">
+      <div class="ds-card__media">
+        <img src="assets/Fotografia/chicamocha-canon.jpg" alt="Cañón del Chicamocha">
+        <span class="ds-badge ds-badge--region ds-badge--overline">Los Santos</span>
+        <span class="ds-seal ds-seal--sm" role="img" aria-label="87 puntos SCA"><span class="ds-seal__num">87</span><span class="ds-seal__unit">pts<br>SCA</span></span>
+      </div>
+      <div class="ds-card__body">
+        <p class="ds-card__origin">Mesa de los Santos</p>
+        <h3 class="ds-card__title">Borde del Cañón</h3>
+        <p class="ds-card__notes">Durazno, miel de caña y final floral.</p>
+        <p class="ds-card__roast"><span class="ds-bar ds-bar--terracota"></span>Tueste medio claro · frutal</p>
+        <dl class="ds-card__meta">
+          <div><dt>Altitud</dt><dd>1.650 m</dd></div><div><dt>Proceso</dt><dd>Honey</dd></div>
+          <div><dt>Variedad</dt><dd>Caturra</dd></div><div><dt>Tueste</dt><dd>Medio claro</dd></div>
+        </dl>
+        <div class="ds-card__foot"><p class="ds-card__price" style="margin:0">$56.000<small>Bolsa 340 g · grano</small></p><button class="ds-btn ds-btn--primary ds-btn--sm">Añadir</button></div>
+      </div>
+    </article>
+  </div>
+</main>
+</body>
+</html>

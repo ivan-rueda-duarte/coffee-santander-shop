@@ -1,0 +1,126 @@
+/* De Santander v3 — generated from tokens.json */
+@font-face{font-family:"Fraunces";src:url("fonts/Fraunces-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Fraunces";src:url("fonts/Fraunces-Italic-Variable.woff2") format("woff2");font-weight:100 900;font-style:italic;font-display:swap}
+@font-face{font-family:"Montserrat";src:url("fonts/Montserrat-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Montserrat";src:url("fonts/Montserrat-Italic-Variable.woff2") format("woff2");font-weight:100 900;font-style:italic;font-display:swap}
+:root, [data-theme="light"]{
+  --monte-900: #0a3f25;
+  --monte-800: #11542f;
+  --hoja-600: #0b6b36;
+  --hoja-400: #1a8c4e;
+  --menta-50: #edf3ea;
+  --pergamino-50: #f7f1e6;
+  --pergamino-0: #fffcf6;
+  --tostado-900: #24170f;
+  --tostado-600: #5a3a26;
+  --arenisca-200: #e8d6b4;
+  --chicamocha-600: #a24f27;
+  --chicamocha-300: #e3a27a;
+  --arcilla-50: #f9e8dc;
+  --oro-500: #e9b320;
+  --oro-900: #4a3a00;
+  --crema-50: #fbf1d2;
+  --grana-600: #b8162c;
+  --grana-400: #d9303f;
+  --carbon-900: #1a1612;
+  --niebla-100: #e6e8e2;
+  --piedra-500: #6b6158;
+  --surface: #f7f1e6;
+  --surface-raised: #fffcf6;
+  --surface-sunken: #efe4d1;
+  --ink: #24170f;
+  --ink-muted: #5f554c;
+  --ink-title: #0a3f25;
+  --line: #ddd0ba;
+  --line-strong: #857868;
+  --brand: #0a3f25;
+  --brand-strong: #11542f;
+  --on-brand: #f7f1e6;
+  --accent: #a24f27;
+  --on-accent: #fff8ee;
+  --highlight: #e9b320;
+  --on-highlight: #1a1612;
+  --eyebrow: #a24f27;
+  --danger: #b8162c;
+  --success: #0b6b36;
+  --focus: #a24f27;
+  --scrim: rgba(20,24,14,0.60);
+  --on-photo: #f7f1e6;
+  --photo-warm: rgba(162,79,39,0.10);
+  --seal-ring: #e9b320;
+  --seal-ring-inner: #24170f;
+  --shadow-sm: 0 1px 2px rgba(36,23,15,0.10);
+  --shadow-md: 0 12px 30px rgba(36,23,15,0.16);
+}
+[data-theme="dark"]{
+  --surface: #0a3f25;
+  --surface-raised: #11542f;
+  --surface-sunken: #07301c;
+  --ink: #f7f1e6;
+  --ink-muted: #cfe0d5;
+  --ink-title: #f7f1e6;
+  --line: #1f6b42;
+  --line-strong: #8bbf9e;
+  --brand: #e9b320;
+  --brand-strong: #f0c445;
+  --on-brand: #1a1612;
+  --accent: #edb28c;
+  --on-accent: #24170f;
+  --highlight: #e9b320;
+  --on-highlight: #1a1612;
+  --eyebrow: #e9b320;
+  --danger: #ffb3b9;
+  --success: #8fd1a8;
+  --focus: #e9b320;
+  --scrim: rgba(4,26,15,0.70);
+  --on-photo: #f7f1e6;
+  --photo-warm: rgba(162,79,39,0.14);
+  --seal-ring: #e9b320;
+  --seal-ring-inner: #f7f1e6;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.40);
+  --shadow-md: 0 12px 30px rgba(0,0,0,0.50);
+}
+:root{
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --ratio-feed: 4/5;
+  --ratio-square: 1/1;
+  --ratio-story: 9/16;
+  --ratio-banner: 12/5;
+  --ratio-product: 3/4;
+  --topo-stroke-light: rgba(36,23,15,0.075);
+  --topo-stroke-dark: rgba(247,241,230,0.085);
+  --topo-stroke-tierra: rgba(122,75,38,0.11);
+  --topo-stroke-arcilla: rgba(162,79,39,0.10);
+  --topo-stroke-width: 1.4px;
+  --grain-opacity: 0.07;
+  --grain-opacity-dark: 0.05;
+  --font-display: Fraunces, Georgia, "Times New Roman", serif;
+  --font-sans: Montserrat, "Helvetica Neue", Arial, sans-serif;
+  --verde-bosque: var(--monte-900);
+}
+.display-xl{font-family:var(--font-display);font-size:64px;line-height:66px;font-weight:700;letter-spacing:-0.02em}
+.display-l{font-family:var(--font-display);font-size:48px;line-height:52px;font-weight:700;letter-spacing:-0.015em}
+.stat{font-family:var(--font-display);font-size:56px;line-height:56px;font-weight:700;letter-spacing:-0.01em}
+.h1{font-family:var(--font-display);font-size:40px;line-height:46px;font-weight:700;letter-spacing:-0.01em}
+.h2{font-family:var(--font-display);font-size:32px;line-height:38px;font-weight:700;letter-spacing:-0.01em}
+.h3{font-family:var(--font-display);font-size:24px;line-height:30px;font-weight:600;letter-spacing:0}
+.quote{font-family:var(--font-display);font-size:26px;line-height:36px;font-weight:400;font-style:italic}
+.subtitle{font-family:var(--font-sans);font-size:20px;line-height:30px;font-weight:500}
+.body-l{font-family:var(--font-sans);font-size:18px;line-height:28px;font-weight:400}
+.body{font-family:var(--font-sans);font-size:16px;line-height:26px;font-weight:400}
+.small{font-family:var(--font-sans);font-size:14px;line-height:22px;font-weight:500}
+.button{font-family:var(--font-sans);font-size:15px;line-height:20px;font-weight:700;letter-spacing:0.01em}
+.overline{font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase}
+.caption{font-family:var(--font-sans);font-size:12px;line-height:18px;font-weight:500}

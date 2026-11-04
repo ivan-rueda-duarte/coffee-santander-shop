@@ -1,0 +1,9 @@
+Sistema de etiquetas en tres niveles. La información técnica se lee en silencio; la clasificación lleva color de significado; el puntaje SCA es el único elemento con forma de **sello**.
+
+**Nivel 1 · `ds-tag` (dato técnico).** Municipio, altitud, proceso, variedad, tueste. Montserrat 500 de 12 px en `ink-muted`, sin relleno; en fila (`ds-tags`) se separan con un punto medio. `--outline` (borde `line`, píldora) para filtros y selectores de la tienda; `--origen` (terracota, mayúsculas) es la única etiqueta técnica con color: nombra el origen o las notas de tueste.
+
+**Nivel 2 · `ds-badge` (clasificación).** Píldora rellena de 12 px, 700. Color con significado fijo: `--region` (verde bosque) para región y producción; `--gold` para cifras de apoyo; `--dark` para segmentos; `--earth` (borde terracota sobre arcilla) para notas de tueste y origen destacados; `--accent` (grana) solo para ediciones limitadas; `--soldout` con la palabra. Máximo dos por tarjeta. Dentro de una tarjeta de región toma el color de su familia.
+
+**Nivel 3 · `ds-seal` (sello SCA).** Círculo de 64 px (48 `--sm` en tarjetas y posts, 88 `--lg` en página de producto y empaque): fondo `surface-raised`, anillo `seal-ring` (oro) de 3 px, microborde `seal-ring-inner` de 0,75 px y un anillo interior fino. Número en Fraunces 700, "PTS SCA" en Montserrat 800 a 0,12 em. Variantes: `--monte` (fondo verde, para pergamino), `--oro` (relleno oro con anillo pergamino, para fotografía con scrim), `--outline` (solo trazo, para impresión monocroma). Solo se usa con puntaje real de catación (≥ 80); nunca como adorno ni con un número inventado. Lleva `role="img"` y `aria-label` con el valor completo.
+
+`ds-badge--process` y `ds-badge--score` de la v4 siguen funcionando pero se consideran retirados: migrar a `ds-tag--outline` y `ds-seal`.

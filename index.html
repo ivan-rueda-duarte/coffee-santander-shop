@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>De Santander · Café de origen</title>
+  <meta name="description" content="De Santander: café de especialidad de marca propia, organizado por provincias de Santander, Colombia. Elige en el mapa, arma tu pedido y envíalo por WhatsApp." />
+  <meta name="theme-color" content="#f7f1e6" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a3f25'/%3E%3Ccircle cx='16' cy='14' r='6' fill='%23e9b320'/%3E%3Cpath d='M16 20v7' stroke='%23e9b320' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="preload" href="fonts/Fraunces-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Montserrat-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#indice">Ir al índice de cafés</a>
+
+  <header class="site-header" id="siteHeader">
+    <div class="wrap site-header__inner">
+      <a href="#atlas" class="wordmark" aria-label="De Santander, inicio">
+        <span class="wordmark__name">De Santander</span>
+        <span class="wordmark__sub">Café de origen</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Principal">
+        <a href="#atlas">Cafés</a>
+        <a href="#pedir">Cómo pedir</a>
+        <a href="#historia">Historia</a>
+      </nav>
+
+      <button id="cartBtn" class="cart-btn" type="button" aria-label="Abrir pedido" aria-controls="cartDrawer">
+        <span class="cart-btn__label">Pedido</span>
+        <span id="cartCount" class="cart-count" hidden>0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Atlas: mapa (página izquierda) e índice de cafés (página derecha) -->
+    <section class="atlas" id="atlas" aria-labelledby="atlasTitle">
+      <div class="wrap">
+        <div class="spread">
+          <div class="map-head">
+            <p class="eyebrow">Café de especialidad · Santander</p>
+            <h1 id="atlasTitle" class="map-head__title">El café que crece entre cañones y <em>montañas de Santander</em></h1>
+            <p id="atlasSummary" class="map-head__lead"></p>
+          </div>
+
+          <div class="spread__page spread__page--map">
+            <figure class="map" id="map">
+              <div class="map__frame">
+                <svg id="mapSvg" class="map__svg" role="img" aria-labelledby="mapDesc"></svg>
+                <div id="mapOverlay" class="map__overlay"></div>
+                <button id="mapReset" class="map__reset" type="button" hidden>Ver todo Santander</button>
+                <div class="map__scale" id="mapScale" aria-hidden="true">
+                  <span class="map__scale-bar"><i></i><i></i></span>
+                  <span class="map__scale-labels"><span>0</span><span id="mapScaleMid"></span><span id="mapScaleEnd"></span></span>
+                </div>
+              </div>
+              <figcaption id="mapDesc" class="map__caption">
+                Departamento de Santander por provincias. Los puntos marcan el municipio de cada café.
+                <span class="map__source">Límites: DANE, Marco Geoestadístico 2018 · Provincias: anexo de municipios de Santander (Wikipedia). Tona, por verificar.</span>
+              </figcaption>
+            </figure>
+          </div>
+
+          <div class="spread__page spread__page--index" id="indice">
+            <div class="index-head">
+              <h2 class="index-head__title">Índice de <em>cafés</em></h2>
+              <label class="sort">
+                <span>Ordenar</span>
+                <select id="sortSelect">
+                  <option value="featured">Orden del catálogo</option>
+                  <option value="cupping">Puntaje SCA</option>
+                  <option value="price-asc">Precio: menor a mayor</option>
+                  <option value="price-desc">Precio: mayor a menor</option>
+                  <option value="altitude">Altura</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="legend" role="group" aria-label="Filtrar por provincia">
+              <div id="legendList" class="legend__list"></div>
+              <p id="legendSoon" class="legend__soon"></p>
+            </div>
+
+            <p id="resultsCount" class="results-count" aria-live="polite"></p>
+            <div id="indexList" class="index-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cómo pedir -->
+    <section class="howto" id="pedir" aria-labelledby="pedirTitle">
+      <div class="wrap">
+        <p class="eyebrow">Tres pasos</p>
+        <h2 id="pedirTitle" class="section-title">Cómo <em>pedir</em></h2>
+        <ol class="howto__steps">
+          <li>
+            <h3>Elige tus cafés</h3>
+            <p>Cada café viene en bolsa de 250 g o 500 g, en grano entero o molido. El precio de cada bolsa está en su ficha.</p>
+          </li>
+          <li>
+            <h3>Envía el pedido por WhatsApp</h3>
+            <p>Al finalizar se abre WhatsApp con tu pedido ya escrito. El pedido se hace cuando lo envías.</p>
+          </li>
+          <li>
+            <h3>Confirmamos envío y pago</h3>
+            <p id="howtoShipping"></p>
+          </li>
+        </ol>
+        <p class="howto__business">¿Compras para tu negocio o necesitas más de 20 bolsas de un café? <a id="businessLink" href="#" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y armamos el pedido contigo.</p>
+      </div>
+    </section>
+
+    <!-- Historia -->
+    <section class="story" id="historia" aria-labelledby="historiaTitle" data-theme="dark">
+      <div class="wrap story__grid">
+        <div class="story__copy">
+          <p class="eyebrow">Nuestra historia</p>
+          <h2 id="historiaTitle" class="section-title">Santander <em>en cada taza</em></h2>
+          <p>
+            Los Santanderes fueron de las primeras regiones cafeteras de Colombia. Entre el cañón del Chicamocha, los pueblos de
+            piedra y las montañas de la cordillera Oriental, generaciones de familias han cultivado café a la sombra y lo han
+            beneficiado con paciencia.
+          </p>
+          <p>
+            <strong>De Santander</strong> nace para llevar esos cafés a tu mesa con su origen a la vista. Seleccionamos cafés de
+            familias productoras de las provincias santandereanas y te contamos de dónde viene cada taza: municipio, altura,
+            variedad y proceso.
+          </p>
+        </div>
+
+        <div class="story__side">
+        <figure class="story__photo photo">
+          <img src="assets/fotografia/cafetal-montana.jpg" alt="Cafetal entre montañas de Santander con niebla de la mañana" width="2000" height="1125" loading="lazy" />
+        </figure>
+        <div class="story__process">
+          <h3 class="story__process-title">Del cafetal a la taza</h3>
+          <ol>
+            <li><strong>Cosecha</strong><span>Recolección manual, grano a grano, en el punto justo de maduración.</span></li>
+            <li><strong>Beneficio</strong><span>Despulpado, fermentación y lavado para resaltar la limpieza en taza.</span></li>
+            <li><strong>Secado</strong><span>Secado lento al sol de la montaña santandereana.</span></li>
+            <li><strong>Tueste</strong><span>Tueste por lotes según el perfil de cada origen.</span></li>
+          </ol>
+        </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap site-footer__inner">
+      <div class="site-footer__brand">
+        <p class="wordmark wordmark--footer"><span class="wordmark__name">De Santander</span><span class="wordmark__sub">Café de origen</span></p>
+        <p class="site-footer__note">Café de especialidad de marca propia, de las provincias de Santander, Colombia.</p>
+      </div>
+      <dl class="site-footer__contact">
+        <div><dt>Pedidos</dt><dd><a id="footerWhatsapp" href="#" target="_blank" rel="noopener"></a></dd></div>
+        <div><dt>Envíos</dt><dd id="footerEnvio"></dd></div>
+        <div><dt>Pagos</dt><dd id="footerPagos"></dd></div>
+      </dl>
+      <nav class="site-footer__nav" aria-label="Pie de página">
+        <a href="#atlas">Cafés</a>
+        <a href="#pedir">Cómo pedir</a>
+        <a href="#historia">Historia</a>
+      </nav>
+      <p class="site-footer__copy">© <span id="year"></span> De Santander</p>
+    </div>
+    <div class="franja" aria-hidden="true"><span class="franja__rojo"></span><span class="franja__lineas"><i></i><i></i><i></i><i></i><i></i></span></div>
+  </footer>
+
+  <!-- Barra de pedido (celular) -->
+  <div id="orderBar" class="order-bar" hidden>
+    <p class="order-bar__summary"><span id="orderBarBags"></span><strong id="orderBarTotal"></strong></p>
+    <button id="orderBarBtn" class="btn btn--primary" type="button">Ver pedido</button>
+  </div>
+
+  <!-- Ficha de café -->
+  <div id="brandModal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button id="closeModal" class="close-btn" type="button" aria-label="Cerrar ficha">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Pedido (carrito) -->
+  <div id="cartOverlay" class="drawer-overlay" hidden></div>
+  <aside id="cartDrawer" class="drawer" aria-label="Tu pedido" aria-hidden="true">
+    <header class="drawer__head">
+      <h2>Tu pedido</h2>
+      <button id="closeCart" class="close-btn close-btn--static" type="button" aria-label="Cerrar pedido">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div id="cartBody" class="drawer__body">
+      <ul id="cartItems" class="drawer__items"></ul>
+
+      <div id="cartOptions" class="drawer__options" hidden>
+        <div class="drawer__field">
+          <label for="cartCiudad">Ciudad de entrega <span class="drawer__optional">(opcional)</span></label>
+          <input id="cartCiudad" type="text" autocomplete="address-level2" maxlength="60" placeholder="Ej. Bogotá, Cali, Bucaramanga">
+          <p class="drawer__hint">Con tu ciudad te confirmamos el costo del envío más rápido.</p>
+        </div>
+        <fieldset class="drawer__field">
+          <legend>Forma de pago <span class="drawer__optional">(opcional)</span></legend>
+          <div id="cartPagos" class="seg"></div>
+        </fieldset>
+      </div>
+
+      <div id="cartSent" class="drawer__sent" hidden>
+        <h3>Tu pedido está listo en WhatsApp</h3>
+        <p>Pulsa enviar en WhatsApp para hacer el pedido; te respondemos con el costo del envío. Si WhatsApp no se abrió, copia el mensaje y envíalo al <a id="sentPhone" href="#" target="_blank" rel="noopener"></a>.</p>
+        <pre id="sentMessage" class="drawer__message"></pre>
+        <div class="drawer__sent-actions">
+          <button id="copyMessageBtn" class="btn btn--ghost" type="button">Copiar mensaje</button>
+          <a id="reopenWhatsapp" class="btn btn--ghost" href="#" target="_blank" rel="noopener">Abrir WhatsApp otra vez</a>
+          <button id="editOrderBtn" class="btn btn--ghost" type="button">Editar pedido</button>
+          <button id="clearCartBtn" class="btn btn--ghost btn--danger" type="button">Vaciar pedido</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="drawer__foot">
+      <dl class="drawer__lines">
+        <div><dt>Subtotal <span id="cartBags" class="drawer__bags"></span></dt><dd><strong id="cartTotal">$0</strong></dd></div>
+        <div><dt>Envío</dt><dd id="cartShipping">Se confirma por WhatsApp</dd></div>
+      </dl>
+      <a id="checkoutBtn" class="btn btn--primary btn--block" href="#" target="_blank" rel="noopener" aria-disabled="true">
+        <svg class="btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.5-2-1-1 .8a5 5 0 0 1-2.8-2.8l.8-1-1-2-1.5 1Z"/></svg>
+        Finalizar compra por WhatsApp
+      </a>
+      <p id="cartFootNote" class="drawer__note"></p>
+    </footer>
+  </aside>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/mapa.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

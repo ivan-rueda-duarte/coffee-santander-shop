@@ -1,0 +1,1 @@
+Bandera del departamento de Santander (`bandera-santander.svg`), incluida únicamente como referencia cromática: verde #00873a → `hoja-600`, amarillo #ffd113 → `oro-500`, negro #252629 → `carbon-900`, rojo #cd2428 → `grana-600`. La marca la cita en la franja de marca (componente Franja); la bandera completa, las estrellas y el escudo no se reproducen en piezas comerciales.

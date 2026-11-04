@@ -1,0 +1,7 @@
+Directriz fotográfica como componente. `ds-photo` envuelve cualquier imagen de origen o producto y aplica el **velo cálido** `photo-warm` (terracota al 10 %, modo multiplicar) que unifica la temperatura de todas las fotos de la marca; `--scrim` añade el velo verde cuando hay texto encima; `--round` da las esquinas `radius-lg`; `ds-photo__caption` es el pie en mayúsculas sobre la imagen.
+
+**Qué se fotografía.** Origen (cañón, cordillera, cafetal con niebla, caminos veredales), trabajo (manos que recolectan, zarandean, benefician y catan), grano (cereza, pergamino, tostado) y producto **en contexto**: la bolsa sobre yute, madera sin barnizar, piedra o tierra, con algo del campo siempre en cuadro. Un mockup sobre fondo neutro no es una foto de marca; si solo existe el mockup, se compone sobre `arenisca-200` con `ds-topo--tierra` y `ds-grano`.
+
+**Cómo.** Luz natural (primeras horas en el cafetal, tarde en el cañón), tonos cálidos sin saturar, horizonte en un tercio, un elemento de escala en primer plano, aire a la izquierda o arriba para el texto. Sin flash, HDR, viñetas ni filtros fríos. Encuadre 4:5 para redes, 3:4 para producto, 12:5 para héroe web.
+
+**Qué no.** Fotos de banco genéricas, poses de catálogo, texto sin scrim, personas identificables sin autorización escrita de uso de imagen (Ley 1581 de 2012 y derecho a la propia imagen). Toda foto nueva se archiva en `assets/Fotografia/` con lugar, fecha y crédito.
