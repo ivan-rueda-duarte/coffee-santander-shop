@@ -36,15 +36,14 @@ Cada café se presenta por su provincia de Santander, y la provincia explica el 
 - **Presentaciones:** cada café define sus propios tamaños y precios en los CSV de `data/` (en la v1 vivían en `js/data.js`). Hoy los cinco cafés tienen 250 g a $25.000 y 500 g a $50.000.
 - **Molienda:** grano entero o molido, mismo precio.
 - **Puntaje:** puntaje de taza en la escala SCA (Specialty Coffee Association); 80 o más es café de especialidad.
-- **Provincias de Santander:** Comunera, García Rovira, Guanentá, Metropolitana, Soto, Vélez y Yariguíes, con los nombres del anexo de municipios de Santander (Wikipedia); el usuario eligió estos nombres en lugar de "Mares" y "Soto Norte". La provincia de cada café se deriva de su municipio con la tabla `MUNICIPIO_PROVINCIA` (86 municipios). Tona queda por verificar porque la fuente la ubica entre Metropolitana y Soto. Los límites del mapa vienen del Marco Geoestadístico Nacional 2018 del DANE.
+- **Provincias de Santander:** Comunera, García Rovira, Guanentá, Metropolitana, Soto Norte (slug `soto`), Vélez y Yariguíes, según la Ordenanza 009 de 2019 de la Asamblea de Santander. La provincia de cada café se deriva de su municipio con la tabla `MUNICIPIO_PROVINCIA` (87 municipios, con código DIVIPOLA en `data/municipios.csv`). Tona, Zapatoca, Rionegro y Simacota aparecen en dos provincias en la ordenanza: se dejaron en Soto Norte, Metropolitana, Metropolitana y Comunera. Cimitarra (Vélez), Onzaga (Guanentá) y Piedecuesta (Metropolitana) no están en la ordenanza y se asignaron por indicación del usuario. Los límites del mapa vienen del Marco Geoestadístico Nacional 2018 del DANE.
 - **Terminología:** usar "provincia" (no "región" ni "origen") para las provincias de Santander, y "puntaje SCA" para el puntaje. Como es marca propia, los nombres de los cafés ("Café Barichara", "Café Oiba"…) son líneas de producto de De Santander, no marcas de terceros; por eso la tienda no tiene filtro por marca.
 - **Carrito:** se guarda en el navegador; máximo 20 bolsas por café y presentación; sin cuentas de usuario.
 - **Técnica:** sitio estático exportado con Next.js (GitHub Pages), sin servidor ni base de datos. Los datos de comercio viven en archivos CSV editados a mano y los textos editoriales en Sanity. Precios en pesos colombianos con formato $25.000. Textos en español. La v1 sin framework se conserva en `legacy/`.
 - **Pendiente de decidir:**
   - Si los procesos "Lavado tradicional", "Lavado controlado", "Lavado premium" y "Lavado especial" son procesos distintos o el mismo lavado.
   - Nombres de finca de cada café (campo `finca` vacío).
-  - Descripciones de las provincias Metropolitana, Soto, Vélez y Yariguíes.
-  - Provincia de Tona (Metropolitana o Soto).
+  - Descripciones de las provincias Metropolitana, Soto Norte, Vélez y Yariguíes.
 
 ## Brand Commitments
 

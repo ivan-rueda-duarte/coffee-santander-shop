@@ -162,7 +162,7 @@ describe("verificarContenido", () => {
   const { catalogo } = cargarCatalogoDesdeDisco();
   it("sin contenido o con slugs válidos no hay errores", () => {
     expect(verificarContenido(catalogo, { cafes: [], provincias: [], productores: [] })).toEqual([]);
-    expect(verificarContenido(catalogo, { cafes: ["cafe-oiba"], provincias: ["guanenta"], productores: [] })).toEqual([]);
+    expect(verificarContenido(catalogo, { cafes: ["cafe-arreboles"], provincias: ["guanenta"], productores: [] })).toEqual([]);
   });
   it("nombra cada slug que no existe y en qué CSV debería estar", () => {
     const e = verificarContenido(catalogo, { cafes: ["cafe-oyba"], provincias: ["mares"], productores: ["finca-x"] });

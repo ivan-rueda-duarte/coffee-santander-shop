@@ -136,7 +136,7 @@ for m in municipios:
     del m["area"]
 
 data = {
-    "fuente": "Límites municipales: DANE, Marco Geoestadístico Nacional 2018. Provincias: anexo de municipios de Santander (Wikipedia).",
+    "fuente": "Límites municipales: DANE, Marco Geoestadístico Nacional 2018. Provincias: Ordenanza 009 de 2019 de la Asamblea de Santander.",
     "viewBox": [0, 0, round(W + 2 * PAD, 1), round(H + 2 * PAD, 1)],
     "proyeccion": {"lon0": round(lon0, 6), "lat0": round(lat0, 6), "cos": round(cosl, 8), "k": round(k, 6),
                    "dx": round(-minx * k + PAD, 4), "dy": round(-miny * k + PAD, 4)},

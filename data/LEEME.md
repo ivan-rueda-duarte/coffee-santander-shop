@@ -22,7 +22,7 @@ Reglas generales
 
 | Columna | Qué es |
 |---|---|
-| `slug` | Identificador del café (`cafe-oiba`). Define también la carpeta de sus fotos. |
+| `slug` | Identificador del café (`cafe-arreboles`). Define también la carpeta de sus fotos. |
 | `nombre` | Nombre que se ve en el sitio. |
 | `precio_250g`, `precio_500g`, `precio_1000g` | Precio en pesos de cada tamaño, solo dígitos (`25000`). **Vacío = ese tamaño no se vende.** Hace falta al menos un precio. |
 | `agotados` *(opcional)* | Tamaños sin existencias, en lista: `500` o `250\|500`. El café sigue visible y ese tamaño aparece agotado. |
@@ -46,7 +46,7 @@ Los tamaños admitidos son 250, 500 y 1000 g. Otro tamaño exige agregar una col
 
 ### Fotos de los productos
 
-1. Crea (si no existe) la carpeta **`public/fotos/cafes/<slug-del-cafe>/`**. Ya están creadas para los cinco cafés actuales, por ejemplo `public/fotos/cafes/cafe-oiba/`.
+1. Crea (si no existe) la carpeta **`public/fotos/cafes/<slug-del-cafe>/`**. Ya están creadas para los dos cafés actuales, por ejemplo `public/fotos/cafes/cafe-arreboles/`.
 2. Copia ahí las fotos (`.jpg`, `.png`, `.webp` o `.avif`). Nombres sin espacios ni tildes: `1.jpg`, `bolsa-frente.jpg`. Conviene vertical 3:4 y menos de 400 KB cada una.
 3. En `catalogo.csv`, en la columna `fotos` de ese café, escribe los nombres separados por `|`: `1.jpg|2.jpg|3.jpg`. **Puedes poner todas las fotos que quieras:** la primera es la principal (tarjeta del catálogo y cabecera de la ficha) y las demás se muestran debajo.
 4. Ejecuta `npm run datos`: si un nombre no coincide con un archivo, dice cuál falta y dónde debe estar.
@@ -55,7 +55,7 @@ Para cambiar una foto, reemplaza el archivo (mismo nombre) o cambia el nombre en
 
 ## provincias.csv y municipios.csv
 
-Las siete provincias de Santander y sus 87 municipios. `descripcion` vacía = no se muestra. En `municipios.csv`, `divipola` es el código del DANE; los municipios con la provincia sin confirmar (hoy Tona) llevan `por_verificar` en `si` y la provincia vacía. El trazado del mapa se genera con `npm run mapa` y lee estos dos archivos.
+Las siete provincias de Santander y sus 87 municipios. `descripcion` vacía = no se muestra. En `municipios.csv`, `divipola` es el código del DANE; la provincia de cada municipio sale de la Ordenanza 009 de 2019 de la Asamblea de Santander. Cimitarra, Onzaga y Piedecuesta no están en la ordenanza y se asignaron por indicación del dueño (Vélez, Guanentá y Metropolitana). Un municipio con la provincia sin confirmar lleva `por_verificar` en `si` y la provincia vacía (hoy ninguno). El trazado del mapa se genera con `npm run mapa` y lee estos dos archivos.
 
 ## productores.csv
 

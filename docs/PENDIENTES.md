@@ -17,8 +17,7 @@ Cada ítem marca un `TODO(dato)`: no se muestra en la interfaz hasta que exista 
 - TODO(dato): confirmar los textos de historia de los 5 cafés; los de la v1 incluyen afirmaciones sin respaldo.
 
 ## Territorio
-- TODO(dato): provincia de Tona (¿Metropolitana o Soto?).
-- TODO(dato): descripciones de Metropolitana, Soto, Vélez y Yariguíes.
+- TODO(dato): descripciones de Metropolitana, Soto Norte, Vélez y Yariguíes.
 
 ## Contenido
 - TODO(dato): fotografías de producto y de fincas, con lugar, fecha y crédito.

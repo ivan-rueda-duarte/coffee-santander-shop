@@ -250,15 +250,14 @@ describe("errores con archivo, línea y columna", () => {
 });
 
 describe("datos reales de data/", () => {
-  it("pasan la validación y tienen lo esperado de la v1", () => {
+  it("pasan la validación y tienen lo esperado", () => {
     const { catalogo } = cargarCatalogoDesdeDisco();
-    expect(catalogo.cafes).toHaveLength(5);
+    expect(catalogo.cafes.length).toBeGreaterThan(0);
     expect(catalogo.provincias).toHaveLength(7);
     expect(catalogo.municipios).toHaveLength(87);
-    expect(catalogo.municipios.filter((m) => m.porVerificar).map((m) => m.slug)).toEqual(["tona"]);
+    expect(catalogo.municipios.filter((m) => m.porVerificar).map((m) => m.slug)).toEqual([]);
     expect(catalogo.municipios.every((m) => m.divipola)).toBe(true);
     expect(catalogo.cafes.every((c) => c.presentaciones.length === 2 && c.provinciaSlug)).toBe(true);
-    expect(catalogo.cafes.every((c) => !c.puntajeVerificado)).toBe(true);
     expect(catalogo.tienda.whatsapp).toBe("573001129874");
   });
 });

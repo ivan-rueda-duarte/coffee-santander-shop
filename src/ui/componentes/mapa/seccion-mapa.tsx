@@ -41,7 +41,7 @@ export function SeccionMapa({ fuente }: { fuente: string }) {
           <p className="body-l mt-4 max-w-md text-ink-muted">
             Toca una provincia para filtrar el catálogo; vuelve a tocarla para quitarla. Los puntos marcan el municipio de cada café.
           </p>
-          <p className="caption mt-6 max-w-md text-ink-muted">{fuente} Tona, por verificar.</p>
+          <p className="caption mt-6 max-w-md text-ink-muted">{fuente}</p>
         </div>
         <div>
           {cerca ? (
