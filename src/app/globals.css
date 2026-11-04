@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "../styles/marca.css";
 @import "../styles/tema-tailwind.css";
+@import "../styles/componentes.css";
+@import "../styles/mapa.css";
 
 html { background: var(--surface); color: var(--ink); }
 body {
@@ -10,7 +12,12 @@ body {
   background: var(--surface);
   color: var(--ink);
 }
+.overline { text-decoration: none; } /* Tailwind trae una utilidad «overline» (línea encima del texto) con el mismo nombre que el antetítulo de la marca */
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Botones de la marca: tamaño táctil cómodo (44 px; 40 px los pequeños) */
+.ds-btn { min-height: 44px; }
+.ds-btn--sm { min-height: 40px; }

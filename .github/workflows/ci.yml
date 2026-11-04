@@ -1,0 +1,46 @@
+name: Comprobaciones
+
+# Se ejecuta en cada pull request y en cada push a una rama que no sea main
+# (main ya pasa por las mismas comprobaciones en deploy.yml).
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - name: Pruebas unitarias (cobertura mínima de domain/ en vitest.config.mts)
+        run: npx vitest run --coverage
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      # Playwright construye el sitio (npm run build) y lo sirve desde out/, como lo hará GitHub Pages.
+      - name: Pruebas e2e
+        run: npm run e2e
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: informe-playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

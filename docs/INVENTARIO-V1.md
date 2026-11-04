@@ -148,3 +148,26 @@ Con su "sigue" puedo avanzar con los valores por defecto marcados en cada una.
 7. Escala gráfica y "Vaciar con deshacer" se conservan (filas 8 y 22). *(Por defecto: sí.)*
 8. Política para pedidos que nunca se envían (punto 12). *(Por defecto: limpieza a los 7 días, a confirmar.)*
 9. Propuesta de `.impeccable/surfaces/index-html.md` corregido (fase 1; la redacto y se la muestro antes de guardarla).
+
+## 6. Estado de la migración (2026-11-04)
+
+Resultado de recorrer la matriz de la sección 2 contra la v2.
+
+| Fila | Estado en la v2 |
+|---|---|
+| 1–2, 11–13 (filtro, URL, orden, leyenda, contador, estado vacío) | Hecho: `useFiltrosCatalogo` + `domain/catalogo`. URL con varias provincias; acepta `?provincia=` de la v1 e ignora `?marca=`. |
+| 3–10 (mapa, pines, zoom, escala, fuentes) | Hecho: `MapaProvincias`. Incluye gratícula, escala gráfica, etiquetas sin solape, encuadre animado (instantáneo con movimiento reducido) y «Ver todo Santander». |
+| 14, 16–18 (tarjeta, mini mapa, ficha, compra) | Hecho. La ficha pasa a ser ruta propia (decisión 3). |
+| 15 (sello SCA, «Mejor puntaje») | **Cambia:** solo con puntaje verificado; hoy no se ve (decisión 2). El rótulo «Mejor puntaje SCA del catálogo» se retiró. |
+| 19 (modal con foco atrapado) | Reemplazado por ruta. El **cajón** del pedido y la **hoja** de filtros conservan foco atrapado, `inert` (Radix), Esc y devolución del foco. |
+| 20–26 (carrito, 20 por línea, vaciar con deshacer, persistencia, pestañas, cajón, barra móvil) | Hecho. Migra `desantander.carrito.v1`. |
+| 27–31 (ciudad y pago, WhatsApp, panel de confirmación, mensaje) | Hecho con cambios: envío completo obligatorio en `/pedido/` y mensaje nuevo (plantilla del prompt, sin número de pedido). «Copiar mensaje», «Abrir WhatsApp», «Editar pedido» y «Vaciar pedido» se conservan. |
+| 32–35 (foco, movimiento reducido, avisos, salto al contenido) | Hecho. |
+| 36–38, 40 (cómo pedir, historia, footer, anclas) | Hecho; los textos sin respaldo de la v1 no se reutilizan (punto 24). |
+| 39 (franja, tramas, velo cálido) | Hecho con los componentes de marca. |
+
+Qué se agregó (no estaba en la v1): provincia(s) múltiples, municipio, proceso, variedad, tueste, perfil de taza, altitud, precio, stock, chips de filtros activos, hoja de filtros en celular, páginas de provincia, páginas legales, sitemap, JSON-LD de producto, departamentos y municipios de Colombia (DANE) en el envío.
+
+**Verificación:** 233 pruebas unitarias (cobertura de `domain/` ≥ 94 %), 27 pruebas e2e (incluye axe sin violaciones serias, teclado, 360 × 740 y migración del carrito de la v1), Lighthouse móvil 91–92 / 100 / 100.
+
+**Decisiones del plan original que cambiaron:** sin Supabase ni Edge Function (CSV); sin Turnstile; sin número de pedido; sin `useDisponibilidad` (la disponibilidad se actualiza al reconstruir); consultas de Sanity validadas con zod en lugar de `sanity typegen`; despliegue solo desde `main` (Pages no tiene vista previa por rama).

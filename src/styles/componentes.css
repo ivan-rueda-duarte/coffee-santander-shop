@@ -1,0 +1,202 @@
+/* De Santander v4.1: componentes de marca (de page_style/components/bundle.css).
+   Cambios respecto al original: sin las piezas de redes (.ds-post, .ds-banner) y con las tramas
+   como archivos en ./tramas/ en lugar de incrustadas. Los valores salen de marca.css. */
+/* De Santander v4.1 — estilos de componentes. Todo valor sale de tokens.css. */
+.ds-root{background:var(--surface);color:var(--ink);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
+.ds-root *{box-sizing:border-box}
+
+/* ---------- Marca tipográfica (sin logotipo oficial aún) ---------- */
+.ds-wordmark{display:inline-flex;flex-direction:column;gap:2px;color:inherit;text-decoration:none}
+.ds-wordmark__name{font-family:var(--font-display);font-weight:700;font-size:22px;line-height:1;letter-spacing:-0.015em}
+.ds-wordmark__tag{font-family:var(--font-sans);font-weight:800;font-size:9px;letter-spacing:0.22em;text-transform:uppercase;opacity:.85}
+
+/* ---------- Franja de marca (la bandera, abstraída) ---------- */
+.ds-franja{display:flex;height:16px;width:100%}
+.ds-franja__rojo{flex:0 0 20%;background:var(--grana-600)}
+.ds-franja__lineas{flex:1;display:flex;flex-direction:column}
+.ds-franja__lineas span{flex:1;display:block}
+.ds-franja__lineas span:nth-child(1){background:var(--hoja-600)}
+.ds-franja__lineas span:nth-child(2){background:var(--oro-500)}
+.ds-franja__lineas span:nth-child(3){background:var(--carbon-900)}
+.ds-franja__lineas span:nth-child(4){background:var(--oro-500)}
+.ds-franja__lineas span:nth-child(5){background:var(--hoja-600)}
+.ds-franja--fina{height:8px}
+.ds-franja--rule{height:3px}
+.ds-franja--rule .ds-franja__lineas span{display:none}
+.ds-franja--rule .ds-franja__lineas{background:var(--oro-500)}
+
+/* ---------- Puntos de color (leyenda) ---------- */
+.ds-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:currentColor;flex:none}
+.ds-dots{display:inline-flex;gap:var(--space-2)}
+.ds-dots .ds-dot{width:16px;height:16px}
+
+/* ---------- Botón ---------- */
+.ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);
+  font-family:var(--font-sans);font-size:15px;line-height:20px;font-weight:700;letter-spacing:.01em;
+  padding:var(--space-3) var(--space-5);border-radius:var(--radius-pill);border:1.5px solid transparent;
+  cursor:pointer;text-decoration:none;transition:background-color .15s ease,border-color .15s ease,color .15s ease;white-space:nowrap}
+.ds-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.ds-btn--primary{background:var(--brand);color:var(--on-brand)}
+.ds-btn--primary:hover{background:var(--brand-strong)}
+.ds-btn--accent{background:transparent;color:var(--accent);border-color:var(--accent)}
+.ds-btn--accent:hover{background:var(--arcilla-50)}
+/* v4.1: --accent ya no es un CTA relleno; es el enlace de origen (borde terracota). El CTA principal es siempre --primary (verde bosque). */
+.ds-btn--gold{background:var(--highlight);color:var(--on-highlight)}
+.ds-btn--gold:hover{filter:brightness(1.05)}
+.ds-btn--secondary{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.ds-btn--secondary:hover{border-color:var(--ink)}
+.ds-btn--ghost{background:transparent;color:var(--brand);padding-left:var(--space-2);padding-right:var(--space-2);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1.5px}
+.ds-btn--on-photo{background:var(--on-photo);color:var(--monte-900)}
+.ds-btn--on-photo:hover{background:var(--arenisca-200)}
+.ds-btn--sm{font-size:13px;line-height:16px;padding:var(--space-2) var(--space-4)}
+.ds-btn--lg{font-size:16px;line-height:22px;padding:var(--space-4) var(--space-6)}
+.ds-btn[disabled],.ds-btn--disabled{background:var(--surface-sunken);color:var(--ink-muted);border-color:var(--line);cursor:not-allowed;filter:none}
+.ds-btn__icon{width:18px;height:18px;flex:none}
+.ds-btn__arrow{font-weight:800}
+
+/* ---------- Etiquetas (v4.1): tres niveles ---------- */
+/* Nivel 1 · ds-tag: dato técnico (municipio, proceso, variedad, altitud). Silencioso: sin relleno. */
+.ds-tag{display:inline-flex;align-items:center;gap:var(--space-1);font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:500;color:var(--ink-muted);padding:2px 0;white-space:nowrap}
+.ds-tag--outline{padding:var(--space-1) var(--space-3);border:1px solid var(--line);border-radius:var(--radius-pill);color:var(--ink)}
+.ds-tag--origen{color:var(--accent);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:11px}
+.ds-tags{display:flex;flex-wrap:wrap;gap:var(--space-1) var(--space-3)}
+.ds-tags .ds-tag+.ds-tag::before{content:"·";margin-right:var(--space-2);color:var(--line-strong)}
+.ds-tags--outline{gap:var(--space-2)}
+.ds-tags--outline .ds-tag+.ds-tag::before{content:none;margin:0}
+/* Nivel 2 · ds-badge: clasificación con color de significado (región, segmento, cifra). */
+.ds-badge{display:inline-flex;align-items:center;gap:var(--space-1);font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:700;padding:var(--space-1) var(--space-3);border-radius:var(--radius-pill);border:1px solid transparent;white-space:nowrap}
+.ds-badge--region{background:var(--monte-900);color:var(--pergamino-50)}
+.ds-badge--gold{background:var(--oro-500);color:var(--carbon-900)}
+.ds-badge--dark{background:var(--tostado-900);color:var(--pergamino-50)}
+.ds-badge--earth{background:var(--arcilla-50);color:var(--accent);border-color:var(--accent)}
+.ds-badge--accent{background:var(--grana-600);color:var(--pergamino-50)}
+.ds-badge--soldout{background:transparent;color:var(--danger);border-color:var(--danger)}
+.ds-badge--overline{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800}
+/* Compatibilidad v4: --process y --score ya no se usan; migran a ds-tag--outline y ds-seal. */
+.ds-badge--process{background:transparent;color:var(--ink);border-color:var(--line)}
+.ds-badge--score{background:var(--highlight);color:var(--on-highlight)}
+/* Nivel 3 · ds-seal: sello de puntaje SCA. Circular, anillo oro + microborde interior. */
+.ds-seal{--seal:64px;position:relative;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:var(--seal);height:var(--seal);border-radius:50%;background:var(--surface-raised);color:var(--ink-title);box-shadow:0 0 0 3px var(--seal-ring),0 0 0 3.75px var(--seal-ring-inner);flex:none;text-align:center}
+.ds-seal::before{content:"";position:absolute;inset:4px;border-radius:50%;border:.75px solid var(--seal-ring-inner);opacity:.35}
+.ds-seal__num{font-family:var(--font-display);font-weight:700;font-size:calc(var(--seal)*.36);line-height:1;letter-spacing:-.01em}
+.ds-seal__unit{font-family:var(--font-sans);font-weight:800;font-size:calc(var(--seal)*.13);line-height:1.1;letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.ds-seal--sm{--seal:48px}
+.ds-seal--lg{--seal:88px}
+.ds-seal--monte{background:var(--monte-900);color:var(--pergamino-50)}
+.ds-seal--oro{background:var(--oro-500);color:var(--carbon-900);box-shadow:0 0 0 3px var(--surface-raised),0 0 0 3.75px var(--oro-500)}
+.ds-seal--outline{background:transparent;color:inherit;box-shadow:0 0 0 1.5px currentColor}
+.ds-seal--outline::before{border-color:currentColor;opacity:.5}
+/* ---------- Barras de acento (v4.1) ---------- */
+.ds-bar{display:block;height:4px;width:48px;border-radius:2px;background:var(--verde-bosque);margin:0}
+.ds-bar--terracota{background:var(--accent)}
+.ds-bar--oro{background:var(--oro-500)}
+.ds-bar--arenisca{background:var(--arenisca-200)}
+.ds-bar--full{width:100%;height:3px}
+/* ---------- Fotografía (v4.1): tratamiento cálido ---------- */
+.ds-photo{position:relative;overflow:hidden;background:var(--surface-sunken)}
+.ds-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.ds-photo::after{content:"";position:absolute;inset:0;background:var(--photo-warm);mix-blend-mode:multiply;pointer-events:none}
+.ds-photo--scrim::before{content:"";position:absolute;inset:0;background:var(--scrim);z-index:1;pointer-events:none}
+.ds-photo--round{border-radius:var(--radius-lg)}
+.ds-photo__caption{position:absolute;left:var(--space-3);bottom:var(--space-3);z-index:2;font-size:11px;line-height:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pergamino-50)}
+
+/* ---------- Tarjeta de región (familias de color) ---------- */
+.ds-region{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-6);border-radius:var(--radius-lg);color:var(--ink);background:var(--niebla-100)}
+.ds-region__head{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);flex-wrap:wrap}
+.ds-region__title{font-family:var(--font-display);font-size:32px;line-height:36px;font-weight:700;letter-spacing:-.01em;margin:0;color:var(--tostado-900)}
+.ds-region__towns{font-size:14px;line-height:22px;font-weight:500;color:var(--ink-muted);margin:0}
+.ds-region__fact{background:var(--pergamino-0);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);display:flex;flex-direction:column;gap:2px}
+.ds-region__fact dt{font-size:11px;line-height:14px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted)}
+.ds-region__fact dd{margin:0;font-family:var(--font-display);font-size:24px;line-height:28px;font-weight:700;letter-spacing:0;color:var(--tostado-900)}
+.ds-region__note{font-size:14px;line-height:22px;margin:0}
+.ds-region__note strong{font-weight:700}
+.ds-region--verde{background:var(--menta-50)}
+.ds-region--verde .ds-region__title,.ds-region--verde .ds-region__fact dd{color:var(--monte-900)}
+.ds-region--verde .ds-badge{background:var(--monte-900);color:var(--pergamino-50)}
+.ds-region--arcilla{background:var(--arcilla-50)}
+.ds-region--arcilla .ds-region__title,.ds-region--arcilla .ds-region__fact dd{color:var(--chicamocha-600)}
+.ds-region--arcilla .ds-badge{background:var(--chicamocha-600);color:var(--on-accent)}
+.ds-region--oro{background:var(--crema-50)}
+.ds-region--oro .ds-region__title,.ds-region--oro .ds-region__fact dd{color:var(--oro-900)}
+.ds-region--oro .ds-badge{background:var(--oro-500);color:var(--carbon-900)}
+.ds-region--neutro .ds-badge{background:var(--tostado-900);color:var(--pergamino-50)}
+.ds-region--tierra{background:var(--arenisca-200)}
+.ds-region--tierra .ds-region__title,.ds-region--tierra .ds-region__fact dd{color:var(--tostado-900)}
+.ds-region--tierra .ds-region__towns{color:var(--tostado-600)}
+.ds-region--tierra .ds-badge{background:var(--tostado-600);color:var(--pergamino-50)}
+.ds-region--monte{background:var(--monte-800);color:var(--pergamino-50)}
+.ds-region--monte .ds-region__title,.ds-region--monte .ds-region__fact dd{color:var(--pergamino-50)}
+.ds-region--monte .ds-region__towns{color:var(--menta-50)}
+.ds-region--monte .ds-region__fact{background:rgba(255,255,255,.08)}
+.ds-region--monte .ds-region__fact dt{color:var(--oro-500)}
+.ds-region--monte .ds-badge{background:var(--oro-500);color:var(--carbon-900)}
+[data-theme="dark"] .ds-region{background:var(--monte-800);color:var(--pergamino-50)}
+[data-theme="dark"] .ds-region .ds-region__title,[data-theme="dark"] .ds-region .ds-region__fact dd{color:var(--pergamino-50)}
+[data-theme="dark"] .ds-region .ds-region__towns{color:var(--menta-50)}
+[data-theme="dark"] .ds-region .ds-region__fact{background:rgba(255,255,255,.08)}
+[data-theme="dark"] .ds-region .ds-region__fact dt{color:var(--oro-500)}
+[data-theme="dark"] .ds-region .ds-badge{background:var(--oro-500);color:var(--carbon-900)}
+
+/* ---------- Tarjeta de producto ---------- */
+.ds-card{display:flex;flex-direction:column;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .2s ease,transform .2s ease;color:var(--ink)}
+.ds-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.ds-card__media{position:relative;aspect-ratio:var(--ratio-product);background:var(--surface-sunken);overflow:hidden}
+.ds-card__media::after{content:"";position:absolute;inset:0;background:var(--photo-warm);mix-blend-mode:multiply;pointer-events:none}
+.ds-card__media img{width:100%;height:100%;object-fit:cover;display:block}
+.ds-card__media .ds-badge{position:absolute;top:var(--space-4);left:var(--space-4);z-index:1}
+.ds-card__media .ds-seal{position:absolute;top:var(--space-4);right:var(--space-4);z-index:1}
+.ds-card__body{flex:1;display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-5)}
+.ds-card__origin{font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--eyebrow);margin:0}
+.ds-card__title{font-family:var(--font-display);font-size:24px;line-height:30px;font-weight:700;letter-spacing:0;margin:0;color:var(--ink-title)}
+.ds-card__notes{font-family:var(--font-display);font-style:italic;font-size:17px;line-height:24px;font-weight:400;color:var(--ink);margin:0}
+.ds-card__meta{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2) var(--space-3);margin:0;padding:var(--space-3) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ds-card__meta dt{font-size:10px;line-height:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted)}
+.ds-card__meta dd{margin:0;font-size:14px;line-height:20px;font-weight:600}
+.ds-card__roast{display:flex;align-items:center;gap:var(--space-2);font-size:12px;line-height:16px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0}
+.ds-card__roast .ds-bar{width:20px;height:3px}
+.ds-card__foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
+.ds-card__price{font-family:var(--font-sans);font-size:20px;line-height:24px;font-weight:700}
+.ds-card__price small{display:block;font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:500;letter-spacing:0;color:var(--ink-muted)}
+
+/* ---------- Banner web ---------- */
+
+/* ---------- Estadística ---------- */
+.ds-stat{display:flex;flex-direction:column;gap:var(--space-2);padding-top:var(--space-3);border-top:2px solid var(--oro-500)}
+.ds-stat__num{font-family:var(--font-display);font-size:40px;line-height:40px;font-weight:700;letter-spacing:-.01em}
+.ds-stat__label{font-size:13px;line-height:18px;font-weight:500}
+.ds-stat--rojo{border-top-color:var(--grana-400)}
+.ds-stat--verde{border-top-color:var(--hoja-400)}
+.ds-stat--blanco{border-top-color:var(--pergamino-50)}
+.ds-stat--tierra{border-top-color:var(--chicamocha-300)}
+
+/* ---------- Plantillas sociales (previsualizadas a 1/3: 360 px = 1080 px) ---------- */
+.ds-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+
+/* ---------- Ilustración: hoja y cerezas ---------- */
+.ds-leaf{position:absolute;pointer-events:none}
+.ds-leaf path{fill:var(--hoja-400)}
+.ds-leaf line{stroke:var(--monte-900);stroke-width:2}
+.ds-cherries circle{fill:var(--grana-600)}
+.ds-cherries circle:last-child{fill:var(--grana-400)}
+
+/* ---------- Estratos del cañón (motivo v1) ---------- */
+.ds-strata{display:flex;flex-direction:column;gap:3px}
+.ds-strata span{display:block;height:6px;border-radius:2px}
+.ds-strata span:nth-child(1){width:60%;background:var(--chicamocha-600)}
+.ds-strata span:nth-child(2){width:85%;background:var(--arenisca-200)}
+.ds-strata span:nth-child(3){width:45%;background:var(--hoja-600)}
+.ds-strata span:nth-child(4){width:70%;background:var(--tostado-600)}
+.ds-strata span:nth-child(5){width:30%;background:var(--oro-500)}
+/* ---------- Tramas: curvas de nivel y grano (v4.1) ---------- */
+.ds-topo{position:relative;isolation:isolate}
+.ds-topo::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background-repeat:no-repeat;background-size:cover;background-position:center}
+.ds-topo>*{position:relative;z-index:1}
+.ds-topo::before{background-image:url("./tramas/topo-claro.svg")}
+.ds-topo--oscuro::before{background-image:url("./tramas/topo-oscuro.svg")}
+.ds-topo--tierra::before{background-image:url("./tramas/topo-tierra.svg")}
+.ds-topo--arcilla::before{background-image:url("./tramas/topo-arcilla.svg")}
+.ds-grano::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background-image:url("./tramas/grano.svg");background-size:240px 240px;opacity:var(--grain-opacity);mix-blend-mode:multiply}
+[data-theme="dark"] .ds-grano::after,.ds-post--monte.ds-grano::after,.ds-post--tostado.ds-grano::after,.ds-region--monte.ds-grano::after{mix-blend-mode:screen;opacity:var(--grain-opacity-dark)}
+.ds-grano{position:relative;isolation:isolate}.ds-grano>*{position:relative;z-index:1}
+.ds-topo.ds-grano::before{z-index:0}
+

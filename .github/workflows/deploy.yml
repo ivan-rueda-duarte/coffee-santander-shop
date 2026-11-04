@@ -1,0 +1,61 @@
+name: Desplegar a GitHub Pages
+
+# GitHub Pages sirve un solo sitio por repositorio: solo se despliega desde main.
+# La rama v2-nextjs se comprueba con ci.yml pero no se publica.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  # Sanity avisa aquí cuando se publica contenido (ver docs/DEPLOY.md). Este tipo de evento
+  # solo ejecuta el workflow que está en la rama por defecto.
+  repository_dispatch:
+    types: [contenido-publicado]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un despliegue a la vez; si llega otro, se cancela el que aún no terminó.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    env:
+      # Con dominio propio (sin /nombre-del-repo) crea la variable DOMINIO_PROPIO = true.
+      GITHUB_PAGES: ${{ vars.DOMINIO_PROPIO == 'true' && 'false' || 'true' }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.URL_SITIO || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
+      # Solo claves públicas y el token de lectura de Sanity (si el dataset es privado).
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+      SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      # `build` valida primero los CSV y el contenido de Sanity (prebuild: npm run datos).
+      - run: npm run build
+      - run: touch out/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  desplegar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - id: despliegue
+        uses: actions/deploy-pages@v4

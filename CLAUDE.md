@@ -13,8 +13,9 @@ Next.js 16 (App Router, `output: 'export'`), TypeScript estricto, Tailwind v4 (c
 - `npm run build`: genera el sitio estático en `out/`.
 - `npm start`: sirve `out/` (equivale a lo que verá GitHub Pages).
 - `npm run lint`, `npm run typecheck`, `npm test`, `npm run e2e`.
-- `npm run datos`: valida los CSV (columnas, tipos, referencias entre archivos). Llega en la Fase 3.
-- `npm run mapa`: regenera la geometría del mapa (`tools/build_mapa.py`).
+- `npm run datos`: valida los CSV (columnas, tipos, referencias) y, si Sanity está configurado, que sus slugs existan en los CSV. Corre solo antes de `build`.
+- `cd studio && npm run dev`: Sanity Studio local. Guía en `docs/SANITY.md`; no ejecutes `sanity login/init/deploy` sin que lo pidan.
+- `npm run mapa -- <geojson>`: regenera `src/data/mapa-santander.json` desde el GeoJSON del DANE (`tools/build_mapa.py`). Las instrucciones para editar los CSV están en `data/LEEME.md`.
 
 Lee `node_modules/next/dist/docs/` antes de usar una API de Next que no conozcas: esta versión cambió respecto a lo que suele recordarse (ver `AGENTS.md`).
 

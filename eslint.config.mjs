@@ -19,7 +19,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": ["error", { patterns: [
         ...fuera("application", "infrastructure", "ui"),
         { group: librerias, message: "domain es TypeScript puro: sin React, Next, Sanity ni lectores de datos." },
-        { group: ["../*", "!../*/*"], message: "Usa rutas relativas dentro de domain." },
+        { group: ["../../**"], message: "domain no puede salir de su carpeta." },
       ] }],
     },
   },
@@ -37,7 +37,7 @@ const eslintConfig = defineConfig([
       { group: ["@sanity/*", "groq", "csv-parse", "csv-parse/*"], message: "ui usa casos de uso o hooks, no clientes de datos." },
     ] }] },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "legacy/**", "page_style/**", "tools/**", "coverage/**", ".claude/**", ".impeccable/**"]),
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "legacy/**", "page_style/**", "tools/**", "coverage/**", ".claude/**", ".impeccable/**", "studio/**"]),
 ]);
 
 export default eslintConfig;

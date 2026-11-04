@@ -14,20 +14,20 @@ Página única de la tienda. Modo: **Persuade**. Rediseño completo con mundo vi
 Compradores para casa, regalos y negocios, mayormente en celular. Deben entender en segundos que es café de marca propia organizado por provincias de Santander, elegir un café (tamaño y molienda) y enviar el pedido por WhatsApp.
 
 ## Proof and content
-Mapa real de Santander: límites municipales DANE MGN 2018; pertenencia municipio → provincia según el anexo de municipios de Santander de Wikipedia (Comunera, García Rovira, Guanentá, Metropolitana, Soto, Vélez, Yariguíes; Tona por verificar). Cinco cafés en `js/data.js`. Sin fotografías ni testimonios: no se inventan.
+Mapa real de Santander: límites municipales DANE MGN 2018; pertenencia municipio → provincia según el anexo de municipios de Santander de Wikipedia (Comunera, García Rovira, Guanentá, Metropolitana, Soto, Vélez, Yariguíes; Tona por verificar). Cinco cafés en los CSV de `data/`. Sin fotografías ni testimonios: no se inventan.
 
 ## Direction contract
-THESIS: El atlas abierto: el mapa real de Santander es a la vez portada y filtro, y el catálogo es el índice de lotes en la página opuesta. Rechaza la plantilla de tienda: hero con cifras, fila de tarjetas con iconos, grilla de producto y banda CTA.
+THESIS: El origen se ve antes que el precio: el catálogo filtrable abre la tienda y el mapa de Santander, debajo, es el segundo camino para explorar por provincia. Rechaza la plantilla de tienda genérica (hero con cifras, fila de iconos, banda CTA).
 
-OWN-WORLD: Hoja de atlas institucional. Fondo blanco frío, tinta azul casi negra, rellenos pastel de mapa político (una tinta por provincia), límites municipales en filete fino, gratícula con grados en el margen, escala gráfica y norte. Topónimos en versalitas espaciadas; títulos en serif de atlas de época (Young Serif); texto y cifras en sans institucional con números tabulares (Public Sans). Pines bermellón como único acento caliente; botón primario bermellón. Sin vidrio, degradados, emoji ni sombras decorativas.
+OWN-WORLD: Marca De Santander v4.1 (docs/marca-v4.1.md). Fondo pergamino #f7f1e6 con tinta tostado #24170f; tema oscuro monte #0a3f25 en portada e historia. Titulares en Fraunces 700 con una palabra de remate en itálica; todo lo demás en Montserrat. CTA principal en verde bosque (oro con texto carbón sobre oscuro). Terracota solo para origen y notas de tueste. Mapa con las cinco familias de color por provincia, curvas de nivel de bajo contraste, grano de papel, franja de bandera a sangre. Sin emojis, sin sombras decorativas, sin bandera ni escudo completos.
 
-STORY: El visitante ve Santander dividido en provincias, nota dónde nace cada café, toca una provincia y el mapa se acerca mientras el índice muestra sus lotes; agrega un café sin salir de la primera pantalla, elige tamaño y molienda en la ficha y envía el pedido por WhatsApp sabiendo que el envío y el pago se confirman allí.
+STORY: El visitante entiende que es café de marca propia por provincias de Santander, filtra el catálogo (o toca una provincia en el mapa), abre la ficha de un café, elige tamaño y molienda y envía el pedido por WhatsApp sabiendo que el envío y el pago se confirman allí.
 
-FIRST VIEWPORT: Escritorio: pliego de dos páginas sobre un mismo lomo. Página izquierda (~58 %): cartela con el titular de marca y una línea de resumen dinámica, mapa de Santander a sangre con gratícula, pines con nombre de cada café y anotación "Mejor puntaje SCA". Página derecha (~42 %): índice de provincias con sus lotes; cada lote con precio "desde" y botón "Agregar" visible; selector de orden arriba. Celular: cartela, mapa a ancho completo, leyenda de provincias y comienzo del índice; barra inferior "Tu pedido" cuando hay carrito.
+FIRST VIEWPORT: Portada en monte con titular, una línea de bajada y CTA "Ver cafés". Inmediatamente debajo, el catálogo con barra de filtros (provincias como chips) y tarjetas de café con precio "desde" y "Agregar". Celular: portada corta, filtros en hoja inferior, barra "Tu pedido".
 
-FORM: Atlas (mapa + índice en pliego), dirección A "Atlas de provincias" de la crítica, fijada por el usuario; posición 1 de las dos propuestas. seed: none (dirección fijada por el usuario, sin sorteo).
+FORM: Catálogo filtrable con mapa interactivo sincronizado (la URL es la única fuente de verdad). Sustituye al atlas de dos páginas de la v1.
 
-Signature interaction: elegir provincia (en el mapa o en la leyenda) acerca el mapa a esa provincia con una transición de encuadre suave y filtra el índice; "Todas" vuelve al departamento completo. Movimiento reducido: cambio instantáneo.
+Signature interaction: elegir una provincia en el mapa o en los chips filtra el catálogo y encuadra el mapa; "Ver todo Santander" vuelve al departamento completo. Movimiento reducido: cambio instantáneo.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 

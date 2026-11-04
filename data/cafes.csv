@@ -1,0 +1,6 @@
+slug,nombre,municipio_slug,productor_slug,altura_msnm,variedades,proceso,proceso_detalle,tueste,notas_cata,puntaje_sca,puntaje_verificado,puntaje_fuente,puntaje_fecha,registro_sanitario,moliendas,destacado,activo,orden
+cafe-altura-de-socorro,Café Altura de Socorro,socorro,,1800,Caturra,lavado,Lavado tradicional,medio,Caramelo|Cacao|Frutos rojos,88,no,,,,grano|molido,no,si,1
+cafe-barichara,Café Barichara,barichara,,1700,Castillo,lavado,Lavado controlado,medio_claro,Naranja|Miel|Jazmín,90,no,,,,grano|molido,no,si,2
+cafe-san-gil,Café San Gil,san-gil,,1650,Colombia,lavado,,medio_oscuro,Chocolate|Nuez|Especias,86,no,,,,grano|molido,no,si,3
+cafe-malaga,Café Málaga,malaga,,1850,Typica,lavado,Lavado especial,claro,Floral|Manzana|Miel,91,no,,,,grano|molido,no,si,4
+cafe-oiba,Café Oiba,oiba,,1750,Bourbon,lavado,Lavado premium,medio,Cereza|Canela|Cacao,89,no,,,,grano|molido,no,si,5

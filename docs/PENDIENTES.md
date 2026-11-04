@@ -26,3 +26,10 @@ Cada ítem marca un `TODO(dato)`: no se muestra en la interfaz hasta que exista 
 
 ## Envío
 - TODO(dato): campos obligatorios de envío, ahora que el pedido sale por WhatsApp (v1 pedía ciudad y pago, ambos opcionales).
+
+## Cumplimiento y publicación
+- TODO(dato): confirmar si los precios incluyen IVA. El resumen del pedido dice «precio total» solo del producto y que el envío se confirma por WhatsApp; la Ley 1480 pide mostrar el precio total con impuestos.
+- TODO(dato): URL pública del sitio (`NEXT_PUBLIC_SITE_URL` / variable `URL_SITIO`) para el sitemap, los enlaces canónicos y Open Graph.
+- TODO(dato): usuario de Instagram real de la marca (campo en «Ajustes del sitio» de Sanity); mientras no exista no se muestra.
+- TODO(dato): proyecto de Sanity (crearlo con `sanity login` / `sanity init`) y el webhook de despliegue (docs/DEPLOY.md).
+- TODO(dato): fotografías de producto en contexto (yute, madera, piedra). Hasta entonces las tarjetas usan una bolsa ilustrada.

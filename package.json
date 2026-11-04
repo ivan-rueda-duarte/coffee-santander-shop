@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "datos": "tsx tools/validar-datos.ts",
-    "mapa": "python3 -I tools/build_mapa.py"
+    "mapa": "python3 -I tools/build_mapa.py",
+    "prebuild": "npm run datos"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.20",
