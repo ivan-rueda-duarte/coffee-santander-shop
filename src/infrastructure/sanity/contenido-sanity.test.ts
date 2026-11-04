@@ -167,7 +167,7 @@ describe("verificarContenido", () => {
   it("nombra cada slug que no existe y en qué CSV debería estar", () => {
     const e = verificarContenido(catalogo, { cafes: ["cafe-oyba"], provincias: ["mares"], productores: ["finca-x"] });
     expect(e).toEqual([
-      'Sanity (cafeContenido): el slug "cafe-oyba" no existe en data/cafes.csv. Corrige el slug en el Studio o agrega la fila al CSV.',
+      'Sanity (cafeContenido): el slug "cafe-oyba" no existe en data/catalogo.csv. Corrige el slug en el Studio o agrega la fila al CSV.',
       'Sanity (provinciaContenido): el slug "mares" no existe en data/provincias.csv. Corrige el slug en el Studio o agrega la fila al CSV.',
       'Sanity (productorContenido): el slug "finca-x" no existe en data/productores.csv. Corrige el slug en el Studio o agrega la fila al CSV.',
     ]);

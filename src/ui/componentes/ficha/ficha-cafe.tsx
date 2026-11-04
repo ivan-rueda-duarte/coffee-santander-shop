@@ -50,7 +50,11 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
     ["Tueste", ETIQUETA_TUESTE[cafe.tueste]],
     ["Registro sanitario", cafe.registroSanitario ?? ""],
   ];
-  const foto = contenido?.fotos[0];
+  // Las fotos del CSV (public/fotos/cafes/<slug>/) mandan; si no hay, se usan las de Sanity.
+  const fotos = cafe.fotos.length
+    ? cafe.fotos.map((url) => ({ url, alt: cafe.fotoDescripcion ?? cafe.nombre, credito: "" }))
+    : (contenido?.fotos ?? []);
+  const foto = fotos[0];
 
   return (
     <article className="bg-surface px-5 py-10 md:px-8 md:py-14">
@@ -67,6 +71,15 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
               )}
               {mostrarSelloSca(cafe) && <SelloSCA puntaje={cafe.puntajeSca!} tamano="lg" className="absolute right-4 top-4 z-10" />}
             </div>
+            {fotos.length > 1 && (
+              <ul className="grid grid-cols-3 gap-3" aria-label={`Más fotos de ${cafe.nombre}`}>
+                {fotos.slice(1).map((f) => (
+                  <li key={f.url} className="relative aspect-square overflow-hidden rounded-lg">
+                    <Foto src={f.url} alt={f.alt} credito={f.credito} ancho={400} alto={400} className="absolute inset-0 h-full" />
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className="max-w-xs">
               <MapaMunicipio municipio={municipio} provincia={provincia} />
             </div>

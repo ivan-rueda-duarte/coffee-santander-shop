@@ -6,6 +6,7 @@ import {
   TUESTES,
   type Cafe,
   type Municipio,
+  TAMANOS_GRAMOS,
   type Presentacion,
   type Productor,
   type Provincia,
@@ -17,11 +18,21 @@ import { ErrorDatos, leerCsv, type FilaCsv } from "./lector";
 /** Devuelve el contenido de un archivo de data/ por su nombre ("cafes.csv"). */
 export type LeerArchivo = (nombre: string) => string;
 
+/** Dice si existe un archivo de public/ ("/fotos/cafes/cafe-oiba/1.jpg"). Sin esta función no se comprueban las fotos. */
+export type ExisteArchivoPublico = (ruta: string) => boolean;
+
+/** Carpeta (dentro de public/) donde van las fotos de cada café: public/fotos/cafes/<slug-del-cafe>/ */
+export const CARPETA_FOTOS = "/fotos/cafes";
+const EXTENSIONES_FOTO = /\.(jpe?g|png|webp|avif)$/i;
+
 export interface ResultadoCarga {
   catalogo: Catalogo;
   /** Cosas que no impiden publicar pero conviene saber. */
   advertencias: string[];
 }
+
+export const ARCHIVO_CATALOGO = "catalogo.csv";
+const columnaPrecio = (gramos: number) => `precio_${gramos}g`;
 
 function tabla(leer: LeerArchivo, archivo: string, requeridas: string[], opcionales: string[], errores: Errores): FilaCsv[] {
   let texto: string;
@@ -37,10 +48,11 @@ function tabla(leer: LeerArchivo, archivo: string, requeridas: string[], opciona
 }
 
 /**
- * Lee y valida los seis CSV de data/ (provincias, municipios, productores, cafes, presentaciones, config).
+ * Lee y valida los CSV de data/ (provincias, municipios, productores, catalogo, config).
+ * El catálogo es un solo archivo: una fila por café con sus precios por tamaño y sus fotos.
  * Si algo está mal lanza ErrorDatos con TODOS los problemas, cada uno con archivo, línea y columna.
  */
-export function cargarCatalogo(leer: LeerArchivo): ResultadoCarga {
+export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPublico): ResultadoCarga {
   const errores = new Errores();
   const advertencias: string[] = [];
 
@@ -98,29 +110,23 @@ export function cargarCatalogo(leer: LeerArchivo): ResultadoCarga {
   verificarUnicos("productores.csv", "slug", cProd, errores);
   const productorPorSlug = new Map(productores.map((p) => [p.slug, p]));
 
-  // ---------- presentaciones (se asocian a los cafés más abajo) ----------
-  const presentacionesPorCafe = new Map<string, Presentacion[]>();
-  const clavesVistas = new Map<string, number>();
-  const filasPresentaciones = tabla(leer, "presentaciones.csv", ["cafe_slug", "gramos", "precio_cop"], ["disponible"], errores);
-
   // ---------- cafés ----------
   const cafes: Cafe[] = [];
-  const todosLosSlugsDeCafe = new Set<string>();
   const cCafe: { valor: string; linea: number }[] = [];
-  const lineaDeCafe = new Map<string, number>();
   const filasCafes = tabla(
     leer,
-    "cafes.csv",
+    ARCHIVO_CATALOGO,
     ["slug", "nombre", "municipio_slug", "altura_msnm", "variedades", "proceso", "tueste", "notas_cata", "moliendas"],
-    ["productor_slug", "proceso_detalle", "puntaje_sca", "puntaje_verificado", "puntaje_fuente", "puntaje_fecha", "registro_sanitario", "destacado", "activo", "orden"],
+    [
+      "productor_slug", "proceso_detalle", "puntaje_sca", "puntaje_verificado", "puntaje_fuente", "puntaje_fecha", "registro_sanitario",
+      ...TAMANOS_GRAMOS.map(columnaPrecio), "agotados", "fotos", "foto_descripcion", "destacado", "activo", "orden",
+    ],
     errores,
   );
   filasCafes.forEach((fila, i) => {
-    const f = new LectorFila("cafes.csv", fila, errores);
+    const f = new LectorFila(ARCHIVO_CATALOGO, fila, errores);
     const slug = f.slug("slug");
     cCafe.push({ valor: slug, linea: f.linea });
-    lineaDeCafe.set(slug, f.linea);
-    todosLosSlugsDeCafe.add(slug);
 
     const municipioSlug = f.slug("municipio_slug");
     const municipio = municipioPorSlug.get(municipioSlug);
@@ -132,7 +138,7 @@ export function cargarCatalogo(leer: LeerArchivo): ResultadoCarga {
     const tueste = f.opcion("tueste", TUESTES);
     const notas = f.lista("notas_cata");
     const sinPerfil = notas.filter((n) => perfilesDeNotas([n]).length === 0);
-    if (sinPerfil.length) advertencias.push(`cafes.csv, línea ${f.linea}: las notas ${sinPerfil.map((n) => `"${n}"`).join(", ")} no tienen perfil de taza asignado (src/domain/catalogo/perfiles.ts).`);
+    if (sinPerfil.length) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: las notas ${sinPerfil.map((n) => `"${n}"`).join(", ")} no tienen perfil de taza asignado (src/domain/catalogo/perfiles.ts).`);
 
     const puntaje = f.decimal("puntaje_sca");
     const verificado = f.booleano("puntaje_verificado", false);
@@ -145,6 +151,30 @@ export function cargarCatalogo(leer: LeerArchivo): ResultadoCarga {
     }
 
     const activo = f.booleano("activo", true);
+
+    // Precios por tamaño: una columna por tamaño; vacía = ese tamaño no se vende.
+    const presentaciones: Presentacion[] = [];
+    const agotados = f.lista("agotados");
+    for (const gramos of TAMANOS_GRAMOS) {
+      const precio = f.entero(columnaPrecio(gramos), { min: 1, requerido: false });
+      if (precio !== null) presentaciones.push({ gramos, precioCop: precio, disponible: !agotados.includes(String(gramos)) });
+    }
+    for (const a of agotados) {
+      if (!presentaciones.some((p) => String(p.gramos) === a)) f.error("agotados", `"${a}" no es un tamaño con precio en esta fila. Tamaños con precio: ${presentaciones.map((p) => p.gramos).join(", ") || "ninguno"}.`);
+    }
+    if (activo && presentaciones.length === 0) f.error(columnaPrecio(TAMANOS_GRAMOS[0]), "el café está activo pero no tiene ningún precio; llena al menos una columna precio_….");
+
+    // Fotos: nombres de archivo dentro de public/fotos/cafes/<slug>/
+    const fotos: string[] = [];
+    for (const archivo of f.lista("fotos")) {
+      if (!EXTENSIONES_FOTO.test(archivo) || /[\\/]/.test(archivo)) {
+        f.error("fotos", `"${archivo}" debe ser solo el nombre del archivo, con extensión .jpg, .png, .webp o .avif (sin carpetas).`);
+        continue;
+      }
+      const ruta = `${CARPETA_FOTOS}/${slug}/${archivo}`;
+      if (activo && existeFoto && !existeFoto(ruta)) f.error("fotos", `no se encontró la foto "${archivo}". Debe estar en public${ruta}.`);
+      fotos.push(ruta);
+    }
     const cafe: Cafe = {
       slug,
       nombre: f.texto("nombre", true),
@@ -167,46 +197,18 @@ export function cargarCatalogo(leer: LeerArchivo): ResultadoCarga {
       puntajeFecha: fecha,
       registroSanitario: f.textoOpcional("registro_sanitario"),
       moliendas: f.opciones("moliendas", MOLIENDAS, true),
-      presentaciones: [],
+      presentaciones: presentaciones.sort((a, b) => a.gramos - b.gramos),
+      fotos,
+      fotoDescripcion: f.textoOpcional("foto_descripcion"),
       destacado: f.booleano("destacado", false),
       orden: f.entero("orden", { min: 0, requerido: false }) ?? i + 1,
     };
     if (activo) cafes.push(cafe);
 
-    if (activo && municipio && municipio.porVerificar) advertencias.push(`cafes.csv, línea ${f.linea}: "${cafe.nombre}" está en ${municipio.nombre}, cuya provincia está por verificar; no aparecerá en ninguna provincia.`);
-    if (activo && puntaje !== null && !verificado) advertencias.push(`cafes.csv, línea ${f.linea}: "${cafe.nombre}" tiene puntaje SCA sin verificar; no se mostrará el sello ni se usará en filtros.`);
+    if (activo && municipio && municipio.porVerificar) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" está en ${municipio.nombre}, cuya provincia está por verificar; no aparecerá en ninguna provincia.`);
+    if (activo && puntaje !== null && !verificado) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" tiene puntaje SCA sin verificar; no se mostrará el sello ni se usará en filtros.`);
   });
-  verificarUnicos("cafes.csv", "slug", cCafe, errores);
-
-  // ---------- presentaciones ----------
-  filasPresentaciones.forEach((fila) => {
-    const f = new LectorFila("presentaciones.csv", fila, errores);
-    const cafeSlug = f.slug("cafe_slug");
-    const gramos = f.entero("gramos", { min: 1, max: 5000 });
-    const precio = f.entero("precio_cop", { min: 1 });
-    const disponible = f.booleano("disponible", true);
-    if (cafeSlug && !todosLosSlugsDeCafe.has(cafeSlug)) {
-      f.error("cafe_slug", `"${cafeSlug}" no existe en cafes.csv.`);
-      return;
-    }
-    if (gramos === null || precio === null) return;
-    const clave = `${cafeSlug}|${gramos}`;
-    const previa = clavesVistas.get(clave);
-    if (previa !== undefined) {
-      f.error("gramos", `${cafeSlug} ya tiene una presentación de ${gramos} g en la línea ${previa}.`);
-      return;
-    }
-    clavesVistas.set(clave, f.linea);
-    const lista = presentacionesPorCafe.get(cafeSlug) ?? [];
-    lista.push({ gramos, precioCop: precio, disponible });
-    presentacionesPorCafe.set(cafeSlug, lista);
-  });
-  for (const cafe of cafes) {
-    cafe.presentaciones = (presentacionesPorCafe.get(cafe.slug) ?? []).sort((a, b) => a.gramos - b.gramos);
-    if (cafe.presentaciones.length === 0) {
-      errores.agregar(`cafes.csv, línea ${lineaDeCafe.get(cafe.slug)}: "${cafe.nombre}" está activo pero no tiene presentaciones en presentaciones.csv.`);
-    }
-  }
+  verificarUnicos(ARCHIVO_CATALOGO, "slug", cCafe, errores);
 
   // ---------- config ----------
   const tienda = leerConfig(leer, errores);

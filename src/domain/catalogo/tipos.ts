@@ -41,6 +41,9 @@ export interface Productor {
   municipioSlug: string | null;
 }
 
+/** Tamaños de bolsa que el catálogo admite (una columna precio_<gramos>g por tamaño). */
+export const TAMANOS_GRAMOS = [250, 500, 1000] as const;
+
 export interface Presentacion {
   gramos: number;
   precioCop: number;
@@ -74,6 +77,10 @@ export interface Cafe {
   registroSanitario: string | null;
   moliendas: Molienda[];
   presentaciones: Presentacion[];
+  /** Rutas de las fotos del café en public/ (la primera es la principal). Vacío = ilustración de la marca. */
+  fotos: string[];
+  /** Descripción de las fotos para lectores de pantalla; si falta se usa el nombre del café. */
+  fotoDescripcion: string | null;
   destacado: boolean;
   orden: number;
 }

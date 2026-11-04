@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { CatalogoRepositorio } from "@/application/puertos";
 import { cargarCatalogo, type LeerArchivo, type ResultadoCarga } from "./cargar-catalogo";
@@ -11,7 +11,8 @@ export function leerDesdeDisco(carpeta: string = join(process.cwd(), CARPETA_DAT
 }
 
 export function cargarCatalogoDesdeDisco(carpeta?: string): ResultadoCarga {
-  return cargarCatalogo(leerDesdeDisco(carpeta));
+  const publico = join(process.cwd(), "public");
+  return cargarCatalogo(leerDesdeDisco(carpeta), (ruta) => existsSync(join(publico, ruta)));
 }
 
 /**

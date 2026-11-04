@@ -35,6 +35,8 @@ export function crearCafe(c: Partial<Cafe> & Pick<Cafe, "slug" | "nombre">): Caf
       { gramos: 250, precioCop: 25000, disponible: true },
       { gramos: 500, precioCop: 50000, disponible: true },
     ],
+    fotos: [],
+    fotoDescripcion: null,
     destacado: false,
     orden: 0,
     ...c,

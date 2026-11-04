@@ -4,8 +4,15 @@ import { obtenerFichaCafe } from "@/application/casos-uso/obtener-ficha-cafe";
 import { PaginaFichaCafe } from "@/ui/componentes/ficha/ficha-cafe";
 import { canonica, cargarCatalogo, repositorioCatalogo, repositorioContenido, URL_SITIO } from "../../_datos/catalogo";
 
-// GitHub Pages es estático: solo existen las páginas de los cafés que están en data/cafes.csv.
+// GitHub Pages es estático: solo existen las páginas de los cafés que están en data/catalogo.csv.
 export const dynamicParams = false;
+
+/** URL absoluta de la foto principal: la del CSV (public/) o, si no hay, la de Sanity. */
+function imagenPrincipal(ficha: NonNullable<Awaited<ReturnType<typeof obtenerFichaCafe>>>): string | undefined {
+  const propia = ficha.cafe.fotos[0];
+  if (propia) return URL_SITIO ? `${URL_SITIO}${propia}` : undefined;
+  return ficha.contenido?.fotos[0]?.url;
+}
 
 export async function generateStaticParams() {
   return (await cargarCatalogo()).cafes.map((c) => ({ slug: c.slug }));
@@ -21,7 +28,7 @@ export async function generateMetadata({ params }: PageProps<"/cafes/[slug]">): 
     title: cafe.nombre,
     description: descripcion,
     alternates: { canonical: canonica(`/cafes/${cafe.slug}/`) },
-    openGraph: { title: cafe.nombre, description: descripcion, type: "website", images: ficha.contenido?.fotos[0] ? [ficha.contenido.fotos[0].url] : undefined },
+    openGraph: { title: cafe.nombre, description: descripcion, type: "website", images: imagenPrincipal(ficha) ? [imagenPrincipal(ficha)!] : undefined },
   };
 }
 
@@ -39,7 +46,7 @@ export default async function PaginaCafe({ params }: PageProps<"/cafes/[slug]">)
     description: cafe.notasCata.length ? `Café de ${cafe.municipio}. Notas de ${cafe.notasCata.join(", ")}.` : `Café de ${cafe.municipio}.`,
     brand: { "@type": "Brand", name: "De Santander" },
     url: URL_SITIO ? `${URL_SITIO}/cafes/${cafe.slug}/` : undefined,
-    image: ficha.contenido?.fotos[0]?.url,
+    image: imagenPrincipal(ficha),
     offers: cafe.presentaciones.map((p) => ({
       "@type": "Offer",
       name: `${p.gramos} g`,

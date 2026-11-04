@@ -4,7 +4,7 @@ import { formatearCOP, formatearMiles } from "@/domain/comun/dinero";
 import { nombresDeVariedades } from "@/domain/marca/variedad";
 import { BotonAgregar } from "../carrito/boton-agregar";
 import { BarraAcento, Pastilla, SelloSCA } from "../marca/etiquetas";
-import { BolsaIlustrada } from "../marca/superficies";
+import { BolsaIlustrada, Foto } from "../marca/superficies";
 
 /** Tarjeta de café (page_style/components/ProductCard): ilustración 3:4, pastilla de provincia, sello SCA verificado, datos en silencio y un solo botón. */
 export function TarjetaCafe({ cafe }: { cafe: Cafe }) {
@@ -18,7 +18,11 @@ export function TarjetaCafe({ cafe }: { cafe: Cafe }) {
   return (
     <article className="ds-card relative h-full">
       <div className="ds-card__media">
-        <BolsaIlustrada tueste={grupoDeTueste(cafe.tueste)} nombre={cafe.nombre} />
+        {cafe.fotos[0] ? (
+          <Foto src={cafe.fotos[0]} alt={cafe.fotoDescripcion ?? cafe.nombre} ancho={600} alto={800} redondeada={false} className="absolute inset-0 h-full" />
+        ) : (
+          <BolsaIlustrada tueste={grupoDeTueste(cafe.tueste)} nombre={cafe.nombre} />
+        )}
         {cafe.provincia && <Pastilla variante="region">{cafe.provincia}</Pastilla>}
         {mostrarSelloSca(cafe) && <SelloSCA puntaje={cafe.puntajeSca!} tamano="sm" />}
       </div>

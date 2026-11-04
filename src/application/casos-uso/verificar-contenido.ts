@@ -12,7 +12,7 @@ export function verificarContenido(catalogo: Catalogo, contenido: SlugsConConten
     provinciaContenido: new Set(catalogo.provincias.map((p) => p.slug)),
     productorContenido: new Set(catalogo.productores.map((p) => p.slug)),
   };
-  const archivos = { cafeContenido: "cafes.csv", provinciaContenido: "provincias.csv", productorContenido: "productores.csv" };
+  const archivos = { cafeContenido: "catalogo.csv", provinciaContenido: "provincias.csv", productorContenido: "productores.csv" };
   const errores: string[] = [];
   const revisar = (tipo: keyof typeof existentes, slugs: string[]) => {
     for (const slug of slugs) {
