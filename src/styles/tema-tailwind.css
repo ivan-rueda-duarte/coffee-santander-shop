@@ -1,0 +1,52 @@
+@theme inline {
+  /* Paleta de marca: mismos nombres que page_style/tokens.json (bg-monte-900, text-chicamocha-600…) */
+  --color-monte-900: var(--monte-900);
+  --color-monte-800: var(--monte-800);
+  --color-hoja-600: var(--hoja-600);
+  --color-hoja-400: var(--hoja-400);
+  --color-menta-50: var(--menta-50);
+  --color-pergamino-50: var(--pergamino-50);
+  --color-pergamino-0: var(--pergamino-0);
+  --color-tostado-900: var(--tostado-900);
+  --color-tostado-600: var(--tostado-600);
+  --color-arenisca-200: var(--arenisca-200);
+  --color-chicamocha-600: var(--chicamocha-600);
+  --color-chicamocha-300: var(--chicamocha-300);
+  --color-arcilla-50: var(--arcilla-50);
+  --color-oro-500: var(--oro-500);
+  --color-oro-900: var(--oro-900);
+  --color-crema-50: var(--crema-50);
+  --color-grana-600: var(--grana-600);
+  --color-grana-400: var(--grana-400);
+  --color-carbon-900: var(--carbon-900);
+  --color-niebla-100: var(--niebla-100);
+  --color-piedra-500: var(--piedra-500);
+  /* Semánticos: cambian solos con data-theme */
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-title: var(--ink-title);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-highlight: var(--highlight);
+  --color-on-highlight: var(--on-highlight);
+  --color-eyebrow: var(--eyebrow);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-focus: var(--focus);
+  --color-on-photo: var(--on-photo);
+  --color-verde-bosque: var(--monte-900);
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-montserrat), "Helvetica Neue", Arial, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+}

@@ -1,19 +1,72 @@
-# Prompt de sistema — De Santander v4.1
+# De Santander v2: tienda web
 
-Copie el bloque siguiente como instrucción de sistema cuando pida a un asistente o diseñador crear piezas para la marca.
+Tienda de café de especialidad de Santander, Colombia. La v1 (HTML/CSS/JS sin framework) vive en `legacy/` y es la referencia de paridad: `docs/INVENTARIO-V1.md`. La v2 es Next.js con exportación estática.
+
+@docs/marca-v4.1.md
+@PRODUCT.md
+
+## Stack y comandos
+
+Next.js 16 (App Router, `output: 'export'`), TypeScript estricto, Tailwind v4 (config en CSS), Vitest, Playwright. Contenido editorial en Sanity. Datos de comercio en archivos CSV editados a mano.
+
+- `npm run dev`: desarrollo local.
+- `npm run build`: genera el sitio estático en `out/`.
+- `npm start`: sirve `out/` (equivale a lo que verá GitHub Pages).
+- `npm run lint`, `npm run typecheck`, `npm test`, `npm run e2e`.
+- `npm run datos`: valida los CSV (columnas, tipos, referencias entre archivos). Llega en la Fase 3.
+- `npm run mapa`: regenera la geometría del mapa (`tools/build_mapa.py`).
+
+Lee `node_modules/next/dist/docs/` antes de usar una API de Next que no conozcas: esta versión cambió respecto a lo que suele recordarse (ver `AGENTS.md`).
+
+## Restricción de hosting: GitHub Pages es solo estático
+
+- No hay API Routes, Server Actions, middleware, ISR ni `next/image` optimizado. No actives `cacheComponents` (exige runtime Node).
+- `next.config.ts`: `output: 'export'`, `trailingSlash`, `images.unoptimized`. El `basePath` solo se aplica con `GITHUB_PAGES=true`. Para rutas de `public/` usa el helper `asset()`.
+- Los Server Components corren en el build. Rutas dinámicas: `generateStaticParams` y `dynamicParams = false`.
+- Todo `useSearchParams` va dentro de `<Suspense>`.
+- `sitemap.ts` y `robots.ts` llevan `export const dynamic = 'force-static'`.
+- No hay base de datos ni función de servidor: el pedido sale directo por WhatsApp (enlace `wa.me`). No guardes pedidos ni datos personales en ningún servicio.
+
+## Dónde vive cada dato
+
+- **CSV en `data/` (comercio, fuente de verdad):** provincias, municipios, cafés, presentaciones y precios, disponibilidad, configuración de la tienda (WhatsApp, ciudad de despacho, formas de pago, máximo por línea). Se editan a mano; el build los valida y falla con un mensaje claro si algo no cuadra.
+- **Sanity (editorial):** historia de cada café y provincia, fotos, textos de inicio, "Cómo pedir", "Historia" y páginas legales. Se enlaza con los CSV por `slug`.
+- Si un campo existe en ambos lados, gana el CSV y el build falla si el `slug` no coincide.
+- Cambiar un CSV exige reconstruir y desplegar el sitio.
+
+## Arquitectura (capas)
 
 ```
-Eres el director de arte de De Santander S.A.S., marca de café de especialidad y experiencias de preparación de las regiones cafeteras de Santander, Colombia. Produce todo según este sistema (v4.1).
-
-PERSONALIDAD. Arquetipo: explorador con raíces. Tono: claro y concreto (nombra provincia, municipio, altitud, variedad, proceso), cercano (tutea en redes, usted en lo comercial), didáctico, orgulloso sin folclor, honesto (nada que no sea demostrable). Nombre siempre "De Santander". Evita: gourmet, premium, exótico, mágico, "el mejor". Nunca uses "Café de Santander" como nombre de producto o titular comercial (denominación de origen de la FNC); di "café santandereano" o nombra la provincia.
-
-COLOR (HEX). Fondo claro pergamino-50 #f7f1e6 (fichas pergamino-0 #fffcf6); fondo oscuro monte-900 #0a3f25 (tarjetas monte-800 #11542f). Tinta tostado-900 #24170f; secundario piedra-500 #6b6158 (claro) / #cfe0d5 (oscuro). Identidad: monte-900 para titulares sobre pergamino y botón primario; hoja-600 #0b6b36 y hoja-400 #1a8c4e para franja y hojas (nunca texto sobre claro). Acento cálido: chicamocha-600 #a24f27 para antetítulos sobre pergamino, chips de origen y botón de campaña; chicamocha-300 #e3a27a sobre monte; arcilla-50 #f9e8dc, arenisca-200 #e8d6b4, tostado-600 #5a3a26 para tarjetas y material cálido. Acentos de bandera: oro-500 #e9b320 (antetítulos y cifras sobre monte, pastillas con texto carbon-900 #1a1612, botón oro; nunca texto sobre claro), grana-600 #b8162c (franja, cerezas, pastilla destacada; nunca texto), grana-400 #d9303f (solo brillo). Tintes de tarjeta: menta-50 #edf3ea, arcilla-50, crema-50 #fbf1d2, niebla-100 #e6e8e2, arenisca-200. Proporción 60 % fondo / 30 % tintes / 10 % acentos. Verde bosque (= monte-900) domina identidad y todo CTA principal; terracota se reserva para origen y notas de tueste (antetítulo de origen, etiqueta de tueste, barra de acento), nunca como relleno de botón de acción. Cada provincia conserva su familia (verde, arcilla, oro, neutro, tierra). Contraste ≥ 4,5:1. Tema oscuro: botón primario oro con texto carbón, antetítulo oro, cita en chicamocha-300.
-
-TIPOGRAFÍA. Titulares en Fraunces 700 (web 64/48/40/32 px; post 1080: 110–130 px) con una palabra de remate en itálica 400 ("Del cañón *a tu taza*"); citas en Fraunces itálica 26 px. Todo lo demás en Montserrat: cuerpo 400–500 (16–18 px web; 34–36 px post), antetítulo 800 MAYÚSCULAS tracking 0,2 em (12 px web; 27 px post), botón 700, notas 12 px. Roboto solo como alternativa de sistema en paneles. Jerarquía: antetítulo → titular → bajada → tarjetas → nota de fuentes. ¿¡ obligatorios; miles con punto; ≈ para aproximados.
-
-ESTILO VISUAL. Fotografía real de origen con luz natural (niebla de mañana en cafetal, tarde en el cañón), horizonte en un tercio, un elemento en primer plano, sin filtros; texto sobre foto solo con velo rgba(20,24,14,.6) y texto pergamino. Texturas de yute, madera cruda, piedra. Ilustración plana: hoja de cafeto en hoja-400 cortada por el borde; cerezas en grupos de tres grana-600 + una grana-400; estratos del cañón (cinco bandas desiguales terracota/arenisca/hoja/tostado/oro) como motivo de apoyo en fondos oscuros. Franja de marca a sangre en el borde inferior: bloque grana-600 al 20 % + cinco líneas hoja-600/oro-500/carbón/oro-500/hoja-600 (24 px en post). Esquinas de 20 px web / 28 px post; botones y pastillas en píldora; sin sombras en redes; sin emojis; sin bandera ni escudo completos. PROFUNDIDAD: curvas de nivel del cañón en muy bajo contraste (trazo tostado al 7,5 % sobre pergamino; pergamino al 8,5 % sobre monte; sombra de risco al 11 % sobre arenisca), una sola trama por pieza, en portadas, tarjetas de región, banners y bloques de cita, nunca detrás de texto corrido; grano de papel artesanal al 7 % (multiplicar) sobre claro y 5 % (pantalla) sobre oscuro en cualquier fondo. FOTOGRAFÍA: velo cálido terracota al 10 % en multiplicar sobre toda foto; producto siempre en contexto (yute, madera cruda, piedra, manos de caficultores), nunca mockups sobre fondo blanco o gris.
-
-COMPONENTES. Botón píldora: el CTA principal es siempre verde bosque (oro con texto carbón sobre fondos oscuros); "Conoce el origen" va como enlace con borde terracota, nunca relleno; oro para "Desliza →" solo sobre oscuro; sobre foto, pergamino. Etiquetas en tres niveles: (1) dato técnico —municipio, altitud, proceso, variedad, tueste— en Montserrat 500 de 12 px gris, sin relleno, separado por punto medio; (2) clasificación en píldora rellena con color de significado (verde bosque región, oro cifra, tostado segmento, terracota con borde para notas de tueste, grana solo edición limitada); (3) puntaje SCA como SELLO circular de 64 px (48 en tarjetas, 88 en producto): fondo pergamino, anillo oro de 3 px, microborde tostado de 0,75 px y anillo interior fino, número en Fraunces 700 y "PTS SCA" en Montserrat 800; solo con puntaje real ≥ 80. Tarjeta de región: fondo tintado, título Fraunces 700 en el oscuro de su familia, pastilla a la derecha, municipios en gris, ficha pergamino con dato grande ("Más cultivada · Castillo®"), nota "También:". Cifra: filete de color + número 800 + línea de contexto. Tarjeta de producto: foto 3:4 con velo cálido, pastilla de región verde, sello SCA arriba a la derecha, antetítulo de origen en terracota, nombre en Fraunces, notas de cata en itálica, línea de tueste en terracota con barra corta, datos técnicos en gris, precio COP, un botón verde bosque. Post 4:5 (1080×1350, margen 72 px) en cinco familias: portada monte, tarjetas de región sobre pergamino, origen fotográfico, producto sobre arenisca, cita de caficultor sobre tostado-900 con estratos; cuadrícula alterna monte → pergamino → foto → tierra → tostado. Carrusel: portada monte → láminas de 4 tarjetas → ficha de origen → cierre monte con botón oro; índice "01/04"; fuentes en cada lámina con datos. Historias 9:16 con zonas seguras de 250 px; ≤ 15 palabras.
-
-REGLAS. Una idea por pieza; ≤ 25 palabras fuera de tarjetas; toda cifra con fuente y fecha; Castillo® con ® la primera vez; afirmaciones comerciales solo si son demostrables; usuario de Instagram real, nunca un marcador.
+src/domain/          TS puro: catálogo (filtros, url, perfiles), pedido (carrito, totales, mensaje WhatsApp, envío), común (dinero COP, slug)
+src/application/     puertos (CatalogoRepositorio, ContenidoRepositorio, CarritoAlmacen) y casos de uso
+src/infrastructure/  lector de CSV, cliente Sanity, carrito en localStorage
+src/ui/              componentes (marca, catalogo, mapa, ficha, carrito, checkout, layout) y hooks
+src/app/             rutas
+data/                CSV de comercio
+tools/               scripts (mapa, validación de datos)
+studio/              Sanity Studio
 ```
+
+- `domain` no importa nada de fuera de `domain`; `application` solo importa `domain`; `ui` no importa `infrastructure`. ESLint lo hace cumplir (`no-restricted-imports`).
+- Server Components por defecto. `'use client'` solo en explorador de catálogo, mapa, selector de presentación/molienda, carrito, formularios y diálogos.
+- La URL es la única fuente de verdad de los filtros. El mapa no tiene estado propio.
+- TypeScript `strict`, sin `any`.
+
+## Marca y diseño
+
+- La marca v4.1 es norma (ver `docs/marca-v4.1.md`). Tokens en `src/styles/marca.css`; nombres de Tailwind iguales a los de la marca (`bg-monte-900`, `text-chicamocha-600`).
+- CTA principal en verde bosque. Terracota solo para origen y tueste. Oro y grana nunca como texto sobre claro.
+- Sello SCA solo con puntaje real verificado y ≥ 80.
+- Contraste ≥ 4,5:1, verificado con axe. Respeta `prefers-reduced-motion`.
+- Para trabajo de interfaz usa la skill `impeccable`; la skill `last30days` no aplica.
+
+## No inventar datos
+
+Nunca inventes NIT, razón social, fincas, puntajes, registros INVIMA, textos legales, fotos ni testimonios. Si falta un dato, déjalo como `TODO(dato):` en `docs/PENDIENTES.md` y no lo muestres en la interfaz. Los textos de la v1 sin respaldo (ver `docs/INVENTARIO-V1.md`, punto 24) no se usan como respaldo.
+
+## Reglas de trabajo
+
+- Rama `v2-nextjs`. Commits pequeños por fase, en español (`feat(catalogo): …`).
+- Nada que toque servicios remotos (push, despliegue, secretos, Sanity) sin pedir confirmación.
+- Si algo contradice el código o los documentos, detente y pregunta.
+- Al cerrar cada fase: resumen de 5 líneas, qué quedó pendiente y la siguiente fase. Espera "sigue".
