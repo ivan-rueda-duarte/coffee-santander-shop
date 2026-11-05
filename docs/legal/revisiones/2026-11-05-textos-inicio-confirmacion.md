@@ -1,6 +1,16 @@
 # Revisión LEG-013 a LEG-020 — Textos de inicio, Historia y confirmación (2026-11-05)
 
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.1 — 2026-11-05.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.2 — 2026-11-05.
+
+> **Estado en la versión 0.2 (2026-11-05)**, con las decisiones del dueño. El detalle está en `2026-11-05-marca-propia-iva.md` (LEG-021 a LEG-030).
+> - LEG-013: **cerrado**. El descriptor es «café de origen» (LEG-026).
+> - LEG-014: **cerrado**. La bajada dice «de provincias de Santander» (LEG-027).
+> - LEG-015: **cerrado** para la frase original, que se retiró. La nueva frase («desde el productor hasta tu casa») se rechaza en LEG-021.
+> - LEG-016: **sustituido**. La marca no tuesta y «lo tostamos por lotes» se retiró. El T2 final de abajo queda **sin efecto**, porque afirmaba el tueste. Rige el T2 de LEG-021. La identificación del fabricante pasa a LEG-022 y LEG-024.
+> - LEG-017: abierto (soporte del proveedor).
+> - LEG-018 y LEG-019: T5 y T6 implementados con el texto final.
+> - LEG-020: T4 y T7 aprobados.
+> - El dato faltante «confirmación de que la marca tuesta» queda resuelto: no tuesta.
 
 Anexo a `2026-11-05-envios.md` (LEG-001 a LEG-012). Alcance: siete textos propuestos (T1 a T7) para inicio, Historia, pantalla de confirmación y botón. Fuentes de respaldo: `PRODUCT.md` (Product Purpose, Brand Commitments, Evidence on Hand y Decisiones), `docs/legal/envios-devoluciones-retracto.md` (sección D), `microcopy-legal.md` 1.2 y LEG-001 puntos 3, 4, 5 y 8.
 
@@ -66,7 +76,7 @@ Ley 1480, numeración exacta del art. 29 y literales del art. 50; Ley 527, art. 
 **T1.** Café santandereano de origen, de marca propia. Elige tu provincia y pide por WhatsApp.
 (Si el cliente documenta la calidad de especialidad: «Café de especialidad de marca propia, de provincias de Santander. Elige tu provincia y pide por WhatsApp.»)
 
-**T2.** De Santander es una marca propia de café de origen. Compramos el café a fincas de familias santandereanas con tradición cafetera, lo tostamos por lotes según el perfil de cada café y lo despachamos desde Bucaramanga a todo Colombia.
+**T2.** ~~De Santander es una marca propia de café de origen. Compramos el café a fincas de familias santandereanas con tradición cafetera, lo tostamos por lotes según el perfil de cada café y lo despachamos desde Bucaramanga a todo Colombia.~~ Sin efecto en la versión 0.2: la marca no tuesta. Ver el T2 de LEG-021.
 
 **T3.** En cada café verás la provincia, el municipio, la altitud, la variedad y el proceso. (Sin cambio; ver condición en LEG-017.)
 
@@ -80,4 +90,4 @@ Ley 1480, numeración exacta del art. 29 y literales del art. 50; Ley 527, art. 
 
 ## Dictamen
 
-**Conforme con observaciones** si se aplican los textos finales. Sin el cambio de LEG-015, la propuesta de T2 sería **No conforme** (frase no demostrable). Siguen vigentes los bloqueos de LEG-001 (IVA) para el lanzamiento.
+**Conforme con observaciones** si se aplican los textos finales. Sin el cambio de LEG-015, la propuesta de T2 sería **No conforme** (frase no demostrable). Siguen vigentes los bloqueos de LEG-001 (IVA) para el lanzamiento. (Versión 0.2: el IVA pasa a condición previa, pendiente del contador. El lanzamiento sigue No conforme por LEG-024 y por la falta de identificación del vendedor.)

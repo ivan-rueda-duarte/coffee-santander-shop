@@ -24,7 +24,7 @@ export function Portada({ catalogo, contenido }: { catalogo: VistaCatalogo; cont
   const bajada =
     contenido?.bajada ??
     (n > 0
-      ? "Café de especialidad de marca propia, de provincias de Santander. Elige tu provincia y pide por WhatsApp."
+      ? "Café de origen de marca propia, de provincias de Santander. Elige tu provincia y pide por WhatsApp."
       : "Estamos preparando la próxima cosecha. Escríbenos por WhatsApp y te avisamos cuando haya café.");
 
   return (
@@ -32,7 +32,7 @@ export function Portada({ catalogo, contenido }: { catalogo: VistaCatalogo; cont
       <Textura trama="oscuro" como="section" aria-labelledby="titulo-portada" className="relative overflow-hidden bg-surface text-ink">
         <Hoja className="hoja-portada" />
         <div className="relative mx-auto max-w-6xl px-5 pb-24 pt-16 md:px-8 md:pb-32 md:pt-24">
-          <Antetitulo>Café de especialidad · Santander</Antetitulo>
+          <Antetitulo>Café de origen · Santander</Antetitulo>
           <Titular
             nivel="h1"
             antes={contenido?.titular ?? "El café que crece entre cañones y"}
@@ -98,13 +98,12 @@ export function ComoPedir({ catalogo, contenido }: { catalogo: VistaCatalogo; co
 // Solo afirmaciones confirmadas por la marca (PRODUCT.md, «Brand Commitments»).
 const HISTORIA_RESPALDO = {
   parrafos: [
-    "De Santander es una marca propia de café de especialidad. Compramos a fincas de familias santandereanas con tradición cafetera, lo tostamos por lotes y lo enviamos a todo Colombia.",
+    "De Santander es una marca propia de café de origen. Trabajamos con fincas de familias productoras santandereanas con tradición cafetera y llevamos su café desde el productor hasta tu casa.",
     "En cada café verás la provincia, el municipio, la altitud, la variedad y el proceso.",
   ],
   proceso: [
     { titulo: "Cosecha", texto: "Recolección manual en el punto de maduración." },
     { titulo: "Secado", texto: "Secado al sol." },
-    { titulo: "Tueste", texto: "Tueste por lotes según el perfil de cada café." },
   ],
 };
 

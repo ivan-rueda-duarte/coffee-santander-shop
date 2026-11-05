@@ -16,7 +16,7 @@ El trabajo común a todos: elegir un café sabiendo de dónde viene y cómo sabe
 
 ## Product Purpose
 
-De Santander es la tienda en línea de una marca propia de café de especialidad de Santander, Colombia. La marca compra lotes a fincas de familias productoras santandereanas, los tuesta y los vende con su nombre. La tienda muestra el origen de cada café (provincia, municipio, altura, variedad, proceso, tueste, perfil de taza y puntaje SCA) y convierte el carrito en un pedido por WhatsApp.
+De Santander es la tienda en línea de una marca propia de café de origen de Santander, Colombia. La marca comercializa café de fincas de familias productoras santandereanas con su nombre; no lo tuesta (indicado por el dueño el 2026-11-05). La tienda muestra el origen de cada café (provincia, municipio, altura, variedad, proceso, tueste, perfil de taza y puntaje SCA) y convierte el carrito en un pedido por WhatsApp.
 
 Éxito: que el visitante elija un café, arme su carrito y envíe el pedido por WhatsApp con toda la información que la tienda necesita para cerrar la venta (cafés, tamaño, molienda, ciudad y forma de pago).
 
@@ -48,7 +48,7 @@ Cada café se presenta por su provincia de Santander, y la provincia explica el 
 ## Brand Commitments
 
 - Nombre: **De Santander**. Descriptor en uso: "Café de origen".
-- Afirmaciones confirmadas por la marca: trabaja con fincas de familias productoras santandereanas con tradición cafetera; recolección manual en el punto de maduración; secado al sol; tueste por lotes según el perfil de cada café.
+- Afirmaciones confirmadas por la marca: trabaja con fincas de familias productoras santandereanas con tradición cafetera; recolección manual en el punto de maduración; secado al sol. «Tueste por lotes» queda fuera: la marca no tuesta (2026-11-05).
 
 ## Evidence on Hand
 
@@ -72,5 +72,5 @@ Cada café se presenta por su provincia de Santander, y la provincia explica el 
 - **2026-11-04: la ficha de café es una página propia** (`/cafes/<slug>/`), no un modal. El botón «Agregar» de la tarjeta sigue añadiendo un café sin salir del catálogo (primer tamaño disponible, grano entero).
 - **2026-11-04: filtros que se ocultan solos.** Un filtro con menos de dos valores distintos (hoy Precio, Proceso, Productor y SCA) no se muestra.
 - **2026-11-04: datos de envío completos antes de WhatsApp.** Nombre, celular, departamento, municipio, dirección y forma de pago son obligatorios; cédula, correo, barrio e indicaciones son opcionales. Se aceptan los términos y la autorización de datos (casillas sin marcar) antes de finalizar.
-- **2026-11-04: textos de la v1 sin respaldo no se reutilizan.** La historia de la marca usa solo las afirmaciones confirmadas (fincas de familias santandereanas, recolección manual, secado al sol, tueste por lotes). Las historias de cada café vienen de Sanity cuando existan.
+- **2026-11-04: textos de la v1 sin respaldo no se reutilizan.** La historia de la marca usa solo las afirmaciones confirmadas (fincas de familias santandereanas, recolección manual, secado al sol). Las historias de cada café vienen de Sanity cuando existan.
 - **2026-11-05: el envío se calcula por zonas.** El sitio calcula el envío con la tabla zona × escalón de peso (hasta 1, 2 y 5 kg; peso = bolsas + 80 g de empaque, y el límite de cada escalón también suma esos 80 g: 1.080 / 2.080 / 5.080 g) y lo suma al total del pedido y al mensaje de WhatsApp, sin API de transportadora ni base de datos. Es «por cotizar» solo en la zona 5 (trayecto especial) y en pedidos de más de 5 kg: el total se rotula «sin envío» y el valor se confirma por WhatsApp antes de pagar. Los destinos que no aparecen en `data/zonas_envio.csv` son zona 4. El cajón del carrito no conoce el destino y dice «se calcula al elegir tu ciudad». Los plazos se publican solo como orientación, sin fechas prometidas. El «pedido mínimo sugerido» es informativo. La página `/envios/` muestra las tarifas generadas desde el CSV.

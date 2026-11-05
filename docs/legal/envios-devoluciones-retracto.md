@@ -1,4 +1,4 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.1 — 2026-11-05.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.2 — 2026-11-05.
 
 # Envíos, devoluciones, retracto y garantía
 
@@ -28,7 +28,7 @@ Despachamos desde Bucaramanga a todo Colombia. Para calcular el envío agrupamos
 - El valor del envío depende de la **zona** y del **peso del pedido** (las bolsas más el empaque). Lo ves en tu carrito y en el resumen antes de enviar el pedido, y va sumado en el mensaje de WhatsApp. Las tarifas vigentes están en la página de envíos, con su fecha de vigencia.
 - **Por cotizar.** No publicamos tarifa para la zona 5 ni para pedidos de más de 5 kg. En esos casos el carrito te lo dice: «Envío por cotizar · te confirmamos el valor por WhatsApp antes de que pagues». El total que ves entonces es **sin envío**. Te informamos el valor por el chat y **tú decides si lo aceptas antes de pagar**. No cobramos primero para ajustar después.
 - El valor que ves en el carrito para las zonas 1 a 4 es el que pagas; no lo ajustamos después de que lo confirmas. <!-- Regla de ENVIOS.md §4. Confirmar con el cliente que la tienda asume cualquier diferencia entre la tarifa publicada y la guía real. [DECISIÓN 4] -->
-- Los precios y el envío están en pesos colombianos. [TODO(dato): IVA. Indicar si el precio de los cafés incluye IVA y cómo se factura el flete; ver `docs/PENDIENTES.md`.]
+- Los precios y el envío están en pesos colombianos. <!-- IVA (versión 0.2): según el dueño, el café no tiene IVA. Falta la confirmación del contador sobre el café en grano y el molido, el flete y el mensajero, y la facturación (LEG-029). No escribir «IVA incluido» ni «sin IVA». Si el contador confirma, se puede publicar como precio final; si concluye otra cosa, el precio y el envío publicados deben incluir el impuesto. [TODO(dato): confirmación del contador] -->
 
 ### 4. Plazos de entrega
 Los plazos se cuentan desde que confirmamos tu pedido y el pago por WhatsApp, en días hábiles. Son orientativos y varían según la transportadora:
@@ -64,6 +64,7 @@ Si el café llega con un defecto de calidad o idoneidad, no corresponde a lo que
 - Podemos reponer el producto, devolverte el dinero o, si procede, repararlo. Escoges tú entre reponer o devolver el dinero cuando el defecto sea de calidad, según la Ley 1480. VERIFICAR el art. 11 y la regla de los perecederos.
 - Los gastos de transporte que genere la garantía los asumimos nosotros. VERIFICAR (art. 11, Ley 1480).
 - La garantía no cubre el deterioro por mal almacenamiento o por uso indebido del producto. <!-- Art. 16 Ley 1480 (exoneración del productor/proveedor): VERIFICAR. -->
+- Atendemos la garantía nosotros, aunque el café lo tueste y empaque otra empresa. <!-- Versión 0.2. De Santander comercializa y no tuesta. Por el art. 10 de la Ley 1480, productor (tostador) y proveedor responden solidariamente por la garantía. No se puede remitir al consumidor al tostador. VERIFICAR con SUIN. -->
 
 Responderemos tu reclamo en [TODO(dato): plazo de respuesta de PQR]. Además del chat, puedes presentar tu queja ante la Superintendencia de Industria y Comercio (www.sic.gov.co).
 
@@ -127,7 +128,7 @@ Por WhatsApp +57 300 112 9874 y [TODO(dato): correo]. Radicamos tu reclamo con n
 5. **Reversión del pago (art. 51)** para Bre-B: publicar o no el numeral 9 según concepto del abogado.
 
 ### C. Datos faltantes
-Razón social, NIT, domicilio, correo de contacto, IVA, plazo máximo de entrega, plazo de respuesta de PQR, forma de generar el radicado, lista final de ciudades de zona 3, confirmación de plazos con el agregador y cobertura real de zona 5.
+Razón social, NIT, domicilio, correo de contacto, confirmación del contador sobre el IVA (el dueño declara que no aplica), plazo máximo de entrega, plazo de respuesta de PQR, forma de generar el radicado, lista final de ciudades de zona 3, confirmación de plazos con el agregador y cobertura real de zona 5.
 
 ### D. Coherencia con otros documentos
 - Términos y condiciones: el contrato se perfecciona cuando el cliente acepta por WhatsApp el total (con envío) que confirmamos; para envío «por cotizar», la aceptación del valor es requisito previo al pago.

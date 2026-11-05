@@ -20,7 +20,7 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.2fr_1fr_1fr] md:px-8">
           <div>
             <Marca pie />
-            <p className="body mt-4 max-w-xs text-ink-muted">Café de especialidad de marca propia, de provincias de Santander, Colombia.</p>
+            <p className="body mt-4 max-w-xs text-ink-muted">Café de origen de marca propia, de provincias de Santander, Colombia.</p>
           </div>
 
           <dl className="space-y-4 text-sm">

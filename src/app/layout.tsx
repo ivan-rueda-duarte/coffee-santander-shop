@@ -24,7 +24,7 @@ const montserrat = localFont({
 });
 
 const DESCRIPCION =
-  "De Santander: café de especialidad de marca propia, organizado por provincias de Santander, Colombia. Elige por provincia, arma tu pedido y envíalo por WhatsApp.";
+  "De Santander: café de origen de marca propia, organizado por provincias de Santander, Colombia. Elige por provincia, arma tu pedido y envíalo por WhatsApp.";
 
 export const metadata: Metadata = {
   metadataBase: URL_SITIO ? new URL(URL_SITIO) : undefined,
