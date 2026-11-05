@@ -71,3 +71,16 @@ Nunca inventes NIT, razón social, fincas, puntajes, registros INVIMA, textos le
 - Nada que toque servicios remotos (push, despliegue, secretos, Sanity) sin pedir confirmación.
 - Si algo contradice el código o los documentos, detente y pregunta.
 - Al cerrar cada fase: resumen de 5 líneas, qué quedó pendiente y la siguiente fase. Espera "sigue".
+
+## Agentes del proyecto
+
+Definiciones en `agents/` (copiadas a `.claude/agents/`); guía de uso y flujo en `agents/AGENTES-README.md`.
+
+- Diseño y marca: `disenador-marca`. Toda pantalla nueva o cambio visual pasa primero por él. (Su archivo aún no existe en `agents/`; mientras tanto, usa la skill `impeccable` y `docs/marca-v4.1.md`.)
+- Código: `desarrollador-fullstack`. Sigue docs/PROMPT-V2.md; pide confirmación antes de cualquier acción remota.
+- Pruebas: `qa-pruebas`. Se ejecuta después de cada cambio y antes de cada merge; no corrige código de producción.
+- Legal: `legal-cumplimiento`. Redacta los documentos legales en docs/legal/ y revisa todo el contenido del sitio con dictamen (LEG-### en docs/legal/revisiones/); nada legal se publica sin aprobación del abogado responsable.
+- Ciclo de defectos: qa-pruebas reporta → desarrollador-fullstack corrige y marca "Corregido — pendiente verificación" → qa-pruebas verifica y cierra.
+- Ningún agente inventa datos de negocio: usan TODO(dato) en docs/PENDIENTES.md.
+- Defectos con ID QA-### en docs/qa/; los commits que los corrigen citan el ID.
+- Los archivos de agentes mencionan Supabase y la función `crear-pedido`: están desactualizados. Manda este documento: los datos de comercio van en CSV y el pedido sale por WhatsApp sin base de datos.
