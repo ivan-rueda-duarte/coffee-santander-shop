@@ -3,6 +3,7 @@ import {
   EMPAQUE_G,
   ESCALONES_KG,
   LIMITE_MAXIMO_G,
+  limiteEscalonG,
   ZONA_ESPECIAL,
   ZONA_POR_DEFECTO,
   ZONAS,
@@ -38,7 +39,7 @@ export function resolverZona(departamento: string, municipio: string, reglas: Pi
 
 /**
  * Costo de envío de un pedido (docs/ENVIOS.md §3 y §4).
- * Más de 5 kg o zona 5: "por cotizar". Si no, el primer escalón (1, 2 o 5 kg) cuyo límite sea ≥ al peso.
+ * Más de 5 kg o zona 5: "por cotizar". Si no, el primer escalón (1, 2 o 5 kg) cuyo límite, con empaque, sea ≥ al peso.
  */
 export function calcularEnvio(items: readonly ItemPesable[], destino: DestinoEnvio, reglas: ReglasEnvio): ResultadoEnvio {
   const pesoFacturableG = calcularPesoFacturable(items);
@@ -50,7 +51,7 @@ export function calcularEnvio(items: readonly ItemPesable[], destino: DestinoEnv
   const tarifa = reglas.tarifas.find((t) => t.clave === clave);
   if (!tarifa?.escalones) throw new RangeError(`No hay tarifa de envío para la clave "${clave}" (zona ${zona}). Revisa data/tarifas_envio.csv.`);
 
-  const indice = ESCALONES_KG.findIndex((kg) => pesoFacturableG <= kg * 1000);
+  const indice = ESCALONES_KG.findIndex((kg) => pesoFacturableG <= limiteEscalonG(kg));
   return { tipo: "tarifa", zona, clave, pesoFacturableG, escalonKg: ESCALONES_KG[indice], valorCop: tarifa.escalones[indice] };
 }
 

@@ -56,7 +56,7 @@ export default async function PaginaEnvios() {
 
         <h2 className="h3 mt-12 text-ink-title">Tarifas por zona</h2>
         <p className="body mt-2 max-w-2xl text-ink-muted">
-          El peso incluye las bolsas más {EMPAQUE_G} g de empaque, y se cobra el primer escalón que lo cubre. Una bolsa suelta paga como 1 kg; dos bolsas de 250 g también.
+          El peso incluye las bolsas más {EMPAQUE_G} g de empaque, y el escalón también lo cuenta: hasta 1 kg de café paga el escalón de 1 kg, hasta 2 kg el de 2 kg y hasta 5 kg el de 5 kg. Una bolsa suelta, dos de 250 g o dos de 500 g pagan el escalón de 1 kg.
         </p>
         <div className="mt-6 overflow-x-auto rounded-lg border border-line">
           <table className="w-full min-w-[44rem] border-collapse text-left text-sm" data-testid="tabla-envios">
@@ -110,7 +110,7 @@ export default async function PaginaEnvios() {
 
         <h2 className="h3 mt-12 text-ink-title">Pedido mínimo sugerido</h2>
         <p className="body mt-2 max-w-2xl">
-          Sugerimos pedir al menos 2 bolsas de 250 g o 1 de 500 g: una bolsa suelta paga el envío como 1 kg. Es solo una recomendación; puedes pedir lo que quieras.
+          Sugerimos pedir al menos 2 bolsas de 250 g o 1 de 500 g: una bolsa suelta paga el envío del escalón de 1 kg. Es solo una recomendación; puedes pedir lo que quieras.
         </p>
 
         <div className="mt-10 rounded-lg bg-surface-sunken p-6">

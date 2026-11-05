@@ -14,7 +14,15 @@ export const EMPAQUE_G = 80;
 /** Límites de los escalones, en kilos y en gramos: coinciden con las columnas hasta_1kg, hasta_2kg y hasta_5kg del CSV. */
 export const ESCALONES_KG = [1, 2, 5] as const;
 export type EscalonKg = (typeof ESCALONES_KG)[number];
-export const LIMITE_MAXIMO_G = 5000;
+
+/**
+ * Límite de un escalón en gramos de peso facturable. Incluye el empaque, para que una carga nominal de
+ * 1, 2 o 5 kg quepa en su escalón: 1.080 / 2.080 / 5.080 g.
+ */
+export const limiteEscalonG = (kg: EscalonKg): number => kg * 1000 + EMPAQUE_G;
+
+/** Más de este peso facturable (5.080 g) el envío va por cotizar. */
+export const LIMITE_MAXIMO_G = limiteEscalonG(5);
 
 /** Precios de los tres escalones, en pesos. */
 export type Escalones = readonly [number, number, number];

@@ -32,8 +32,8 @@ Entrega de la FASE 0: resumen de dónde se enchufa cada pieza, lista de inconsis
 - Tipos: `Zona = 1|2|3|4|5`, `TarifaEnvio { zona, clave, nombre, medio, escalones: [number, number, number] | null }`, `ResultadoEnvio = { tipo: 'tarifa', zona, clave, pesoFacturableG, escalonKg, valorCop } | { tipo: 'por_cotizar', zona, pesoFacturableG, motivo: 'zona_especial' | 'mas_de_5kg' }`.
 - `calcularPesoFacturable(items, EMPAQUE_G = 80)`: suma de gramos de las bolsas × cantidad + empaque.
 - `resolverZona(departamento, municipio, reglas)`: precedencia municipio > departamento > 4. Normaliza tildes y mayúsculas. Devuelve también la `clave` de tarifa (en zona 1 la clave es el municipio; en 2–5, `zona2`…`zona5`).
-- `calcularEnvio(items, destino, tarifas, reglas)`: aplica la regla: > 5.000 g → `por_cotizar/mas_de_5kg`; zona 5 → `por_cotizar/zona_especial`; en otro caso el primer escalón (1, 2, 5 kg) cuyo límite sea ≥ al peso.
-- Funciones puras, sin React ni acceso a datos. Cobertura ≥ 90 % con Vitest: bordes exactos (1.000 g, 2.000 g, 5.000 g, 5.001 g), zona 1 por municipio, departamento con excepción municipal (Florencia → 4, resto de Caquetá → 5), municipio desconocido → 4, tildes ("Giron" = "Girón").
+- `calcularEnvio(items, destino, tarifas, reglas)`: aplica la regla: > 5.080 g (5 kg + empaque) → `por_cotizar/mas_de_5kg`; zona 5 → `por_cotizar/zona_especial`; en otro caso el primer escalón (1, 2, 5 kg) cuyo límite sea ≥ al peso.
+- Funciones puras, sin React ni acceso a datos. Cobertura ≥ 90 % con Vitest: bordes exactos (1.080/1.081 g, 2.080/2.081 g, 5.080/5.081 g), zona 1 por municipio, departamento con excepción municipal (Florencia → 4, resto de Caquetá → 5), municipio desconocido → 4, tildes ("Giron" = "Girón").
 
 ## Datos
 - Loader de `tarifas_envio.csv` y `zonas_envio.csv` con el mismo patrón de los CSV existentes; validación con zod al cargar (zona entre 1 y 5, escalones numéricos ascendentes, `por_cotizar` solo en zona 5).
@@ -64,7 +64,7 @@ Conserva el límite de ≈ 2.000 caracteres.
 - Actualiza `PRODUCT.md` (decisión: envío calculado por zonas; "por cotizar" solo en zona 5 y > 5 kg) y `docs/PENDIENTES.md` (los TODO(dato) de `docs/ENVIOS.md` §7).
 
 # DEFINICIÓN DE TERMINADO
-- `npm run lint && npm run typecheck && npm test && npm run build` en verde; e2e: pedido a Bogotá 2 × 250 g muestra $18.000 (2 × 500 g pesa 1.080 g con el empaque y paga el escalón de 2 kg: $23.000, según `docs/ENVIOS.md` §3) y el `href` de WhatsApp contiene "Envío (Bogotá · zona 3): $18.000"; pedido a Leticia muestra "por cotizar" y el total "sin envío".
+- `npm run lint && npm run typecheck && npm test && npm run build` en verde; e2e: pedido a Bogotá 2 × 500 g (1.080 g con el empaque, dentro del escalón de 1 kg) muestra $18.000 y el `href` de WhatsApp contiene "Envío (Bogotá · zona 3): $18.000"; pedido a Leticia muestra "por cotizar" y el total "sin envío".
 - Tabla de envíos en la página renderizada desde `data/tarifas_envio.csv`.
 - Resumen de 5 líneas al final de cada paso; espera mi "sigue".
 ~~~~

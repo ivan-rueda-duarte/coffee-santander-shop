@@ -24,8 +24,8 @@ Precedencia al resolver la zona de un destino: fila `municipio` > fila `departam
 ## 3. Peso facturable y escalones
 
 - Peso facturable = suma de las bolsas + 80 g de empaque (`EMPAQUE_G`).
-- Escalones: ≤ 1 kg, 1–2 kg, 2–5 kg. Se toma el primer escalón cuyo límite sea ≥ al peso.
-- > 5 kg: "por cotizar" en cualquier zona.
+- Escalones: hasta 1 kg, hasta 2 kg y hasta 5 kg. El límite de cada escalón incluye el empaque: 1.080 g, 2.080 g y 5.080 g de peso facturable. Se toma el primer escalón cuyo límite sea ≥ al peso facturable. Así una carga nominal de 1, 2 o 5 kg cabe en su escalón.
+- Peso facturable > 5.080 g (más de 5 kg de café): "por cotizar" en cualquier zona.
 
 ## 4. Regla "por cotizar"
 
@@ -52,7 +52,7 @@ Revisar cada enero (ajuste por IPC de las transportadoras).
 
 - Plazos: zona 1, mismo día o siguiente hábil; zonas 2–3, 1–3 días hábiles; zona 4, 2–6 días hábiles; zona 5, 5–12 días hábiles y entrega en oficina de la transportadora.
 - En municipios sin reparto a domicilio la guía puede cerrar en "reclamar en oficina".
-- Pedido mínimo sugerido: 2 bolsas de 250 g o 1 de 500 g (una bolsa suelta paga como 1 kg).
+- Pedido mínimo sugerido: 2 bolsas de 250 g o 1 de 500 g (una bolsa suelta de 250 g o de 500 g, y también 2 bolsas de 500 g, pagan el escalón de 1 kg).
 
 ## 7. Pendientes (TODO(dato))
 

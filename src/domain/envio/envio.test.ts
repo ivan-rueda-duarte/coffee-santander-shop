@@ -59,24 +59,23 @@ describe("resolverZona", () => {
 });
 
 describe("calcularEnvio", () => {
-  it("1.000 g exactos caen en el primer escalón", () => {
-    // 920 g de bolsas + 80 g de empaque
-    const r = calcularEnvio([bolsas(920)], BUCARAMANGA, REGLAS);
-    expect(r).toEqual({ tipo: "tarifa", zona: 1, clave: "bucaramanga", pesoFacturableG: 1000, escalonKg: 1, valorCop: 8800 });
+  it("1.080 g (1 kg nominal con empaque) caen en el primer escalón", () => {
+    const r = calcularEnvio([bolsas(1000)], BUCARAMANGA, REGLAS);
+    expect(r).toEqual({ tipo: "tarifa", zona: 1, clave: "bucaramanga", pesoFacturableG: 1080, escalonKg: 1, valorCop: 8800 });
   });
-  it("1.001 g pasan al segundo escalón", () => {
-    const r = calcularEnvio([bolsas(921)], BUCARAMANGA, REGLAS);
-    expect(r).toMatchObject({ tipo: "tarifa", pesoFacturableG: 1001, escalonKg: 2, valorCop: 11600 });
+  it("1.081 g pasan al segundo escalón", () => {
+    expect(calcularEnvio([bolsas(1001)], BUCARAMANGA, REGLAS)).toMatchObject({ pesoFacturableG: 1081, escalonKg: 2, valorCop: 11600 });
   });
-  it("2.000 g exactos siguen en el segundo escalón", () => {
-    expect(calcularEnvio([bolsas(1920)], BUCARAMANGA, REGLAS)).toMatchObject({ pesoFacturableG: 2000, escalonKg: 2, valorCop: 11600 });
+  it("2.080 g siguen en el segundo escalón y 2.081 g pasan al tercero", () => {
+    expect(calcularEnvio([bolsas(2000)], BUCARAMANGA, REGLAS)).toMatchObject({ pesoFacturableG: 2080, escalonKg: 2, valorCop: 11600 });
+    expect(calcularEnvio([bolsas(2001)], BUCARAMANGA, REGLAS)).toMatchObject({ pesoFacturableG: 2081, escalonKg: 5, valorCop: 15400 });
   });
-  it("5.000 g exactos están en el tercer escalón", () => {
-    expect(calcularEnvio([bolsas(4920)], BUCARAMANGA, REGLAS)).toMatchObject({ tipo: "tarifa", pesoFacturableG: 5000, escalonKg: 5, valorCop: 15400 });
+  it("5.080 g (5 kg nominales) están en el tercer escalón", () => {
+    expect(calcularEnvio([bolsas(5000)], BUCARAMANGA, REGLAS)).toMatchObject({ tipo: "tarifa", pesoFacturableG: 5080, escalonKg: 5, valorCop: 15400 });
   });
-  it("5.001 g van por cotizar en cualquier zona", () => {
-    expect(calcularEnvio([bolsas(4921)], BUCARAMANGA, REGLAS)).toEqual({ tipo: "por_cotizar", zona: 1, pesoFacturableG: 5001, motivo: "mas_de_5kg" });
-    expect(calcularEnvio([bolsas(4921)], BOGOTA, REGLAS)).toMatchObject({ tipo: "por_cotizar", zona: 3, motivo: "mas_de_5kg" });
+  it("5.081 g van por cotizar en cualquier zona", () => {
+    expect(calcularEnvio([bolsas(5001)], BUCARAMANGA, REGLAS)).toEqual({ tipo: "por_cotizar", zona: 1, pesoFacturableG: 5081, motivo: "mas_de_5kg" });
+    expect(calcularEnvio([bolsas(5001)], BOGOTA, REGLAS)).toMatchObject({ tipo: "por_cotizar", zona: 3, motivo: "mas_de_5kg" });
   });
   it("más de 5 kg en zona 5 se explica por el peso", () => {
     expect(calcularEnvio([bolsas(1000, 6)], { departamento: "Amazonas", municipio: "Leticia" }, REGLAS)).toMatchObject({ motivo: "mas_de_5kg", zona: 5 });
@@ -85,8 +84,8 @@ describe("calcularEnvio", () => {
     expect(calcularEnvio([bolsas(500)], BOGOTA, REGLAS)).toMatchObject({ escalonKg: 1, valorCop: 18000 });
     expect(calcularEnvio([bolsas(250, 2)], BOGOTA, REGLAS)).toMatchObject({ escalonKg: 1, valorCop: 18000 });
   });
-  it("2 × 500 g superan 1 kg con el empaque y pagan el segundo escalón", () => {
-    expect(calcularEnvio([bolsas(500, 2)], BOGOTA, REGLAS)).toMatchObject({ pesoFacturableG: 1080, escalonKg: 2, valorCop: 23000 });
+  it("2 × 500 g (1.080 g con el empaque) pagan el primer escalón", () => {
+    expect(calcularEnvio([bolsas(500, 2)], BOGOTA, REGLAS)).toMatchObject({ pesoFacturableG: 1080, escalonKg: 1, valorCop: 18000 });
   });
   it("zona 1 por municipio usa la tarifa de cada uno", () => {
     expect(calcularEnvio([bolsas(250)], { departamento: "Santander", municipio: "Giron" }, REGLAS)).toMatchObject({ zona: 1, clave: "giron", valorCop: 10500 });
@@ -112,7 +111,7 @@ describe("calcularEnvio", () => {
 describe("totalConEnvio", () => {
   it("suma el envío cuando hay tarifa", () => {
     const envio = calcularEnvio([bolsas(500, 2)], BOGOTA, REGLAS);
-    expect(totalConEnvio(96000, envio)).toEqual({ totalCop: 96000 + 23000, sinEnvio: false });
+    expect(totalConEnvio(96000, envio)).toEqual({ totalCop: 96000 + 18000, sinEnvio: false });
   });
   it("no lo suma cuando va por cotizar", () => {
     const envio = calcularEnvio([bolsas(250)], { departamento: "Amazonas", municipio: "Leticia" }, REGLAS);

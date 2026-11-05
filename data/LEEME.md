@@ -91,4 +91,4 @@ Debe existir siempre la tarifa de la zona 4 (`zona4`): es la que se aplica a tod
 | `zona` | 1 a 5. La zona 1 solo se asigna por municipio, y cada municipio de zona 1 necesita su tarifa en `tarifas_envio.csv`. |
 | `nota` *(opcional)* | Comentario para quien edita. |
 
-El peso que se factura es el de las bolsas más 80 g de empaque (constante `EMPAQUE_G` en `src/domain/envio/tipos.ts`).
+El peso que se factura es el de las bolsas más 80 g de empaque (constante `EMPAQUE_G` en `src/domain/envio/tipos.ts`), y el límite de cada escalón también suma esos 80 g (1.080, 2.080 y 5.080 g).

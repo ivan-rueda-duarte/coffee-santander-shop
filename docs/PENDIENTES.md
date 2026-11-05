@@ -30,7 +30,6 @@ Cada ítem marca un `TODO(dato)`: no se muestra en la interfaz hasta que exista 
 - TODO(dato): confirmar con el cliente la lista final de ciudades de zona 3 (`data/zonas_envio.csv`).
 - TODO(dato): confirmar los plazos de entrega por zona con el agregador (Envia.com o Mipaquete.com). Hoy la página `/envios/` publica los de `docs/ENVIOS.md` §6 como orientación (constante `PLAZOS` en `src/app/envios/page.tsx`).
 - TODO(dato): verificar la cobertura de la zona 5 en el agregador antes de prometer entrega; sin ruta privada, usar 4-72.
-- Decidido (2026-11-05): se mantiene `docs/ENVIOS.md` §3. 2 bolsas de 500 g pesan 1.080 g con el empaque y pagan el escalón de 2 kg (Bogotá: $23.000).
 - TODO(dato): las tarifas se revisan cada enero (IPC de las transportadoras). La columna `vigencia_desde` se valida pero no se usa para decidir qué tarifa rige.
 - TODO(dato): en la zona 5 el medio es «transportadora o 4-72»; definir cuál se usa para poder decirlo en la página de envíos.
 - TODO(dato): el texto legal de «Envíos, devoluciones y retracto» (Sanity, `docs/legal/`) debe coincidir con la política de zonas, la regla «por cotizar» y la advertencia de «reclamar en oficina».
