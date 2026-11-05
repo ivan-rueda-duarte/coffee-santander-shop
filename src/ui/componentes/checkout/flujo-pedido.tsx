@@ -3,15 +3,14 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
-import { formatearCOP } from "@/domain/comun/dinero";
 import { normalizar } from "@/domain/comun/slug";
 import { crearEsquemaEnvio, validar } from "@/domain/pedido/envio";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
-import { etiquetaBolsas } from "@/domain/pedido/totales";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 import { useAvisos } from "../layout/avisos";
 import { useCarrito } from "../carrito/carrito-provider";
 import { LineaPedido } from "../carrito/linea-pedido";
+import { TotalesPedido } from "../carrito/totales-pedido";
 import { Boton, BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
 import { IconoCopiar, IconoFlecha, IconoFlechaAtras, IconoWhatsapp } from "../marca/iconos";
@@ -149,17 +148,11 @@ function Contenido() {
     );
   }
 
+  const destino = valores.departamento && valores.municipio ? { departamento: valores.departamento, municipio: valores.municipio } : null;
   const resumenTotales = (
-    <dl className="space-y-2 rounded-lg bg-surface-raised p-5 text-sm">
-      <div className="flex justify-between">
-        <dt>Subtotal · {etiquetaBolsas(totales.bolsas)}</dt>
-        <dd className="font-bold tabular-nums text-ink-title">{formatearCOP(totales.subtotalCop)}</dd>
-      </div>
-      <div className="flex justify-between gap-4 text-ink-muted">
-        <dt>Envío</dt>
-        <dd className="text-right">Se confirma por WhatsApp, antes de que pagues</dd>
-      </div>
-    </dl>
+    <div className="rounded-lg bg-surface-raised p-5">
+      <TotalesPedido totales={totales} destino={paso === "carrito" ? null : destino} />
+    </div>
   );
 
   return (
@@ -202,6 +195,9 @@ function Contenido() {
             }}
           >
             <FormularioEnvio valores={valores} errores={errores} formasPago={tienda.formasPago} alCambiar={(c) => { setValores((v) => ({ ...v, ...c })); setEnvioValido(false); }} />
+            <div className="mt-8 rounded-lg bg-surface-raised p-5" aria-live="polite">
+              <TotalesPedido totales={totales} destino={destino} />
+            </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <Boton variante="secundario" onClick={() => irA("carrito")}>
                 <IconoFlechaAtras className="ds-btn__icon" /> Volver al carrito
@@ -223,7 +219,7 @@ function Contenido() {
             ))}
           </ul>
           <div className="mt-4">{resumenTotales}</div>
-          <p className="caption mt-3 text-ink-muted">El costo del envío y la forma de pago se confirman por WhatsApp antes de que pagues. Más en <a className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones y retracto</a>.</p>
+          <p className="caption mt-3 text-ink-muted">La forma de pago se confirma por WhatsApp antes de que pagues. Más en <a className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos: zonas, tarifas y plazos</a> y en <a className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones y retracto</a>.</p>
 
           <div className="mt-6 rounded-lg border border-line p-5 text-sm">
             <div className="flex items-start justify-between gap-4">
@@ -275,7 +271,7 @@ function Contenido() {
         <section aria-labelledby="t-confirmacion" className="max-w-2xl">
           <h1 id="t-confirmacion" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido está listo en WhatsApp</h1>
           <p className="body mt-3">
-            Pulsa el botón y envía el mensaje desde WhatsApp para hacer el pedido: <strong>el pedido se hace cuando lo envías</strong>. Te respondemos con el costo del envío y la forma de pagar.
+            Pulsa el botón y envía el mensaje desde WhatsApp para hacer el pedido: <strong>el pedido se hace cuando lo envías</strong>. {resultado.envio.tipo === "por_cotizar" ? "Te respondemos con el valor del envío, que te confirmamos antes de que pagues, y la forma de pagar." : "Te respondemos para confirmar el envío y la forma de pagar."}
           </p>
           {resultado.indicacionesResumidas && <p className="caption mt-2 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}
           <div className="mt-6 flex flex-wrap gap-3">

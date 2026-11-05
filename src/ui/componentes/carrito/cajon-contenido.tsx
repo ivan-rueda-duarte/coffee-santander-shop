@@ -1,13 +1,12 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { formatearCOP } from "@/domain/comun/dinero";
-import { etiquetaBolsas } from "@/domain/pedido/totales";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 import { BotonEnlace, Boton } from "../marca/boton";
 import { IconoCerrar, IconoFlecha } from "../marca/iconos";
 import { LineaPedido } from "./linea-pedido";
 import { useCarrito } from "./carrito-provider";
+import { TotalesPedido } from "./totales-pedido";
 
 /** Cajón lateral «Tu pedido». Foco atrapado, el resto de la página queda inerte y Esc lo cierra (Radix). */
 export default function CajonContenido() {
@@ -42,7 +41,7 @@ export default function CajonContenido() {
           </header>
 
           <Dialog.Description id="cajon-descripcion" className="sr-only">
-            Cafés que agregaste, con tamaño, molienda y cantidad. El envío se confirma por WhatsApp.
+            Cafés que agregaste, con tamaño, molienda y cantidad. El envío se calcula al elegir tu ciudad.
           </Dialog.Description>
 
           <div className="flex-1 overflow-y-auto px-6">
@@ -82,18 +81,7 @@ export default function CajonContenido() {
 
           {!vacio && (
             <footer className="border-t border-line bg-surface-raised px-6 py-5">
-              <dl className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <dt>
-                    Subtotal <span className="text-ink-muted">· {etiquetaBolsas(totales.bolsas)}</span>
-                  </dt>
-                  <dd className="font-bold tabular-nums text-ink-title">{formatearCOP(totales.subtotalCop)}</dd>
-                </div>
-                <div className="flex justify-between gap-4 text-ink-muted">
-                  <dt>Envío</dt>
-                  <dd className="text-right">Se confirma por WhatsApp · desde {catalogo.tienda.ciudadDespacho}</dd>
-                </div>
-              </dl>
+              <TotalesPedido totales={totales} destino={null} ciudadDespacho={catalogo.tienda.ciudadDespacho} className="text-sm" />
               <BotonEnlace href="/pedido/" bloque tamano="lg" className="mt-4" onClick={cerrarCajon}>
                 Continuar con el pedido <IconoFlecha className="ds-btn__icon" />
               </BotonEnlace>
