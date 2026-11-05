@@ -1,12 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function agregarBarichara(page: Page) {
-  await page.goto("/cafes/cafe-barichara/");
+async function agregarCasaMartinez(page: Page) {
+  await page.goto("/cafes/cafe-casa-martinez/");
   await page.getByRole("radio", { name: "Molido" }).check({ force: true });
   await page.getByRole("radio", { name: /^500 g/ }).check({ force: true });
   await expect(page.getByText("1 × 500 g · molido")).toBeVisible();
   await page.getByRole("button", { name: "Agregar al pedido" }).click();
-  await expect(page.getByRole("status")).toContainText("Agregaste Café Barichara: 500 g, molido");
+  await expect(page.getByRole("status")).toContainText("Agregaste Café Casa Martínez: 500 g, molido");
 }
 
 async function llenarEnvio(page: Page) {
@@ -22,13 +22,13 @@ async function llenarEnvio(page: Page) {
 
 test.describe("pedido", () => {
   test("4. ficha → carrito → envío → resumen → confirmación con el enlace de WhatsApp", async ({ page }) => {
-    await agregarBarichara(page);
+    await agregarCasaMartinez(page);
 
     // Cajón «Tu pedido»
     await page.getByRole("button", { name: /^Pedido/ }).click();
     const cajon = page.getByRole("dialog", { name: "Tu pedido" });
-    await expect(cajon).toContainText("Café Barichara");
-    await expect(cajon).toContainText("$50.000");
+    await expect(cajon).toContainText("Café Casa Martínez");
+    await expect(cajon).toContainText("$47.000");
     await cajon.getByRole("link", { name: /Continuar con el pedido/ }).click();
 
     // 1. Carrito
@@ -69,8 +69,8 @@ test.describe("pedido", () => {
     const href = (await enlace.getAttribute("href")) ?? "";
     expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
     const texto = decodeURIComponent(href.split("?text=")[1]);
-    expect(texto).toContain("• Café Barichara (Guanentá) — Molido — 500 g × 1 = $50.000");
-    expect(texto).toContain("Subtotal: $50.000");
+    expect(texto).toContain("• Café Casa Martínez (Guanentá) — Molido — 500 g × 1 = $47.000");
+    expect(texto).toContain("Subtotal: $47.000");
     expect(texto).toContain("Envío (Bucaramanga · zona 1): $8.800");
     expect(texto).toContain("Nombre: Ana Rueda");
     expect(texto).toContain("Celular: 300 123 4567");
@@ -87,17 +87,17 @@ test.describe("pedido", () => {
   });
 
   test("Vaciar pedido se puede deshacer", async ({ page }) => {
-    await agregarBarichara(page);
+    await agregarCasaMartinez(page);
     await page.getByRole("button", { name: /^Pedido/ }).click();
     const cajon = page.getByRole("dialog", { name: "Tu pedido" });
     await cajon.getByRole("button", { name: "Vaciar pedido" }).click();
     await expect(cajon).toContainText("Tu pedido está vacío");
     await cajon.getByRole("button", { name: "Deshacer" }).click();
-    await expect(cajon).toContainText("Café Barichara");
+    await expect(cajon).toContainText("Café Casa Martínez");
   });
 
   test("cantidad: máximo de 20 bolsas por línea", async ({ page }) => {
-    await page.goto("/cafes/cafe-oiba/");
+    await page.goto("/cafes/cafe-arreboles/");
     const mas = page.getByRole("button", { name: "Una bolsa más" });
     for (let i = 0; i < 25; i++) if (await mas.isEnabled()) await mas.click();
     await expect(mas).toBeDisabled();
@@ -108,14 +108,14 @@ test.describe("pedido", () => {
   });
 
   test("5. recargar conserva el carrito y se sincroniza entre pestañas", async ({ page, context }) => {
-    await agregarBarichara(page);
+    await agregarCasaMartinez(page);
     await page.reload();
     await expect(page.getByRole("button", { name: /^Pedido 1 bolsa/ })).toBeVisible();
 
     const otra = await context.newPage();
     await otra.goto("/");
     await expect(otra.getByRole("button", { name: /^Pedido 1 bolsa/ })).toBeVisible();
-    await otra.getByRole("button", { name: /Agregar Café Oiba/ }).click();
+    await otra.getByRole("button", { name: /Agregar Café Arreboles/ }).click();
     await expect(page.getByRole("button", { name: /^Pedido 2 bolsas/ })).toBeVisible();
   });
 
@@ -130,22 +130,17 @@ test.describe("pedido", () => {
       }
     });
     await page.goto("/pedido/");
-    await expect(page.getByText("Café Oiba")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Una bolsa más de Café Oiba" })).toBeVisible();
+    // Los ids de la v1 apuntan a cafés que ya no están en data/catalogo.csv (cafe-oiba): el pedido se muestra vacío.
+    await expect(page.getByRole("heading", { name: "Tu pedido está vacío" })).toBeVisible();
     const guardado = await page.evaluate(() => [localStorage.getItem("desantander.carrito.v1"), localStorage.getItem("desantander.carrito.v2")]);
     expect(guardado[0]).toBeNull();
-    expect(JSON.parse(guardado[1]!).lineas).toEqual([{ cafeSlug: "cafe-oiba", gramos: 250, molienda: "molido", cantidad: 3 }]);
-    // «Cali» coincide con un solo municipio: se propone en el envío
-    await page.getByRole("button", { name: /Continuar con el envío/ }).click();
-    await expect(page.getByLabel("Departamento")).toHaveValue("Valle del Cauca");
-    await expect(page.getByLabel("Municipio")).toHaveValue("Cali");
-    await expect(page.getByRole("radio", { name: "Efectivo contraentrega" })).toBeChecked();
+    expect(JSON.parse(guardado[1]!).lineas).toEqual([]); // la línea huérfana se descarta
   });
 
   test("sin pedido, /pedido/ explica que está vacío y recargar el resumen vuelve al envío", async ({ page }) => {
     await page.goto("/pedido/?paso=envio");
     await expect(page.getByRole("heading", { name: "Tu pedido está vacío" })).toBeVisible();
-    await agregarBarichara(page);
+    await agregarCasaMartinez(page);
     await page.goto("/pedido/?paso=resumen");
     await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
   });

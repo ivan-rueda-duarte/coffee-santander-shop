@@ -18,12 +18,12 @@ test.describe("6. accesibilidad", () => {
   });
 
   test("ficha de café: axe sin violaciones serias", async ({ page }) => {
-    await page.goto("/cafes/cafe-barichara/");
+    await page.goto("/cafes/cafe-casa-martinez/");
     expect(await violacionesGraves(page)).toEqual([]);
   });
 
   test("pedido: axe sin violaciones serias en cada paso", async ({ page }) => {
-    await page.goto("/cafes/cafe-oiba/");
+    await page.goto("/cafes/cafe-arreboles/");
     await page.getByRole("button", { name: "Agregar al pedido" }).click();
     await page.goto("/pedido/");
     await expect(page.getByRole("heading", { name: "Tu pedido", level: 1 })).toBeVisible();
@@ -34,7 +34,7 @@ test.describe("6. accesibilidad", () => {
   });
 
   test("cajón del pedido y página legal: axe sin violaciones serias", async ({ page }) => {
-    await page.goto("/cafes/cafe-oiba/");
+    await page.goto("/cafes/cafe-arreboles/");
     await page.getByRole("button", { name: "Agregar al pedido" }).click();
     await page.getByRole("button", { name: /^Pedido/ }).click();
     await expect(page.getByRole("dialog", { name: "Tu pedido" })).toBeVisible();
@@ -44,7 +44,7 @@ test.describe("6. accesibilidad", () => {
   });
 
   test("teclado: el cajón atrapa el foco, Esc lo cierra y devuelve el foco", async ({ page }) => {
-    await page.goto("/cafes/cafe-oiba/");
+    await page.goto("/cafes/cafe-arreboles/");
     await page.getByRole("button", { name: "Agregar al pedido" }).click();
     const abrir = page.getByRole("button", { name: /^Pedido/ });
     await abrir.focus();
@@ -65,8 +65,8 @@ test.describe("6. accesibilidad", () => {
     const guanenta = page.locator("aside[aria-label=Filtros]").getByRole("button", { name: /^Guanentá/ });
     await guanenta.focus();
     await page.keyboard.press("Enter");
-    await expect(page.locator("#resultados-catalogo")).toHaveText("2 cafés en Guanentá");
-    await page.getByRole("button", { name: /Agregar Café Barichara/ }).focus();
+    await expect(page.locator("#resultados-catalogo")).toHaveText("1 café en Guanentá");
+    await page.getByRole("button", { name: /Agregar Café Casa Martínez/ }).focus();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("button", { name: /^Pedido 1 bolsa/ })).toBeVisible();
   });
