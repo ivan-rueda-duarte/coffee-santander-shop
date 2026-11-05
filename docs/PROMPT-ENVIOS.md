@@ -64,7 +64,7 @@ Conserva el límite de ≈ 2.000 caracteres.
 - Actualiza `PRODUCT.md` (decisión: envío calculado por zonas; "por cotizar" solo en zona 5 y > 5 kg) y `docs/PENDIENTES.md` (los TODO(dato) de `docs/ENVIOS.md` §7).
 
 # DEFINICIÓN DE TERMINADO
-- `npm run lint && npm run typecheck && npm test && npm run build` en verde; e2e: pedido a Bogotá 2 × 500 g muestra $18.000 y el `href` de WhatsApp contiene "Envío (Bogotá · zona 3): $18.000"; pedido a Leticia muestra "por cotizar" y el total "sin envío".
+- `npm run lint && npm run typecheck && npm test && npm run build` en verde; e2e: pedido a Bogotá 2 × 250 g muestra $18.000 (2 × 500 g pesa 1.080 g con el empaque y paga el escalón de 2 kg: $23.000, según `docs/ENVIOS.md` §3) y el `href` de WhatsApp contiene "Envío (Bogotá · zona 3): $18.000"; pedido a Leticia muestra "por cotizar" y el total "sin envío".
 - Tabla de envíos en la página renderizada desde `data/tarifas_envio.csv`.
 - Resumen de 5 líneas al final de cada paso; espera mi "sigue".
 ~~~~
