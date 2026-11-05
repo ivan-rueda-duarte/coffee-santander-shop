@@ -13,10 +13,12 @@ import {
 } from "@/domain/catalogo/tipos";
 import type { ConfigTienda } from "@/domain/pedido/tienda";
 import { Errores, LectorFila, verificarUnicos } from "./campos";
-import { ErrorDatos, leerCsv, type FilaCsv } from "./lector";
+import { ErrorDatos, type FilaCsv } from "./lector";
+import { cargarEnvios, type DatosDivipola } from "./cargar-envios";
+import { tabla, type LeerArchivo } from "./tabla";
+import divipolaCrudo from "@/data/divipola.json";
 
-/** Devuelve el contenido de un archivo de data/ por su nombre ("cafes.csv"). */
-export type LeerArchivo = (nombre: string) => string;
+export type { LeerArchivo };
 
 /** Dice si existe un archivo de public/ ("/fotos/cafes/cafe-oiba/1.jpg"). Sin esta función no se comprueban las fotos. */
 export type ExisteArchivoPublico = (ruta: string) => boolean;
@@ -34,25 +36,12 @@ export interface ResultadoCarga {
 export const ARCHIVO_CATALOGO = "catalogo.csv";
 const columnaPrecio = (gramos: number) => `precio_${gramos}g`;
 
-function tabla(leer: LeerArchivo, archivo: string, requeridas: string[], opcionales: string[], errores: Errores): FilaCsv[] {
-  let texto: string;
-  try {
-    texto = leer(archivo);
-  } catch {
-    errores.agregar(`${archivo}: no se encontró el archivo en data/.`);
-    return [];
-  }
-  const { filas, errores: erroresLectura } = leerCsv(texto, archivo, { requeridas, opcionales });
-  erroresLectura.forEach((e) => errores.agregar(e));
-  return filas;
-}
-
 /**
  * Lee y valida los CSV de data/ (provincias, municipios, productores, catalogo, config).
  * El catálogo es un solo archivo: una fila por café con sus precios por tamaño y sus fotos.
  * Si algo está mal lanza ErrorDatos con TODOS los problemas, cada uno con archivo, línea y columna.
  */
-export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPublico): ResultadoCarga {
+export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPublico, divipola: DatosDivipola = divipolaCrudo as DatosDivipola): ResultadoCarga {
   const errores = new Errores();
   const advertencias: string[] = [];
 
@@ -213,9 +202,12 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
   // ---------- config ----------
   const tienda = leerConfig(leer, errores);
 
+  // ---------- envíos (zonas y tarifas) ----------
+  const envios = cargarEnvios(leer, errores, divipola);
+
   if (errores.lista.length) throw new ErrorDatos(errores.lista);
   return {
-    catalogo: { provincias: provincias.sort((a, b) => a.orden - b.orden), municipios, productores, cafes: cafes.sort((a, b) => a.orden - b.orden), tienda: tienda as ConfigTienda },
+    catalogo: { provincias: provincias.sort((a, b) => a.orden - b.orden), municipios, productores, cafes: cafes.sort((a, b) => a.orden - b.orden), tienda: tienda as ConfigTienda, envios },
     advertencias,
   };
 }

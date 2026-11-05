@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Catalogo } from "@/domain/catalogo/catalogo";
 import { buscarCafe, crearBuscadorDePrecios, provinciasConCafes, provinciasProximas } from "@/domain/catalogo/catalogo";
 import { vendedorCompleto } from "@/domain/pedido/tienda";
-import { crearCafe, CAFES_PRUEBA, MALAGA, OIBA, PROVINCIAS_PRUEBA, SAN_GIL, SOCORRO } from "@/domain/pruebas/fixtures";
+import { crearCafe, CAFES_PRUEBA, MALAGA, OIBA, PROVINCIAS_PRUEBA, REGLAS_ENVIO_PRUEBA, SAN_GIL, SOCORRO } from "@/domain/pruebas/fixtures";
 import type { CatalogoRepositorio, ContenidoRepositorio } from "../puertos";
 import { obtenerCatalogo } from "./obtener-catalogo";
 import { obtenerFichaCafe } from "./obtener-ficha-cafe";
@@ -28,6 +28,7 @@ const catalogo: Catalogo = {
     maxCantidad: 20,
     vendedor: { razonSocial: null, nit: null, domicilio: null, correoContacto: null },
   },
+  envios: REGLAS_ENVIO_PRUEBA,
 };
 const repo: CatalogoRepositorio = { obtener: async () => catalogo };
 const sinContenido: ContenidoRepositorio = { cafe: async () => null, provincia: async () => null, inicio: async () => null, historia: async () => null, legal: async () => null, slugs: async () => ({ cafes: [], provincias: [], productores: [] }) };

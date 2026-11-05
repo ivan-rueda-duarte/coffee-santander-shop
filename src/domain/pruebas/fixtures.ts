@@ -1,5 +1,6 @@
 import { perfilesDeNotas } from "../catalogo/perfiles";
 import type { Cafe, Provincia } from "../catalogo/tipos";
+import type { ReglasEnvio } from "../envio/tipos";
 
 // Datos de prueba: los cinco cafés de la v1. Solo para tests.
 
@@ -117,4 +118,32 @@ export const ID_V1_A_SLUG: Record<number, string> = {
   3: SAN_GIL.slug,
   4: MALAGA.slug,
   5: OIBA.slug,
+};
+
+/** Reglas de envío de prueba: copian las tarifas de docs/ENVIOS.md §5 con unas pocas zonas. */
+export const REGLAS_ENVIO_PRUEBA: ReglasEnvio = {
+  tarifas: [
+    { zona: 1, clave: "bucaramanga", nombre: "Bucaramanga", medio: "mensajero", escalones: [8800, 11600, 15400] },
+    { zona: 1, clave: "giron", nombre: "Girón", medio: "mensajero", escalones: [10500, 14300, 18700] },
+    { zona: 2, clave: "zona2", nombre: "Resto de Santander", medio: "transportadora", escalones: [12100, 16200, 22000] },
+    { zona: 3, clave: "zona3", nombre: "Capitales y ciudades principales", medio: "transportadora", escalones: [18000, 23000, 33000] },
+    { zona: 4, clave: "zona4", nombre: "Resto del país", medio: "transportadora", escalones: [22000, 28100, 37400] },
+    { zona: 5, clave: "zona5", nombre: "Trayecto especial", medio: "transportadora_o_472", escalones: null },
+  ],
+  zonas: [
+    { nivel: "departamento", departamento: "Santander", municipio: null, zona: 2 },
+    { nivel: "municipio", departamento: "Santander", municipio: "Bucaramanga", zona: 1 },
+    { nivel: "municipio", departamento: "Santander", municipio: "Girón", zona: 1 },
+    { nivel: "municipio", departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C.", zona: 3 },
+    { nivel: "municipio", departamento: "Antioquia", municipio: "Medellín", zona: 3 },
+    { nivel: "municipio", departamento: "Caquetá", municipio: "Florencia", zona: 4 },
+    { nivel: "departamento", departamento: "Caquetá", municipio: null, zona: 5 },
+    { nivel: "municipio", departamento: "Arauca", municipio: "Arauca", zona: 4 },
+    { nivel: "departamento", departamento: "Arauca", municipio: null, zona: 5 },
+    { nivel: "municipio", departamento: "Chocó", municipio: "Quibdó", zona: 4 },
+    { nivel: "departamento", departamento: "Chocó", municipio: null, zona: 5 },
+    { nivel: "departamento", departamento: "Amazonas", municipio: null, zona: 5 },
+    { nivel: "municipio", departamento: "Antioquia", municipio: "Rionegro", zona: 3 },
+    { nivel: "municipio", departamento: "Santander", municipio: "Rionegro", zona: 2 },
+  ],
 };

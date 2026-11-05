@@ -1,0 +1,62 @@
+nivel,departamento,municipio,zona,nota
+departamento,Santander,,2,Todo Santander salvo los 4 municipios de zona 1
+municipio,Santander,Bucaramanga,1,Mensajero (domiciliario / DiDi Entrega Light / Uber Courier)
+municipio,Santander,Floridablanca,1,Mensajero
+municipio,Santander,Piedecuesta,1,Mensajero
+municipio,Santander,Girón,1,Mensajero
+municipio,"Bogotá, D.C.","Bogotá, D.C.",3,Capital
+municipio,Antioquia,Medellín,3,Capital
+municipio,Antioquia,Bello,3,Área metropolitana de Medellín
+municipio,Antioquia,Envigado,3,Área metropolitana de Medellín
+municipio,Antioquia,Itagüí,3,Área metropolitana de Medellín
+municipio,Antioquia,Sabaneta,3,Área metropolitana de Medellín
+municipio,Antioquia,Rionegro,3,Oriente antioqueño
+municipio,Valle del Cauca,Cali,3,Capital
+municipio,Valle del Cauca,Palmira,3,Área metropolitana de Cali
+municipio,Valle del Cauca,Yumbo,3,Área metropolitana de Cali
+municipio,Valle del Cauca,Buenaventura,3,Puerto principal
+municipio,Atlántico,Barranquilla,3,Capital
+municipio,Atlántico,Soledad,3,Área metropolitana de Barranquilla
+municipio,Bolívar,Cartagena de Indias,3,Capital
+municipio,Norte de Santander,San José de Cúcuta,3,Capital
+municipio,Risaralda,Pereira,3,Capital
+municipio,Risaralda,Dosquebradas,3,Área metropolitana de Pereira
+municipio,Caldas,Manizales,3,Capital
+municipio,Quindío,Armenia,3,Capital
+municipio,Tolima,Ibagué,3,Capital
+municipio,Meta,Villavicencio,3,Capital
+municipio,Magdalena,Santa Marta,3,Capital
+municipio,Cesar,Valledupar,3,Capital
+municipio,Córdoba,Montería,3,Capital
+municipio,Sucre,Sincelejo,3,Capital
+municipio,Huila,Neiva,3,Capital
+municipio,Nariño,Pasto,3,Capital
+municipio,Cauca,Popayán,3,Capital
+municipio,Boyacá,Tunja,3,Capital
+municipio,Boyacá,Duitama,3,Ciudad intermedia con cobertura directa
+municipio,Boyacá,Sogamoso,3,Ciudad intermedia con cobertura directa
+municipio,Cundinamarca,Soacha,3,Área metropolitana de Bogotá
+municipio,Cundinamarca,Chía,3,Sabana de Bogotá
+municipio,Casanare,Yopal,3,Capital
+municipio,La Guajira,Riohacha,3,Capital
+municipio,Caquetá,Florencia,4,Capital de departamento de zona 5: cobertura normal pero trayecto largo
+municipio,Chocó,Quibdó,4,Capital de departamento de zona 5: cobertura normal pero trayecto largo
+municipio,Arauca,Arauca,4,Capital de departamento de zona 5: cobertura normal pero trayecto largo
+departamento,Amazonas,,5,Solo acceso aéreo
+departamento,Guainía,,5,Trayecto especial
+departamento,Vaupés,,5,Trayecto especial
+departamento,Vichada,,5,Trayecto especial
+departamento,Guaviare,,5,Trayecto especial
+departamento,Putumayo,,5,Trayecto especial
+departamento,Caquetá,,5,Trayecto especial salvo Florencia
+departamento,Chocó,,5,Trayecto especial salvo Quibdó
+departamento,Arauca,,5,Trayecto especial salvo Arauca capital
+departamento,"Archipiélago de San Andrés, Providencia y Santa Catalina",,5,Solo acceso aéreo
+municipio,Nariño,San Andrés de Tumaco,5,Pacífico
+municipio,Cauca,Timbiquí,5,Pacífico (acceso marítimo o aéreo)
+municipio,Cauca,Guapi,5,Pacífico
+municipio,Cauca,López de Micay,5,Pacífico
+municipio,Chocó,Bahía Solano,5,Pacífico
+municipio,Chocó,Nuquí,5,Pacífico
+municipio,La Guajira,Uribia,5,Alta Guajira
+municipio,La Guajira,Manaure,5,Alta Guajira

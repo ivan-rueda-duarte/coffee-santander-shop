@@ -1,0 +1,9 @@
+zona,clave,nombre,medio,hasta_1kg_cop,hasta_2kg_cop,hasta_5kg_cop,mas_5kg,vigencia_desde
+1,bucaramanga,Bucaramanga,mensajero,8800,11600,15400,por_cotizar,2026-11-05
+1,floridablanca,Floridablanca,mensajero,9900,13200,17600,por_cotizar,2026-11-05
+1,piedecuesta,Piedecuesta,mensajero,12700,16500,21500,por_cotizar,2026-11-05
+1,giron,Girón,mensajero,10500,14300,18700,por_cotizar,2026-11-05
+2,zona2,Resto de Santander,transportadora,12100,16200,22000,por_cotizar,2026-11-05
+3,zona3,Capitales y ciudades principales,transportadora,18000,23000,33000,por_cotizar,2026-11-05
+4,zona4,Resto del país,transportadora,22000,28100,37400,por_cotizar,2026-11-05
+5,zona5,Trayecto especial,transportadora_o_472,por_cotizar,por_cotizar,por_cotizar,por_cotizar,2026-11-05

@@ -63,4 +63,32 @@ Vacío por ahora. Cuando haya al menos dos productores con datos aparecerá el f
 
 ## config.csv
 
-Pares `clave,valor`: `nombre_tienda`, `whatsapp` (con indicativo y solo dígitos: `573001129874`), `ciudad_despacho`, `nota_envio`, `formas_pago` (lista con `|`) y `max_cantidad`. Las claves `razon_social`, `nit`, `domicilio` y `correo_contacto` son datos legales del vendedor: mientras estén vacías no se muestran en el sitio.
+Pares `clave,valor`: `nombre_tienda`, `whatsapp` (con indicativo y solo dígitos: `573001129874`), `ciudad_despacho`, `nota_envio` (texto corto del pie de página), `formas_pago` (lista con `|`) y `max_cantidad`. Las claves `razon_social`, `nit`, `domicilio` y `correo_contacto` son datos legales del vendedor: mientras estén vacías no se muestran en el sitio.
+
+## tarifas_envio.csv y zonas_envio.csv (envíos por zona)
+
+El costo del envío lo calcula el sitio con estas dos tablas; la política completa está en `docs/ENVIOS.md`. Pasos para cambiar una tarifa: edita el número en `tarifas_envio.csv`, ejecuta `npm run datos` y reconstruye el sitio. Conviene revisarlas cada enero.
+
+**`tarifas_envio.csv`**: una fila por tarifa.
+
+| Columna | Qué es |
+|---|---|
+| `zona` | 1 a 5. |
+| `clave` | En zona 1, el `slug` del municipio (`bucaramanga`, `giron`). En las demás, `zona2`, `zona3`, `zona4` y `zona5`. |
+| `nombre`, `medio` | Cómo se llama la tarifa y quién entrega (texto libre). |
+| `hasta_1kg_cop`, `hasta_2kg_cop`, `hasta_5kg_cop` | Precio en pesos hasta 1, 2 y 5 kg, solo dígitos. Deben ir en aumento. En la zona 5 los tres dicen `por_cotizar`, y en ninguna otra zona puede aparecer `por_cotizar`. |
+| `mas_5kg` | Siempre `por_cotizar`. |
+| `vigencia_desde` | Fecha desde la que rige (`2026-11-05`). |
+
+Debe existir siempre la tarifa de la zona 4 (`zona4`): es la que se aplica a todo destino que no aparece en `zonas_envio.csv`.
+
+**`zonas_envio.csv`**: una fila por regla. Si un destino coincide con una regla de municipio, gana esa; si no, la del departamento; si no, la zona 4.
+
+| Columna | Qué es |
+|---|---|
+| `nivel` | `departamento` o `municipio`. |
+| `departamento`, `municipio` | Con los nombres del DANE de `src/data/divipola.json` (el formulario guarda esos nombres): `Bogotá, D.C.`, `Cartagena de Indias`, `San José de Cúcuta`, `San Andrés de Tumaco`, `Archipiélago de San Andrés, Providencia y Santa Catalina`. Las que llevan coma van entre comillas. Se compara sin importar tildes ni mayúsculas, pero el nombre tiene que existir: `npm run datos` falla si no. `municipio` va vacío en las reglas de departamento. |
+| `zona` | 1 a 5. La zona 1 solo se asigna por municipio, y cada municipio de zona 1 necesita su tarifa en `tarifas_envio.csv`. |
+| `nota` *(opcional)* | Comentario para quien edita. |
+
+El peso que se factura es el de las bolsas más 80 g de empaque (constante `EMPAQUE_G` en `src/domain/envio/tipos.ts`).

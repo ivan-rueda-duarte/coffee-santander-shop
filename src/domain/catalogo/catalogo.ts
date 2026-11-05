@@ -1,3 +1,4 @@
+import type { ReglasEnvio } from "../envio/tipos";
 import type { BuscarPrecio } from "../pedido/totales";
 import type { ConfigTienda } from "../pedido/tienda";
 import type { Cafe, Municipio, Productor, Provincia } from "./tipos";
@@ -10,6 +11,8 @@ export interface Catalogo {
   /** Solo cafés activos. */
   cafes: Cafe[];
   tienda: ConfigTienda;
+  /** Zonas y tarifas de envío (data/zonas_envio.csv y data/tarifas_envio.csv). */
+  envios: ReglasEnvio;
 }
 
 export function buscarCafe(catalogo: Pick<Catalogo, "cafes">, slug: string): Cafe | undefined {

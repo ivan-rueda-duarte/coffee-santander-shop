@@ -22,6 +22,19 @@ cafe-socorro,Café Socorro,25000,50000,,,1.jpg|2.png,Bolsa sobre yute,socorro,fi
 cafe-san-gil,Café San Gil,25000,,,250,,,san-gil,,1650,Colombia,lavado,,medio_oscuro,Chocolate|Nuez,86.5,no,,,,grano,no,si,1
 cafe-viejo,Café Viejo,25000,,,,,,socorro,,1700,Bourbon,lavado,,medio,Cereza,,no,,,,grano|molido,no,no,3
 `,
+  "tarifas_envio.csv": `zona,clave,nombre,medio,hasta_1kg_cop,hasta_2kg_cop,hasta_5kg_cop,mas_5kg,vigencia_desde
+1,bucaramanga,Bucaramanga,mensajero,8800,11600,15400,por_cotizar,2026-11-05
+2,zona2,Resto de Santander,transportadora,12100,16200,22000,por_cotizar,2026-11-05
+3,zona3,Capitales,transportadora,18000,23000,33000,por_cotizar,2026-11-05
+4,zona4,Resto del país,transportadora,22000,28100,37400,por_cotizar,2026-11-05
+5,zona5,Trayecto especial,transportadora_o_472,por_cotizar,por_cotizar,por_cotizar,por_cotizar,2026-11-05
+`,
+  "zonas_envio.csv": `nivel,departamento,municipio,zona,nota
+departamento,Santander,,2,
+municipio,Santander,Bucaramanga,1,
+municipio,"Bogotá, D.C.","Bogotá, D.C.",3,
+departamento,Amazonas,,5,
+`,
   "config.csv": `clave,valor
 nombre_tienda,De Santander
 whatsapp,573001129874
@@ -82,6 +95,13 @@ describe("cargarCatalogo con datos válidos", () => {
   });
   it("acepta puntaje con punto decimal", () => {
     expect(catalogo.cafes[0].puntajeSca).toBe(86.5);
+  });
+  it("lee las reglas de envío", () => {
+    expect(catalogo.envios.tarifas.map((t) => t.clave)).toEqual(["bucaramanga", "zona2", "zona3", "zona4", "zona5"]);
+    expect(catalogo.envios.tarifas[0].escalones).toEqual([8800, 11600, 15400]);
+    expect(catalogo.envios.tarifas[4].escalones).toBeNull();
+    expect(catalogo.envios.zonas).toHaveLength(4);
+    expect(catalogo.envios.zonas[2]).toEqual({ nivel: "municipio", departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C.", zona: 3 });
   });
   it("lee la configuración y los datos del vendedor", () => {
     expect(catalogo.tienda).toMatchObject({
@@ -259,5 +279,10 @@ describe("datos reales de data/", () => {
     expect(catalogo.municipios.every((m) => m.divipola)).toBe(true);
     expect(catalogo.cafes.every((c) => c.presentaciones.length === 2 && c.provinciaSlug)).toBe(true);
     expect(catalogo.tienda.whatsapp).toBe("573001129874");
+  });
+  it("las zonas de envío usan los nombres de divipola.json y hay tarifa para cada zona", () => {
+    const { envios } = cargarCatalogoDesdeDisco().catalogo;
+    expect(envios.tarifas.map((t) => t.zona)).toEqual(expect.arrayContaining([1, 2, 3, 4, 5]));
+    expect(envios.zonas.filter((r) => r.zona === 1).map((r) => r.municipio)).toEqual(["Bucaramanga", "Floridablanca", "Piedecuesta", "Girón"]);
   });
 });
