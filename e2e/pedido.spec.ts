@@ -51,7 +51,7 @@ test.describe("pedido", () => {
 
     // 3. Resumen: las casillas vienen sin marcar
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
-    await expect(page.getByText("El costo del envío y la forma de pago se confirman por WhatsApp")).toBeVisible();
+    await expect(page.getByText("La forma de pago se confirma por WhatsApp antes de que pagues")).toBeVisible();
     const autorizacion = page.getByRole("checkbox", { name: /Autorizo el tratamiento/ });
     const terminos = page.getByRole("checkbox", { name: /Acepto los términos/ });
     await expect(autorizacion).not.toBeChecked();
@@ -71,7 +71,7 @@ test.describe("pedido", () => {
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto).toContain("• Café Barichara (Guanentá) — Molido — 500 g × 1 = $50.000");
     expect(texto).toContain("Subtotal: $50.000");
-    expect(texto).toContain("Envío: por confirmar según la ciudad");
+    expect(texto).toContain("Envío (Bucaramanga · zona 1): $8.800");
     expect(texto).toContain("Nombre: Ana Rueda");
     expect(texto).toContain("Celular: 300 123 4567");
     expect(texto).toContain("Ciudad: Bucaramanga, Santander");
