@@ -26,8 +26,18 @@ Cada ítem marca un `TODO(dato)`: no se muestra en la interfaz hasta que exista 
 ## Envío
 - TODO(dato): campos obligatorios de envío, ahora que el pedido sale por WhatsApp (v1 pedía ciudad y pago, ambos opcionales).
 
+## Envíos por zonas (docs/ENVIOS.md)
+- TODO(dato): confirmar con el cliente la lista final de ciudades de zona 3 (`data/zonas_envio.csv`).
+- TODO(dato): confirmar los plazos de entrega por zona con el agregador (Envia.com o Mipaquete.com). Hoy la página `/envios/` publica los de `docs/ENVIOS.md` §6 como orientación (constante `PLAZOS` en `src/app/envios/page.tsx`).
+- TODO(dato): verificar la cobertura de la zona 5 en el agregador antes de prometer entrega; sin ruta privada, usar 4-72.
+- TODO(dato): decidir si 2 bolsas de 500 g deben pagar el escalón de 2 kg. Con 80 g de empaque pesan 1.080 g, así que hoy pagan el segundo escalón (Bogotá: $23.000, no $18.000). Si se quiere que paguen el primero, hay que cambiar `EMPAQUE_G` o el límite del escalón; el cálculo actual sigue `docs/ENVIOS.md` §3.
+- TODO(dato): las tarifas se revisan cada enero (IPC de las transportadoras). La columna `vigencia_desde` se valida pero no se usa para decidir qué tarifa rige.
+- TODO(dato): en la zona 5 el medio es «transportadora o 4-72»; definir cuál se usa para poder decirlo en la página de envíos.
+- TODO(dato): el texto legal de «Envíos, devoluciones y retracto» (Sanity, `docs/legal/`) debe coincidir con la política de zonas, la regla «por cotizar» y la advertencia de «reclamar en oficina».
+- TODO(dato): los pedidos de más de 5 kg y los de zona 5 se cotizan a mano por WhatsApp; falta definir quién responde y en cuánto tiempo (no se promete plazo en el sitio).
+
 ## Cumplimiento y publicación
-- TODO(dato): confirmar si los precios incluyen IVA. El resumen del pedido dice «precio total» solo del producto y que el envío se confirma por WhatsApp; la Ley 1480 pide mostrar el precio total con impuestos.
+- TODO(dato): confirmar si los precios incluyen IVA. El resumen del pedido muestra el subtotal de los cafés y el envío por zona (o «por cotizar»); la Ley 1480 pide mostrar el precio total con impuestos.
 - TODO(dato): URL pública del sitio (`NEXT_PUBLIC_SITE_URL` / variable `URL_SITIO`) para el sitemap, los enlaces canónicos y Open Graph.
 - TODO(dato): usuario de Instagram real de la marca (campo en «Ajustes del sitio» de Sanity); mientras no exista no se muestra.
 - TODO(dato): proyecto de Sanity (crearlo con `sanity login` / `sanity init`) y el webhook de despliegue (docs/DEPLOY.md).

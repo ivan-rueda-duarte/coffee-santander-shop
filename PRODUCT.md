@@ -27,8 +27,8 @@ Cada café se presenta por su provincia de Santander, y la provincia explica el 
 ## Operating Context
 
 - **Compra:** el visitante navega el catálogo, filtra por provincia, abre la ficha de un café, elige tamaño y molienda, y agrega al carrito. Al pulsar "Finalizar compra por WhatsApp" se abre WhatsApp con el pedido ya escrito; **el pedido existe solo cuando el cliente envía ese mensaje**.
-- **Cierre de venta:** se hace por chat de WhatsApp con la tienda (+57 300 112 9874). Ahí se confirman el costo y el tiempo del envío y la forma de pago.
-- **Despacho:** desde Bucaramanga a todo Colombia. El costo del envío se confirma por WhatsApp según la ciudad.
+- **Cierre de venta:** se hace por chat de WhatsApp con la tienda (+57 300 112 9874). Ahí se confirman el envío (cuando es por cotizar) y la forma de pago.
+- **Despacho:** desde Bucaramanga a todo Colombia. El costo del envío se calcula en el sitio por zona y peso (`docs/ENVIOS.md`, tarifas en `data/tarifas_envio.csv`); solo es «por cotizar» en la zona 5 y en pedidos de más de 5 kg, y en ese caso se confirma por WhatsApp antes de que el cliente pague.
 - **Pagos:** efectivo contraentrega y transferencia Bre-B. No hay pago en línea.
 
 ## Capabilities and Constraints
@@ -73,3 +73,4 @@ Cada café se presenta por su provincia de Santander, y la provincia explica el 
 - **2026-11-04: filtros que se ocultan solos.** Un filtro con menos de dos valores distintos (hoy Precio, Proceso, Productor y SCA) no se muestra.
 - **2026-11-04: datos de envío completos antes de WhatsApp.** Nombre, celular, departamento, municipio, dirección y forma de pago son obligatorios; cédula, correo, barrio e indicaciones son opcionales. Se aceptan los términos y la autorización de datos (casillas sin marcar) antes de finalizar.
 - **2026-11-04: textos de la v1 sin respaldo no se reutilizan.** La historia de la marca usa solo las afirmaciones confirmadas (fincas de familias santandereanas, recolección manual, secado al sol, tueste por lotes). Las historias de cada café vienen de Sanity cuando existan.
+- **2026-11-05: el envío se calcula por zonas.** El sitio calcula el envío con la tabla zona × escalón de peso (hasta 1, 2 y 5 kg; peso = bolsas + 80 g de empaque) y lo suma al total del pedido y al mensaje de WhatsApp, sin API de transportadora ni base de datos. Es «por cotizar» solo en la zona 5 (trayecto especial) y en pedidos de más de 5 kg: el total se rotula «sin envío» y el valor se confirma por WhatsApp antes de pagar. Los destinos que no aparecen en `data/zonas_envio.csv` son zona 4. El cajón del carrito no conoce el destino y dice «se calcula al elegir tu ciudad». Los plazos se publican solo como orientación, sin fechas prometidas. El «pedido mínimo sugerido» es informativo. La página `/envios/` muestra las tarifas generadas desde el CSV.
