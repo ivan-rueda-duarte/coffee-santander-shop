@@ -3,14 +3,14 @@
 Cada ítem marca un `TODO(dato)`: no se muestra en la interfaz hasta que exista el dato real.
 
 ## Datos del vendedor (Ley 1480 de 2011)
-- TODO(dato): razón social, NIT, domicilio y contacto del vendedor (footer y resumen del pedido).
+- Datos del vendedor cargados en `data/config.csv` (2026-11-05): De Santander SAS, NIT 902121184, desantander.tienda@gmail.com. TODO(dato): domicilio (el pie y el resumen no muestran los datos hasta que estén los cuatro) y dígito de verificación del NIT, si se quiere mostrar.
 - TODO(dato): textos legales (términos, privacidad, envíos y devoluciones, retracto). Los redacta el cliente.
 - TODO(dato): política de datos (Ley 1581 de 2012). Debe mencionar que el mensaje pasa por WhatsApp (Meta).
 
 ## Catálogo
 - TODO(dato): fuente y fecha de los puntajes SCA (hoy 86–91 sin verificar). Sin ellos no hay sello ni filtro.
 - TODO(dato): nombre de finca o productor de cada café (campo vacío en los 5).
-- TODO(dato): registro sanitario INVIMA de cada café.
+- Café Casa Martínez: notificación sanitaria NSA-003219-2017 (cargada 2026-11-05). TODO(dato): registro o notificación sanitaria de Café Arreboles, y su titular/fabricante.
 - TODO(dato): decidir si "Lavado tradicional / controlado / premium / especial" son procesos distintos. Mientras tanto se muestra "Lavado".
 - TODO(dato): grado de molienda (¿"Molido" único o espresso / filtrado / prensa francesa?).
 - TODO(dato): tabla de nota de cata → perfil de taza (Miel y Canela son ambiguas).
