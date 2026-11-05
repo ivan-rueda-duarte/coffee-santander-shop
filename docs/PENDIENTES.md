@@ -50,3 +50,10 @@ Cada ítem marca un `TODO(dato)`: no se muestra en la interfaz hasta que exista 
 - TODO(dato): usuario de Instagram real de la marca (campo en «Ajustes del sitio» de Sanity); mientras no exista no se muestra.
 - TODO(dato): proyecto de Sanity (crearlo con `sanity login` / `sanity init`) y el webhook de despliegue (docs/DEPLOY.md).
 - TODO(dato): fotografías de producto en contexto (yute, madera, piedra). Hasta entonces las tarjetas usan una bolsa ilustrada.
+
+## Textos del inicio y la confirmación (LEG-013 a LEG-020)
+- TODO(dato): decidir si el descriptor «café de especialidad» se mantiene (ningún puntaje SCA está verificado) o pasa a «café de origen». Aparece en `src/app/layout.tsx`, el pie, el inicio y la Historia.
+- TODO(dato): soporte del productor para altitud, variedad y proceso de cada café; el texto «En cada café verás…» solo es cierto si los cinco campos existen.
+- TODO(dato): confirmar que la marca tuesta directamente (el texto dice «lo tostamos por lotes»).
+- TODO(dato): decidir el momento de formación del contrato (al enviar el mensaje, o al aceptar el total). Los textos de confirmación ya siguen la segunda opción; `PRODUCT.md` («el pedido existe cuando el cliente envía el mensaje») aún dice lo contrario.
+- TODO(dato): frase opcional «Si no lo aceptas, no pagas nada» en el caso por cotizar.

@@ -64,8 +64,8 @@ test.describe("pedido", () => {
     await page.getByRole("button", { name: "Finalizar compra" }).click();
 
     // 4. Confirmación
-    await expect(page.getByRole("heading", { name: "Tu pedido está listo en WhatsApp" })).toBeVisible();
-    const enlace = page.getByRole("link", { name: /Abrir WhatsApp/ });
+    await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
+    const enlace = page.getByRole("link", { name: /Enviar por WhatsApp/ });
     const href = (await enlace.getAttribute("href")) ?? "";
     expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
     const texto = decodeURIComponent(href.split("?text=")[1]);

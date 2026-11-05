@@ -1,6 +1,5 @@
 import type { ContenidoHistoria, ContenidoInicio } from "@/application/puertos";
 import type { VistaCatalogo } from "@/application/casos-uso/obtener-catalogo";
-import { etiquetaCafes } from "@/domain/catalogo/filtros";
 import { BotonEnlace } from "../marca/boton";
 import { Antetitulo, BarraAcento } from "../marca/etiquetas";
 import { Foto, Franja, Hoja, Textura } from "../marca/superficies";
@@ -22,11 +21,10 @@ export function Titular({ nivel: Nivel = "h2", antes, remate, className }: { niv
 
 export function Portada({ catalogo, contenido }: { catalogo: VistaCatalogo; contenido: ContenidoInicio | null }) {
   const n = catalogo.cafes.length;
-  const k = catalogo.provinciasActivas.length;
   const bajada =
     contenido?.bajada ??
     (n > 0
-      ? `${etiquetaCafes(n)} de especialidad de ${k === 1 ? "una provincia" : `${k} provincias`} de Santander, de marca propia. Elige por provincia y pide por WhatsApp.`
+      ? "Café de especialidad de marca propia, de provincias de Santander. Elige tu provincia y pide por WhatsApp."
       : "Estamos preparando la próxima cosecha. Escríbenos por WhatsApp y te avisamos cuando haya café.");
 
   return (
@@ -63,7 +61,7 @@ const textoPasos = (catalogo: VistaCatalogo, contenido: ContenidoInicio | null) 
   const pagosTexto = pagos.length > 1 ? `${pagos.slice(0, -1).join(", ")} y ${pagos[pagos.length - 1]}` : pagos[0];
   return [
     { titulo: "Elige tus cafés", texto: `Cada café viene en bolsa de ${lista}, en grano entero o molido. El precio de cada bolsa está en su tarjeta y en su ficha.` },
-    { titulo: "Envía el pedido por WhatsApp", texto: "Completas tus datos de envío y se abre WhatsApp con tu pedido ya escrito. El pedido se hace cuando lo envías." },
+    { titulo: "Envía el pedido por WhatsApp", texto: "Completas tus datos de envío y se abre WhatsApp con tu pedido ya escrito. Con ese mensaje nos pides el pedido." },
     { titulo: "Confirmamos envío y pago", texto: `Despachamos desde ${tienda.ciudadDespacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con ${pagosTexto}.` },
   ];
 };
@@ -100,8 +98,8 @@ export function ComoPedir({ catalogo, contenido }: { catalogo: VistaCatalogo; co
 // Solo afirmaciones confirmadas por la marca (PRODUCT.md, «Brand Commitments»).
 const HISTORIA_RESPALDO = {
   parrafos: [
-    "De Santander es una marca propia de café de especialidad. Trabajamos con fincas de familias productoras santandereanas con tradición cafetera.",
-    "Te contamos de dónde viene cada taza: provincia, municipio, altitud, variedad y proceso.",
+    "De Santander es una marca propia de café de especialidad. Compramos a fincas de familias santandereanas con tradición cafetera, lo tostamos por lotes y lo enviamos a todo Colombia.",
+    "En cada café verás la provincia, el municipio, la altitud, la variedad y el proceso.",
   ],
   proceso: [
     { titulo: "Cosecha", texto: "Recolección manual en el punto de maduración." },

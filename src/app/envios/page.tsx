@@ -58,7 +58,7 @@ export default async function PaginaEnvios() {
         <p className="body mt-2 max-w-2xl text-ink-muted">
           El peso incluye las bolsas más {EMPAQUE_G} g de empaque, y el escalón también lo cuenta: hasta 1 kg de café paga el escalón de 1 kg, hasta 2 kg el de 2 kg y hasta 5 kg el de 5 kg. Una bolsa suelta, dos de 250 g o dos de 500 g pagan el escalón de 1 kg.
         </p>
-        <div className="mt-6 overflow-x-auto rounded-lg border border-line">
+        <div className="mt-6 overflow-x-auto rounded-lg border border-line" role="region" aria-label="Tarifas de envío" tabIndex={0}>
           <table className="w-full min-w-[44rem] border-collapse text-left text-sm" data-testid="tabla-envios">
             <caption className="sr-only">Tarifas de envío en pesos colombianos por zona y escalón de peso</caption>
             <thead className="bg-surface-sunken">

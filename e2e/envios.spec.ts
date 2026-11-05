@@ -52,8 +52,8 @@ async function completarYFinalizar(page: Page) {
   await page.getByRole("checkbox", { name: /Autorizo el tratamiento/ }).check();
   await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
   await page.getByRole("button", { name: "Finalizar compra" }).click();
-  await expect(page.getByRole("heading", { name: "Tu pedido está listo en WhatsApp" })).toBeVisible();
-  const href = (await page.getByRole("link", { name: /Abrir WhatsApp/ }).getAttribute("href")) ?? "";
+  await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
+  const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
   const texto = decodeURIComponent(href.split("?text=")[1]);
   expect(texto.length).toBeLessThan(2000);
@@ -157,8 +157,8 @@ test.describe("envío por zonas: por cotizar", () => {
     await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
     await page.getByRole("button", { name: "Finalizar compra" }).click();
     await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme cuando aceptas ese valor.");
-    await expect(page.getByTestId("texto-confirmacion")).not.toContainText("el pedido se hace cuando lo envías");
-    const href = (await page.getByRole("link", { name: /Abrir WhatsApp/ }).getAttribute("href")) ?? "";
+    await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme");
+    const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto.length).toBeLessThan(2000);
     expect(texto).toContain("Envío: POR COTIZAR (zona especial)");
@@ -193,7 +193,8 @@ test.describe("envío por zonas: por cotizar", () => {
     await page.getByRole("checkbox", { name: /Autorizo el tratamiento/ }).check();
     await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
     await page.getByRole("button", { name: "Finalizar compra" }).click();
-    await expect(page.getByTestId("texto-confirmacion")).toContainText("el pedido se hace cuando lo envías");
+    await expect(page.getByTestId("texto-confirmacion")).toContainText("Después te respondemos para confirmarlo");
+    await expect(page.getByTestId("texto-confirmacion")).not.toContainText("Tu pedido queda en firme");
     await expect(page.getByTestId("texto-confirmacion")).not.toContainText("queda en firme");
   });
 });

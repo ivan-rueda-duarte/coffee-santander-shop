@@ -276,20 +276,20 @@ function Contenido() {
 
       {paso === "confirmacion" && resultado && (
         <section aria-labelledby="t-confirmacion" className="max-w-2xl">
-          <h1 id="t-confirmacion" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido está listo en WhatsApp</h1>
+          <h1 id="t-confirmacion" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido está listo para enviar por WhatsApp</h1>
           {resultado.envio.tipo === "por_cotizar" ? (
             <p className="body mt-3" data-testid="texto-confirmacion">
-              Pulsa el botón y envía el mensaje desde WhatsApp. Con este mensaje nos pides el pedido. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.
+              Pulsa «Enviar por WhatsApp» y manda el mensaje. Con este mensaje nos pides el pedido. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.
             </p>
           ) : (
             <p className="body mt-3" data-testid="texto-confirmacion">
-              Pulsa el botón y envía el mensaje desde WhatsApp para hacer el pedido: <strong>el pedido se hace cuando lo envías</strong>. Te respondemos para confirmar el envío y la forma de pagar.
+              Pulsa «Enviar por WhatsApp» y manda el mensaje. Con él nos pides el pedido. Después te respondemos para confirmarlo y acordar el pago.
             </p>
           )}
           {resultado.indicacionesResumidas && <p className="caption mt-2 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}
           <div className="mt-6 flex flex-wrap gap-3">
             <BotonEnlace href={resultado.enlace} tamano="lg" target="_blank" rel="noopener noreferrer">
-              <IconoWhatsapp className="ds-btn__icon" /> Abrir WhatsApp
+              <IconoWhatsapp className="ds-btn__icon" /> Enviar por WhatsApp
             </BotonEnlace>
             <Boton variante="secundario" tamano="lg" onClick={copiar}>
               <IconoCopiar className="ds-btn__icon" /> Copiar mensaje
