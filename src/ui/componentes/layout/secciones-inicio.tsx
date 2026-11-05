@@ -64,7 +64,7 @@ const textoPasos = (catalogo: VistaCatalogo, contenido: ContenidoInicio | null) 
   return [
     { titulo: "Elige tus cafés", texto: `Cada café viene en bolsa de ${lista}, en grano entero o molido. El precio de cada bolsa está en su tarjeta y en su ficha.` },
     { titulo: "Envía el pedido por WhatsApp", texto: "Completas tus datos de envío y se abre WhatsApp con tu pedido ya escrito. El pedido se hace cuando lo envías." },
-    { titulo: "Confirmamos envío y pago", texto: `Despachamos desde ${tienda.ciudadDespacho} a todo Colombia y te decimos el costo del envío por WhatsApp. Pagas con ${pagosTexto}.` },
+    { titulo: "Confirmamos envío y pago", texto: `Despachamos desde ${tienda.ciudadDespacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con ${pagosTexto}.` },
   ];
 };
 

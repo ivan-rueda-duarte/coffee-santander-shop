@@ -5,6 +5,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
 import { normalizar } from "@/domain/comun/slug";
 import { crearEsquemaEnvio, validar } from "@/domain/pedido/envio";
+import { calcularEnvio } from "@/domain/envio/envio";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 import { useAvisos } from "../layout/avisos";
@@ -149,9 +150,15 @@ function Contenido() {
   }
 
   const destino = valores.departamento && valores.municipio ? { departamento: valores.departamento, municipio: valores.municipio } : null;
+  const envioPorCotizar = paso === "resumen" && destino !== null && totales.lineas.length > 0 && calcularEnvio(totales.lineas, destino, catalogo.envios).tipo === "por_cotizar";
   const resumenTotales = (
     <div className="rounded-lg bg-surface-raised p-5">
       <TotalesPedido totales={totales} destino={paso === "carrito" ? null : destino} />
+      {envioPorCotizar && (
+        <p className="caption mt-3 text-ink-muted" data-testid="aviso-por-cotizar">
+          Este valor no incluye el envío. Te lo informamos por WhatsApp y tú decides si lo aceptas antes de pagar.
+        </p>
+      )}
     </div>
   );
 
@@ -270,9 +277,15 @@ function Contenido() {
       {paso === "confirmacion" && resultado && (
         <section aria-labelledby="t-confirmacion" className="max-w-2xl">
           <h1 id="t-confirmacion" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido está listo en WhatsApp</h1>
-          <p className="body mt-3">
-            Pulsa el botón y envía el mensaje desde WhatsApp para hacer el pedido: <strong>el pedido se hace cuando lo envías</strong>. {resultado.envio.tipo === "por_cotizar" ? "Te respondemos con el valor del envío, que te confirmamos antes de que pagues, y la forma de pagar." : "Te respondemos para confirmar el envío y la forma de pagar."}
-          </p>
+          {resultado.envio.tipo === "por_cotizar" ? (
+            <p className="body mt-3" data-testid="texto-confirmacion">
+              Pulsa el botón y envía el mensaje desde WhatsApp. Con este mensaje nos pides el pedido. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.
+            </p>
+          ) : (
+            <p className="body mt-3" data-testid="texto-confirmacion">
+              Pulsa el botón y envía el mensaje desde WhatsApp para hacer el pedido: <strong>el pedido se hace cuando lo envías</strong>. Te respondemos para confirmar el envío y la forma de pagar.
+            </p>
+          )}
           {resultado.indicacionesResumidas && <p className="caption mt-2 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}
           <div className="mt-6 flex flex-wrap gap-3">
             <BotonEnlace href={resultado.enlace} tamano="lg" target="_blank" rel="noopener noreferrer">

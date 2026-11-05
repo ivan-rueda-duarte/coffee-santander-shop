@@ -123,7 +123,7 @@ export function FormularioEnvio({
 
       <fieldset className="sm:col-span-2" aria-describedby={errores.formaPago ? "formaPago-error" : undefined}>
         <legend className="text-sm font-bold">Forma de pago</legend>
-        <p className="caption text-ink-muted">Se confirma por WhatsApp; no se paga en esta página.</p>
+        <p className="caption text-ink-muted">Confirmamos el pago por WhatsApp. En esta página no se paga.</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {formasPago.map((p) => (
             <label key={p} className="cursor-pointer">

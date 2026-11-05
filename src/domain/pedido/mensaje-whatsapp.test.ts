@@ -95,12 +95,16 @@ describe("construirMensaje", () => {
       Ciudad: Leticia, Amazonas
       Dirección: Calle 45 # 12-30 · Barrio: Cabecera
       Indicaciones: Dejar en portería
-      Forma de pago: Transferencia Bre-B"
+      Forma de pago: Transferencia Bre-B
+
+      Quedo atento al valor del envío para confirmar mi pedido."
     `);
   });
   it("por cotizar por peso dice más de 5 kg", () => {
     const { texto } = construirMensaje({ ...pedido, costoEnvio: porCotizar("mas_de_5kg") });
     expect(texto).toContain("Envío: POR COTIZAR (más de 5 kg)\nTotal sin envío: $125.000");
+    expect(texto.endsWith("\n\nQuedo atento al valor del envío para confirmar mi pedido.")).toBe(true);
+    expect(construirMensaje(pedido).texto).not.toContain("Quedo atento");
   });
   it("omite los datos opcionales que no hay", () => {
     const { texto } = construirMensaje({ ...pedido, envio: { ...envio, barrio: undefined, indicaciones: undefined } });

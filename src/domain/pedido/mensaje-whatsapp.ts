@@ -69,6 +69,7 @@ function cuerpo(p: PedidoMensaje, indicaciones: string | undefined): string {
     `Dirección: ${direccion}`,
     ...(indicaciones ? [`Indicaciones: ${indicaciones}`] : []),
     `Forma de pago: ${e.formaPago}`,
+    ...(p.costoEnvio.tipo === "por_cotizar" ? ["", "Quedo atento al valor del envío para confirmar mi pedido."] : []),
   ].join("\n");
 }
 
