@@ -5,10 +5,12 @@ import {
   LIMITE_MAXIMO_G,
   ZONA_ESPECIAL,
   ZONA_POR_DEFECTO,
+  ZONAS,
   type DestinoEnvio,
   type ItemPesable,
   type ReglasEnvio,
   type ResultadoEnvio,
+  type Zona,
   type ZonaResuelta,
 } from "./tipos";
 
@@ -66,3 +68,27 @@ export const TEXTO_POR_COTIZAR = {
   zona_especial: "zona especial",
   mas_de_5kg: "más de 5 kg",
 } as const;
+
+export interface CoberturaZona {
+  zona: Zona;
+  /** Departamentos completos que caen en esta zona. */
+  departamentos: string[];
+  /** Municipios con regla propia en esta zona. */
+  municipios: string[];
+  /** Zona 5: municipios de zona 4 dentro de un departamento de zona 5 (Florencia, Quibdó, Arauca). */
+  excepciones: string[];
+}
+
+/** Resume data/zonas_envio.csv por zona, para la página de envíos. Respeta el orden del archivo. */
+export function coberturaPorZona(reglas: Pick<ReglasEnvio, "zonas">): CoberturaZona[] {
+  const deZona5 = new Set(reglas.zonas.filter((r) => r.nivel === "departamento" && r.zona === ZONA_ESPECIAL).map((r) => normalizar(r.departamento)));
+  return ZONAS.map((zona) => ({
+    zona,
+    departamentos: reglas.zonas.filter((r) => r.nivel === "departamento" && r.zona === zona).map((r) => r.departamento),
+    municipios: reglas.zonas.filter((r) => r.nivel === "municipio" && r.zona === zona).map((r) => nombreDestino(r.municipio ?? "")),
+    excepciones:
+      zona === ZONA_ESPECIAL
+        ? reglas.zonas.filter((r) => r.nivel === "municipio" && r.zona === ZONA_POR_DEFECTO && deZona5.has(normalizar(r.departamento))).map((r) => nombreDestino(r.municipio ?? ""))
+        : [],
+  }));
+}

@@ -34,7 +34,12 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
             </div>
             <div>
               <dt className="overline text-eyebrow">Envíos</dt>
-              <dd className="mt-1 text-ink-muted">{tienda.notaEnvio}</dd>
+              <dd className="mt-1 text-ink-muted">
+                {tienda.notaEnvio}{" "}
+                <Link href="/envios/" className="font-semibold text-ink underline underline-offset-4">
+                  Zonas, tarifas y plazos
+                </Link>
+              </dd>
             </div>
             <div>
               <dt className="overline text-eyebrow">Pagos</dt>

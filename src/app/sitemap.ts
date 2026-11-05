@@ -10,6 +10,6 @@ const LEGALES = ["terminos", "privacidad", "envios-devoluciones", "vendedor"];
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!URL_SITIO) return [];
   const catalogo = await cargarCatalogo();
-  const rutas = ["/", "/cafes/", ...catalogo.cafes.map((c) => `/cafes/${c.slug}/`), ...provinciasConCafes(catalogo).map((p) => `/provincias/${p.slug}/`), ...LEGALES.map((s) => `/legal/${s}/`)];
+  const rutas = ["/", "/cafes/", "/envios/", ...catalogo.cafes.map((c) => `/cafes/${c.slug}/`), ...provinciasConCafes(catalogo).map((p) => `/provincias/${p.slug}/`), ...LEGALES.map((s) => `/legal/${s}/`)];
   return rutas.map((r) => ({ url: `${URL_SITIO}${r}` }));
 }

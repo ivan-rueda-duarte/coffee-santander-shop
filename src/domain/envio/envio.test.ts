@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { REGLAS_ENVIO_PRUEBA as REGLAS } from "../pruebas/fixtures";
-import { calcularEnvio, calcularPesoFacturable, nombreDestino, resolverZona, totalConEnvio } from "./envio";
+import { calcularEnvio, coberturaPorZona, calcularPesoFacturable, nombreDestino, resolverZona, totalConEnvio } from "./envio";
 import { EMPAQUE_G, type ItemPesable } from "./tipos";
 
 const bolsas = (gramos: number, cantidad = 1): ItemPesable => ({ gramos, cantidad });
@@ -124,5 +124,22 @@ describe("nombreDestino", () => {
   it("quita lo que va después de la coma", () => {
     expect(nombreDestino("Bogotá, D.C.")).toBe("Bogotá");
     expect(nombreDestino("Girón")).toBe("Girón");
+  });
+});
+
+describe("coberturaPorZona", () => {
+  const cobertura = coberturaPorZona(REGLAS);
+  it("agrupa por zona sin perder ninguna", () => {
+    expect(cobertura.map((c) => c.zona)).toEqual([1, 2, 3, 4, 5]);
+  });
+  it("lista municipios y departamentos de cada zona", () => {
+    expect(cobertura[0].municipios).toEqual(["Bucaramanga", "Girón"]);
+    expect(cobertura[1].departamentos).toEqual(["Santander"]);
+    expect(cobertura[2].municipios).toContain("Bogotá");
+    expect(cobertura[4].departamentos).toEqual(["Caquetá", "Arauca", "Chocó", "Amazonas"]);
+  });
+  it("la zona 5 informa sus excepciones de zona 4", () => {
+    expect(cobertura[4].excepciones).toEqual(["Florencia", "Arauca", "Quibdó"]);
+    expect(cobertura[2].excepciones).toEqual([]);
   });
 });
