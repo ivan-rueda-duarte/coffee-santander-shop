@@ -1,6 +1,8 @@
 import type { Catalogo } from "@/domain/catalogo/catalogo";
 import { buscarCafe, crearBuscadorDePrecios } from "@/domain/catalogo/catalogo";
 import { ETIQUETA_MOLIENDA } from "@/domain/catalogo/tipos";
+import { calcularEnvio, totalConEnvio } from "@/domain/envio/envio";
+import type { ResultadoEnvio } from "@/domain/envio/tipos";
 import type { LineaCarrito } from "@/domain/pedido/carrito";
 import { crearEsquemaEnvio, esquemaConsentimientos, validar } from "@/domain/pedido/envio";
 import { construirEnlace, construirMensaje } from "@/domain/pedido/mensaje-whatsapp";
@@ -21,6 +23,10 @@ export interface PedidoListo {
   /** true si hubo que acortar las indicaciones para no pasar de 2.000 caracteres. */
   indicacionesResumidas: boolean;
   totales: Totales;
+  /** Costo de envío calculado con el departamento y el municipio del formulario. */
+  envio: ResultadoEnvio;
+  /** Subtotal más envío; si el envío va por cotizar, es el total sin envío. */
+  totalCop: number;
 }
 
 export type ResultadoPedido =
@@ -64,6 +70,7 @@ export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido): Resu
   if (Object.keys(errores).length || !envio.ok) return { ok: false, errores, lineas: problemasLineas };
 
   const totales = calcularTotales(entrada.lineas, crearBuscadorDePrecios(catalogo));
+  const costoEnvio = calcularEnvio(totales.lineas, envio.datos, catalogo.envios);
   const { texto, indicacionesResumidas } = construirMensaje({
     nombreTienda: tienda.nombre,
     lineas: totales.lineas.map((l) => {
@@ -71,7 +78,8 @@ export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido): Resu
       return { nombreCafe: cafe.nombre, provincia: cafe.provincia, molienda: l.molienda, gramos: l.gramos, cantidad: l.cantidad, totalCop: l.totalCop };
     }),
     subtotalCop: totales.subtotalCop,
+    costoEnvio,
     envio: envio.datos,
   });
-  return { ok: true, pedido: { texto, enlace: construirEnlace(tienda.whatsapp, texto), indicacionesResumidas, totales } };
+  return { ok: true, pedido: { texto, enlace: construirEnlace(tienda.whatsapp, texto), indicacionesResumidas, totales, envio: costoEnvio, totalCop: totalConEnvio(totales.subtotalCop, costoEnvio).totalCop } };
 }

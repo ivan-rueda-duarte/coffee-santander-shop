@@ -1,4 +1,6 @@
 import { formatearCOP } from "../comun/dinero";
+import { nombreDestino, TEXTO_POR_COTIZAR, totalConEnvio } from "../envio/envio";
+import type { ResultadoEnvio } from "../envio/tipos";
 import { ETIQUETA_MOLIENDA, type Molienda } from "../catalogo/tipos";
 import { formatearCelular, type DatosEnvio } from "./envio";
 
@@ -18,6 +20,8 @@ export interface PedidoMensaje {
   nombreTienda: string;
   lineas: readonly LineaMensaje[];
   subtotalCop: number;
+  /** Costo de envío calculado para el destino del formulario. */
+  costoEnvio: ResultadoEnvio;
   envio: DatosEnvio;
 }
 
@@ -32,6 +36,20 @@ function lineaDeProducto(l: LineaMensaje): string {
   return `• ${l.nombreCafe}${origen} — ${ETIQUETA_MOLIENDA[l.molienda]} — ${l.gramos} g × ${l.cantidad} = ${formatearCOP(l.totalCop)}`;
 }
 
+/** Líneas de subtotal, envío y total (docs/ENVIOS.md §4). */
+function lineasDeTotales(p: PedidoMensaje): string[] {
+  const c = p.costoEnvio;
+  const { totalCop } = totalConEnvio(p.subtotalCop, c);
+  if (c.tipo === "por_cotizar") {
+    return [`Subtotal: ${formatearCOP(p.subtotalCop)}`, `Envío: POR COTIZAR (${TEXTO_POR_COTIZAR[c.motivo]})`, `Total sin envío: ${formatearCOP(totalCop)}`];
+  }
+  return [
+    `Subtotal: ${formatearCOP(p.subtotalCop)}`,
+    `Envío (${nombreDestino(p.envio.municipio)} · zona ${c.zona}): ${formatearCOP(c.valorCop)}`,
+    `Total: ${formatearCOP(totalCop)}`,
+  ];
+}
+
 function cuerpo(p: PedidoMensaje, indicaciones: string | undefined): string {
   const e = p.envio;
   const direccion = e.barrio ? `${e.direccion} · Barrio: ${e.barrio}` : e.direccion;
@@ -40,8 +58,7 @@ function cuerpo(p: PedidoMensaje, indicaciones: string | undefined): string {
     "",
     ...p.lineas.map(lineaDeProducto),
     "",
-    `Subtotal: ${formatearCOP(p.subtotalCop)}`,
-    "Envío: por confirmar según la ciudad",
+    ...lineasDeTotales(p),
     "",
     "Envío a:",
     `Nombre: ${e.nombre}`,

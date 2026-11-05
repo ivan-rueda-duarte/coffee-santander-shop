@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { construirEnlace, construirMensaje, formatearWhatsapp, LIMITE_MENSAJE, type PedidoMensaje } from "./mensaje-whatsapp";
 import type { DatosEnvio } from "./envio";
+import type { ResultadoEnvio } from "../envio/tipos";
 
 const envio: DatosEnvio = {
   nombre: "Ana Rueda",
@@ -22,8 +23,10 @@ const pedido: PedidoMensaje = {
     { nombreCafe: "Café Oiba", provincia: "Comunera", molienda: "molido", gramos: 250, cantidad: 1, totalCop: 25000 },
   ],
   subtotalCop: 125000,
+  costoEnvio: { tipo: "tarifa", zona: 1, clave: "bucaramanga", pesoFacturableG: 1330, escalonKg: 2, valorCop: 11600 },
   envio,
 };
+const porCotizar = (motivo: "zona_especial" | "mas_de_5kg"): ResultadoEnvio => ({ tipo: "por_cotizar", zona: 5, pesoFacturableG: 1330, motivo });
 
 describe("construirMensaje", () => {
   it("sigue la plantilla del pedido", () => {
@@ -36,7 +39,8 @@ describe("construirMensaje", () => {
       • Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000
 
       Subtotal: $125.000
-      Envío: por confirmar según la ciudad
+      Envío (Bucaramanga · zona 1): $11.600
+      Total: $136.600
 
       Envío a:
       Nombre: Ana Rueda
@@ -46,6 +50,57 @@ describe("construirMensaje", () => {
       Indicaciones: Dejar en portería
       Forma de pago: Transferencia Bre-B"
     `);
+  });
+  it("con tarifa suma el envío al total (Bogotá, D.C. se muestra como Bogotá)", () => {
+    const { texto } = construirMensaje({
+      ...pedido,
+      subtotalCop: 96000,
+      costoEnvio: { tipo: "tarifa", zona: 3, clave: "zona3", pesoFacturableG: 580, escalonKg: 1, valorCop: 18000 },
+      envio: { ...envio, departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C." },
+    });
+    expect(texto).toMatchInlineSnapshot(`
+      "¡Hola, De Santander! Quiero finalizar mi pedido
+
+      • Café Barichara (Guanentá) — Grano entero — 500 g × 2 = $100.000
+      • Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000
+
+      Subtotal: $96.000
+      Envío (Bogotá · zona 3): $18.000
+      Total: $114.000
+
+      Envío a:
+      Nombre: Ana Rueda
+      Celular: 300 123 4567
+      Ciudad: Bogotá, D.C., Bogotá, D.C.
+      Dirección: Calle 45 # 12-30 · Barrio: Cabecera
+      Indicaciones: Dejar en portería
+      Forma de pago: Transferencia Bre-B"
+    `);
+  });
+  it("por cotizar (zona especial) no suma envío y rotula el total", () => {
+    const { texto } = construirMensaje({ ...pedido, subtotalCop: 96000, costoEnvio: porCotizar("zona_especial"), envio: { ...envio, departamento: "Amazonas", municipio: "Leticia" } });
+    expect(texto).toMatchInlineSnapshot(`
+      "¡Hola, De Santander! Quiero finalizar mi pedido
+
+      • Café Barichara (Guanentá) — Grano entero — 500 g × 2 = $100.000
+      • Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000
+
+      Subtotal: $96.000
+      Envío: POR COTIZAR (zona especial)
+      Total sin envío: $96.000
+
+      Envío a:
+      Nombre: Ana Rueda
+      Celular: 300 123 4567
+      Ciudad: Leticia, Amazonas
+      Dirección: Calle 45 # 12-30 · Barrio: Cabecera
+      Indicaciones: Dejar en portería
+      Forma de pago: Transferencia Bre-B"
+    `);
+  });
+  it("por cotizar por peso dice más de 5 kg", () => {
+    const { texto } = construirMensaje({ ...pedido, costoEnvio: porCotizar("mas_de_5kg") });
+    expect(texto).toContain("Envío: POR COTIZAR (más de 5 kg)\nTotal sin envío: $125.000");
   });
   it("omite los datos opcionales que no hay", () => {
     const { texto } = construirMensaje({ ...pedido, envio: { ...envio, barrio: undefined, indicaciones: undefined } });

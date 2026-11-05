@@ -123,10 +123,30 @@ describe("prepararPedido", () => {
     expect(r.pedido.totales.bolsas).toBe(3);
     expect(r.pedido.texto).toContain("• Café Málaga (García Rovira) — Grano entero — 500 g × 2 = $100.000");
     expect(r.pedido.texto).toContain("• Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000");
-    expect(r.pedido.texto).toContain("Subtotal: $125.000");
+    expect(r.pedido.texto).toContain("Subtotal: $125.000\nEnvío (Bucaramanga · zona 1): $11.600\nTotal: $136.600");
+    expect(r.pedido.envio).toMatchObject({ tipo: "tarifa", zona: 1, pesoFacturableG: 1330, valorCop: 11600 });
+    expect(r.pedido.totalCop).toBe(136600);
     expect(r.pedido.enlace.startsWith("https://wa.me/573001129874?text=")).toBe(true);
     expect(decodeURIComponent(r.pedido.enlace.split("?text=")[1])).toBe(r.pedido.texto);
     expect(r.pedido.indicacionesResumidas).toBe(false);
+  });
+  it("calcula el envío con el departamento y el municipio del formulario", () => {
+    const bogota = { ...envioValido, departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C." };
+    const dos250 = [{ cafeSlug: OIBA.slug, gramos: 250, molienda: "grano" as const, cantidad: 2 }];
+    const r = prepararPedido(catalogo, entrada({ lineas: dos250, envio: bogota }));
+    expect(r.ok && r.pedido.texto).toContain("Subtotal: $50.000\nEnvío (Bogotá · zona 3): $18.000\nTotal: $68.000");
+    expect(r.ok && r.pedido.totalCop).toBe(68000);
+  });
+  it("en zona especial el envío va por cotizar y el total no lo incluye", () => {
+    const leticia = { ...envioValido, departamento: "Amazonas", municipio: "Leticia" };
+    const r = prepararPedido(catalogo, entrada({ envio: leticia }));
+    expect(r.ok && r.pedido.texto).toContain("Subtotal: $125.000\nEnvío: POR COTIZAR (zona especial)\nTotal sin envío: $125.000");
+    expect(r.ok && r.pedido.envio).toMatchObject({ tipo: "por_cotizar", motivo: "zona_especial" });
+    expect(r.ok && r.pedido.totalCop).toBe(125000);
+  });
+  it("de más de 5 kg va por cotizar aunque la zona tenga tarifa", () => {
+    const r = prepararPedido(catalogo, entrada({ lineas: [{ cafeSlug: SOCORRO.slug, gramos: 500, molienda: "grano", cantidad: 11 }] }));
+    expect(r.ok && r.pedido.texto).toContain("Envío: POR COTIZAR (más de 5 kg)");
   });
   it("rechaza un pedido vacío", () => {
     const r = prepararPedido(catalogo, entrada({ lineas: [] }));
