@@ -52,6 +52,8 @@ test.describe("pedido", () => {
     // 3. Resumen: las casillas vienen sin marcar
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByText("La forma de pago se confirma por WhatsApp antes de que pagues")).toBeVisible();
+    // D5 (microcopy §5.3): la exclusión del retracto se informa antes de las casillas, solo en el resumen.
+    await expect(page.getByTestId("aviso-retracto")).toHaveText("El café es un alimento: no admite retracto. Si llega dañado o equivocado, te respondemos con la garantía.");
     const autorizacion = page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ });
     const terminos = page.getByRole("checkbox", { name: /Acepto los términos/ });
     await expect(autorizacion).not.toBeChecked();

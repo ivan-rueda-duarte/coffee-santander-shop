@@ -240,6 +240,8 @@ function Contenido() {
           </ul>
           <div className="mt-4">{resumenTotales}</div>
           <p className="caption mt-3 text-ink-muted">La forma de pago se confirma por WhatsApp antes de que pagues. Más en <Link className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos: zonas, tarifas y plazos</Link> y en <Link className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones y retracto</Link>.</p>
+          {/* D5 (LEG-064): texto exacto de docs/legal/microcopy-legal.md §5.3. Solo aquí; no va en la ficha ni en el carrito. */}
+          <p className="caption mt-2 text-ink-muted" data-testid="aviso-retracto">El café es un alimento: no admite retracto. Si llega dañado o equivocado, te respondemos con la garantía.</p>
 
           <div className="mt-6 rounded-lg border border-line p-5 text-sm">
             <div className="flex items-start justify-between gap-4">
