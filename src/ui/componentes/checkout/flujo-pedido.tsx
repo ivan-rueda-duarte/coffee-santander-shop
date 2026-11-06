@@ -269,7 +269,7 @@ function Contenido() {
             <Boton variante="secundario" onClick={() => irA("envio")}>
               <IconoFlechaAtras className="ds-btn__icon" /> Volver
             </Boton>
-            <Boton tamano="lg" onClick={finalizar}>Finalizar compra</Boton>
+            <Boton tamano="lg" className="max-sm:w-full max-sm:!whitespace-normal" onClick={finalizar}>Preparar pedido para WhatsApp</Boton>
           </div>
         </section>
       )}

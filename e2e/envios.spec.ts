@@ -51,7 +51,7 @@ async function completarYFinalizar(page: Page) {
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
   await page.getByRole("checkbox", { name: /Autorizo el tratamiento/ }).check();
   await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
-  await page.getByRole("button", { name: "Finalizar compra" }).click();
+  await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
   await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
   const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
@@ -155,7 +155,7 @@ test.describe("envío por zonas: por cotizar", () => {
     await expect(totalDe(page)).toContainText("Total sin envío");
     await page.getByRole("checkbox", { name: /Autorizo el tratamiento/ }).check();
     await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
-    await page.getByRole("button", { name: "Finalizar compra" }).click();
+    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
     await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme cuando aceptas ese valor.");
     await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme");
     const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
@@ -192,8 +192,8 @@ test.describe("envío por zonas: por cotizar", () => {
     await expect(totalDe(page)).not.toContainText("sin envío");
     await page.getByRole("checkbox", { name: /Autorizo el tratamiento/ }).check();
     await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
-    await page.getByRole("button", { name: "Finalizar compra" }).click();
-    await expect(page.getByTestId("texto-confirmacion")).toContainText("Después te respondemos para confirmarlo");
+    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+    await expect(page.getByTestId("texto-confirmacion")).toContainText("Te respondemos para confirmarlo");
     await expect(page.getByTestId("texto-confirmacion")).not.toContainText("Tu pedido queda en firme");
     await expect(page.getByTestId("texto-confirmacion")).not.toContainText("queda en firme");
   });

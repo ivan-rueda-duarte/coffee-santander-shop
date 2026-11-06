@@ -56,12 +56,12 @@ test.describe("pedido", () => {
     const terminos = page.getByRole("checkbox", { name: /Acepto los términos/ });
     await expect(autorizacion).not.toBeChecked();
     await expect(terminos).not.toBeChecked();
-    await page.getByRole("button", { name: "Finalizar compra" }).click();
+    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
     await expect(page.getByText("Debes autorizar el tratamiento de tus datos")).toBeVisible();
     await expect(page.getByText("Debes aceptar los términos")).toBeVisible();
     await autorizacion.check();
     await terminos.check();
-    await page.getByRole("button", { name: "Finalizar compra" }).click();
+    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
 
     // 4. Confirmación
     await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
