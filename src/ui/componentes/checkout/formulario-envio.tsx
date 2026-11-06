@@ -3,6 +3,7 @@
 import { useMemo, type ReactNode } from "react";
 import { DOCUMENTO_OBLIGATORIO, MAX_DOCUMENTO, MAX_INDICACIONES, TIPOS_DOCUMENTO, type FinalidadDocumento, type TipoDocumento } from "@/domain/pedido/envio";
 import divipolaCrudo from "@/data/divipola.json";
+import { IconoChevron } from "../marca/iconos";
 
 interface Departamento {
   codigo: string;
@@ -61,6 +62,9 @@ export const ENVIO_VACIO: ValoresEnvio = {
 
 const entrada = "mt-1 w-full rounded-md border border-line-strong bg-surface-raised px-3 py-3 text-base text-ink placeholder:text-ink-muted/70 aria-[invalid=true]:border-danger";
 
+/** `entrada` sin margen ni color de texto: el texto visible lo pinta un <span> encima (QA-002). */
+const entradaSuperpuesta = `${entrada.replace("mt-1 ", "").replace(" text-ink ", " ").replace(" px-3 ", " pl-4 ")} col-start-1 row-start-1 appearance-none pr-10 text-transparent forced-colors:text-[CanvasText] [&>option]:text-ink`;
+
 /** `ayudaFija`: la ayuda sigue visible junto al error (cuando trae un enlace que sirve para corregirlo). */
 function Campo({ id, etiqueta, error, ayuda, ayudaFija, opcional, children }: { id: string; etiqueta: string; error?: string; ayuda?: ReactNode; ayudaFija?: boolean; opcional?: boolean; children: ReactNode }) {
   return (
@@ -117,14 +121,29 @@ export function FormularioEnvio({
         <input {...props("correo")} type="email" autoComplete="email" />
       </Campo>
       <Campo id="tipoDocumento" etiqueta="Tipo de documento" opcional={!documentoObligatorio} error={errores.tipoDocumento}>
-        <select {...props("tipoDocumento")} autoComplete="off">
-          <option value="">Elige el tipo</option>
-          {TIPOS_DOCUMENTO.map((t) => (
-            <option key={t} value={t}>
-              {ETIQUETA_TIPO_DOCUMENTO[t]}
-            </option>
-          ))}
-        </select>
+        {/* QA-002: un <select> nativo no parte líneas y a 320 px cortaba «Permiso por Protección Temporal (PPT)».
+            El texto visible lo pinta un <span> (aria-hidden) en la misma celda de la rejilla, que sí parte líneas
+            y da la altura; el select conserva el valor, el foco y la lectura para lectores de pantalla.
+            Como la flecha nativa toma el color del texto (transparente), el select va sin apariencia nativa y la
+            flecha es un IconoChevron. Con colores forzados el span se oculta y se ve el texto nativo del select. */}
+        <div className="mt-1 grid">
+          <select
+            {...props("tipoDocumento")}
+            autoComplete="off"
+            className={entradaSuperpuesta}
+          >
+            <option value="">Elige el tipo</option>
+            {TIPOS_DOCUMENTO.map((t) => (
+              <option key={t} value={t}>
+                {ETIQUETA_TIPO_DOCUMENTO[t]}
+              </option>
+            ))}
+          </select>
+          <span aria-hidden="true" className="pointer-events-none col-start-1 row-start-1 self-center border border-transparent py-3 pl-4 pr-10 text-base text-ink forced-colors:hidden">
+            {TIPOS_DOCUMENTO.includes(valores.tipoDocumento as TipoDocumento) ? ETIQUETA_TIPO_DOCUMENTO[valores.tipoDocumento as TipoDocumento] : "Elige el tipo"}
+          </span>
+          <IconoChevron width={16} height={16} className="pointer-events-none col-start-1 row-start-1 mr-3 self-center justify-self-end text-ink" />
+        </div>
       </Campo>
       <Campo id="numeroDocumento" etiqueta="Número de documento" opcional={!documentoObligatorio} error={errores.numeroDocumento} ayuda={AYUDA_DOCUMENTO[DOCUMENTO_OBLIGATORIO || "opcional"]}>
         <input {...props("numeroDocumento", true)} type="text" inputMode={valores.tipoDocumento === "CC" ? "numeric" : "text"} autoComplete="off" maxLength={MAX_DOCUMENTO} autoCapitalize="characters" spellCheck={false} />
