@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
@@ -238,7 +239,7 @@ function Contenido() {
             ))}
           </ul>
           <div className="mt-4">{resumenTotales}</div>
-          <p className="caption mt-3 text-ink-muted">La forma de pago se confirma por WhatsApp antes de que pagues. Más en <a className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos: zonas, tarifas y plazos</a> y en <a className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones y retracto</a>.</p>
+          <p className="caption mt-3 text-ink-muted">La forma de pago se confirma por WhatsApp antes de que pagues. Más en <Link className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos: zonas, tarifas y plazos</Link> y en <Link className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones y retracto</Link>.</p>
 
           <div className="mt-6 rounded-lg border border-line p-5 text-sm">
             <div className="flex items-start justify-between gap-4">
@@ -261,14 +262,14 @@ function Contenido() {
               <input type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-describedby={erroresResumen?.errores.autorizacionDatos ? "e-aut" : undefined} />
               <span>
                 Autorizo a {responsableDatos} a tratar mis datos personales para atender este pedido: confirmarlo, coordinar la entrega con la transportadora {FINALIDAD_EN_AUTORIZACION[DOCUMENTO_OBLIGATORIO || "opcional"]}. Sé que el pedido viaja por WhatsApp (Meta), que puede tratar datos fuera de Colombia. Más en la{" "}
-                <a className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">política de tratamiento de datos</a>.
+                <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">política de tratamiento de datos</Link>.
               </span>
             </label>
             {erroresResumen?.errores.autorizacionDatos && <p id="e-aut" className="text-sm font-semibold text-danger">{erroresResumen.errores.autorizacionDatos}</p>}
             <label className="flex cursor-pointer items-start gap-3 text-sm">
               <input type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-describedby={erroresResumen?.errores.aceptaTerminos ? "e-ter" : undefined} />
               <span>
-                Acepto los <a className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">términos y condiciones</a>.
+                Acepto los <Link className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">términos y condiciones</Link>.
               </span>
             </label>
             {erroresResumen?.errores.aceptaTerminos && <p id="e-ter" className="text-sm font-semibold text-danger">{erroresResumen.errores.aceptaTerminos}</p>}

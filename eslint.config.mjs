@@ -37,6 +37,25 @@ const eslintConfig = defineConfig([
       { group: ["@sanity/*", "groq", "csv-parse", "csv-parse/*"], message: "ui usa casos de uso o hooks, no clientes de datos." },
     ] }] },
   },
+  {
+    // QA-003: un <a href="/…"> crudo ignora el basePath de GitHub Pages (404 en producción).
+    // Los enlaces internos van con next/link (`Link`) o `BotonEnlace`.
+    files: ["src/**/*.tsx"],
+    rules: { "no-restricted-syntax": ["error",
+      {
+        selector: "JSXOpeningElement[name.name='a'] > JSXAttribute[name.name='href'] > Literal[value=/^\\//]",
+        message: "Enlace interno con <a> crudo: usa Link de next/link o BotonEnlace para respetar el basePath (QA-003).",
+      },
+      {
+        selector: "JSXOpeningElement[name.name='a'] > JSXAttribute[name.name='href'] > JSXExpressionContainer > TemplateLiteral > TemplateElement:first-child[value.raw=/^\\//]",
+        message: "Enlace interno con <a> crudo: usa Link de next/link o BotonEnlace para respetar el basePath (QA-003).",
+      },
+      {
+        selector: "JSXOpeningElement[name.name='a'] > JSXAttribute[name.name='href'] > JSXExpressionContainer > Literal[value=/^\\//]",
+        message: "Enlace interno con <a> crudo: usa Link de next/link o BotonEnlace para respetar el basePath (QA-003).",
+      },
+    ] },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "legacy/**", "page_style/**", "tools/**", "coverage/**", ".claude/**", ".impeccable/**", "studio/**"]),
 ]);
 
