@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
 import { normalizar } from "@/domain/comun/slug";
-import { crearEsquemaEnvio, validar } from "@/domain/pedido/envio";
+import { crearEsquemaEnvio, DOCUMENTO_OBLIGATORIO, SIGLA_DOCUMENTO, validar, type DatosEnvio, type FinalidadDocumento } from "@/domain/pedido/envio";
 import { calcularEnvio } from "@/domain/envio/envio";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
@@ -15,7 +15,14 @@ import { TotalesPedido } from "../carrito/totales-pedido";
 import { Boton, BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
 import { IconoCopiar, IconoFlecha, IconoFlechaAtras, IconoWhatsapp } from "../marca/iconos";
-import { DEPARTAMENTOS, ENVIO_VACIO, FormularioEnvio, type ValoresEnvio } from "./formulario-envio";
+import { CODIGOS_DEPARTAMENTO, DEPARTAMENTOS, ENVIO_VACIO, FormularioEnvio, type ValoresEnvio } from "./formulario-envio";
+
+/** Finalidad del documento en la casilla de autorización (docs/legal/microcopy-legal.md §4.3). */
+const FINALIDAD_EN_AUTORIZACION: Record<"opcional" | FinalidadDocumento, string> = {
+  opcional: "y, si escribí mi documento, emitir la factura a mi nombre",
+  guia: "y usar mi documento para generar la guía de envío",
+  factura: "y usar mi documento para emitir la factura electrónica",
+};
 
 const PASOS = [
   { id: "carrito", titulo: "Carrito" },
@@ -42,6 +49,8 @@ function Contenido() {
   const { lineas, totales, listo, preferencias, guardarPreferencias, vaciar } = useCarrito();
   const { avisar } = useAvisos();
   const tienda = catalogo.tienda;
+  // Responsable del tratamiento (§4.3): la razón social de data/config.csv. Si faltara, se nombra la tienda; no se inventa una razón social.
+  const responsableDatos = tienda.vendedor.razonSocial ?? tienda.nombre;
 
   const pedido = params.get("paso");
   const paso: Paso = esPaso(pedido) ? pedido : "carrito";
@@ -49,6 +58,8 @@ function Contenido() {
   const [valores, setValores] = useState<ValoresEnvio>(ENVIO_VACIO);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [envioValido, setEnvioValido] = useState(false);
+  // Datos ya normalizados (documento sin puntos, etc.) para el resumen. Solo en memoria.
+  const [datosEnvio, setDatosEnvio] = useState<DatosEnvio | null>(null);
   const [autorizacion, setAutorizacion] = useState(false);
   const [terminos, setTerminos] = useState(false);
   const [erroresResumen, setErroresResumen] = useState<{ errores: Record<string, string>; lineas: string[] } | null>(null);
@@ -79,7 +90,7 @@ function Contenido() {
     titulo.current?.focus({ preventScroll: false });
   }, [paso]);
 
-  const esquema = useMemo(() => crearEsquemaEnvio(tienda.formasPago), [tienda.formasPago]);
+  const esquema = useMemo(() => crearEsquemaEnvio(tienda.formasPago, CODIGOS_DEPARTAMENTO), [tienda.formasPago]);
 
   const continuarEnvio = () => {
     const r = validar(esquema, valores);
@@ -92,12 +103,13 @@ function Contenido() {
     }
     setErrores({});
     setEnvioValido(true);
+    setDatosEnvio(r.datos);
     guardarPreferencias({ formaPago: r.datos.formaPago, municipio: r.datos.municipio });
     irA("resumen");
   };
 
   const finalizar = () => {
-    const r = prepararPedido(catalogo, { lineas, envio: valores, autorizacionDatos: autorizacion, aceptaTerminos: terminos });
+    const r = prepararPedido(catalogo, { lineas, envio: valores, autorizacionDatos: autorizacion, aceptaTerminos: terminos }, CODIGOS_DEPARTAMENTO);
     if (!r.ok) {
       setErroresResumen({ errores: r.errores, lineas: r.lineas });
       return;
@@ -234,8 +246,12 @@ function Contenido() {
               <Boton variante="enlace" tamano="sm" onClick={() => irA("envio")}>Editar</Boton>
             </div>
             <p className="mt-2 font-semibold">{valores.nombre}</p>
+            {datosEnvio?.tipoDocumento && datosEnvio.numeroDocumento && (
+              <p className="text-ink-muted">Documento: {SIGLA_DOCUMENTO[datosEnvio.tipoDocumento]} {datosEnvio.numeroDocumento}</p>
+            )}
             <p className="text-ink-muted">{valores.direccion}{valores.barrio ? ` · ${valores.barrio}` : ""}</p>
             <p className="text-ink-muted">{valores.municipio}, {valores.departamento}</p>
+            {datosEnvio?.codigoPostal && <p className="text-ink-muted">Código postal: {datosEnvio.codigoPostal}</p>}
             <p className="text-ink-muted">Pago: {valores.formaPago}</p>
           </div>
 
@@ -244,8 +260,8 @@ function Contenido() {
             <label className="flex cursor-pointer items-start gap-3 text-sm">
               <input type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-describedby={erroresResumen?.errores.autorizacionDatos ? "e-aut" : undefined} />
               <span>
-                Autorizo el tratamiento de mis datos personales para gestionar este pedido, según la{" "}
-                <a className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">política de tratamiento de datos</a>. Entiendo que el pedido se envía por WhatsApp (Meta).
+                Autorizo a {responsableDatos} a tratar mis datos personales para atender este pedido: confirmarlo, coordinar la entrega con la transportadora {FINALIDAD_EN_AUTORIZACION[DOCUMENTO_OBLIGATORIO || "opcional"]}. Sé que el pedido viaja por WhatsApp (Meta), que puede tratar datos fuera de Colombia. Más en la{" "}
+                <a className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">política de tratamiento de datos</a>.
               </span>
             </label>
             {erroresResumen?.errores.autorizacionDatos && <p id="e-aut" className="text-sm font-semibold text-danger">{erroresResumen.errores.autorizacionDatos}</p>}

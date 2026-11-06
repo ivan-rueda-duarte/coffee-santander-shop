@@ -49,7 +49,7 @@ async function completarYFinalizar(page: Page) {
   await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
   await page.getByRole("button", { name: /Revisar el pedido/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
-  await page.getByRole("checkbox", { name: /Autorizo el tratamiento/ }).check();
+  await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
   await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
   await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
@@ -153,7 +153,7 @@ test.describe("envío por zonas: por cotizar", () => {
     await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toHaveText("Este valor no incluye el envío. Te lo informamos por WhatsApp y tú decides si lo aceptas antes de pagar.");
     await expect(totalDe(page)).toContainText("Total sin envío");
-    await page.getByRole("checkbox", { name: /Autorizo el tratamiento/ }).check();
+    await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
     await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
     await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme cuando aceptas ese valor.");
@@ -190,7 +190,7 @@ test.describe("envío por zonas: por cotizar", () => {
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toHaveCount(0);
     await expect(totalDe(page)).not.toContainText("sin envío");
-    await page.getByRole("checkbox", { name: /Autorizo el tratamiento/ }).check();
+    await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
     await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
     await expect(page.getByTestId("texto-confirmacion")).toContainText("Te respondemos para confirmarlo");

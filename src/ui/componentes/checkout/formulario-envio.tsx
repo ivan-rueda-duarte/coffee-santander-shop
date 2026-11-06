@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { MAX_INDICACIONES } from "@/domain/pedido/envio";
+import { DOCUMENTO_OBLIGATORIO, MAX_DOCUMENTO, MAX_INDICACIONES, TIPOS_DOCUMENTO, type FinalidadDocumento, type TipoDocumento } from "@/domain/pedido/envio";
 import divipolaCrudo from "@/data/divipola.json";
 
 interface Departamento {
@@ -11,25 +11,58 @@ interface Departamento {
 }
 export const DEPARTAMENTOS = (divipolaCrudo as { departamentos: Departamento[] }).departamentos;
 
+/** Nombre del departamento → código DIVIPOLA («Santander» → «68»), para validar el código postal. */
+export const CODIGOS_DEPARTAMENTO: Readonly<Record<string, string>> = Object.fromEntries(DEPARTAMENTOS.map((d) => [d.nombre, d.codigo]));
+
+/** Textos exactos de docs/legal/microcopy-legal.md §4.1 y §4.2. */
+const ETIQUETA_TIPO_DOCUMENTO: Record<TipoDocumento, string> = {
+  CC: "Cédula de ciudadanía",
+  CE: "Cédula de extranjería",
+  PPT: "Permiso por Protección Temporal (PPT)",
+  PAS: "Pasaporte",
+};
+const AYUDA_DOCUMENTO: Record<"opcional" | FinalidadDocumento, string> = {
+  opcional: "Escríbelo solo si quieres la factura electrónica a tu nombre. Si lo dejas vacío, tu pedido sigue igual.",
+  guia: "Lo pide la transportadora para generar la guía de tu envío.",
+  factura: "Lo necesitamos para la factura electrónica de tu compra.",
+};
+const VISOR_CODIGO_POSTAL = "https://visor.codigopostal.gov.co/472/visor/";
+
 /** Lo que escribe la persona, sin validar (todo texto). */
 export interface ValoresEnvio {
   nombre: string;
   celular: string;
-  cedula: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
   correo: string;
   departamento: string;
   municipio: string;
+  codigoPostal: string;
   direccion: string;
   barrio: string;
   indicaciones: string;
   formaPago: string;
 }
 
-export const ENVIO_VACIO: ValoresEnvio = { nombre: "", celular: "", cedula: "", correo: "", departamento: "", municipio: "", direccion: "", barrio: "", indicaciones: "", formaPago: "" };
+export const ENVIO_VACIO: ValoresEnvio = {
+  nombre: "",
+  celular: "",
+  tipoDocumento: "",
+  numeroDocumento: "",
+  correo: "",
+  departamento: "",
+  municipio: "",
+  codigoPostal: "",
+  direccion: "",
+  barrio: "",
+  indicaciones: "",
+  formaPago: "",
+};
 
 const entrada = "mt-1 w-full rounded-md border border-line-strong bg-surface-raised px-3 py-3 text-base text-ink placeholder:text-ink-muted/70 aria-[invalid=true]:border-danger";
 
-function Campo({ id, etiqueta, error, ayuda, opcional, children }: { id: string; etiqueta: string; error?: string; ayuda?: string; opcional?: boolean; children: ReactNode }) {
+/** `ayudaFija`: la ayuda sigue visible junto al error (cuando trae un enlace que sirve para corregirlo). */
+function Campo({ id, etiqueta, error, ayuda, ayudaFija, opcional, children }: { id: string; etiqueta: string; error?: string; ayuda?: ReactNode; ayudaFija?: boolean; opcional?: boolean; children: ReactNode }) {
   return (
     <div>
       <label htmlFor={id} className="text-sm font-bold">
@@ -37,7 +70,7 @@ function Campo({ id, etiqueta, error, ayuda, opcional, children }: { id: string;
         {opcional && <span className="font-medium text-ink-muted"> (opcional)</span>}
       </label>
       {children}
-      {ayuda && !error && <p id={`${id}-ayuda`} className="caption mt-1 text-ink-muted">{ayuda}</p>}
+      {ayuda && (!error || ayudaFija) && <p id={`${id}-ayuda`} className="caption mt-1 text-ink-muted">{ayuda}</p>}
       {error && (
         <p id={`${id}-error`} className="mt-1 text-sm font-semibold text-danger">
           {error}
@@ -58,6 +91,7 @@ export function FormularioEnvio({
   formasPago: readonly string[];
   alCambiar: (cambios: Partial<ValoresEnvio>) => void;
 }) {
+  const documentoObligatorio = DOCUMENTO_OBLIGATORIO !== false;
   const municipios = useMemo(() => DEPARTAMENTOS.find((d) => d.nombre === valores.departamento)?.municipios ?? [], [valores.departamento]);
   const props = (campo: keyof ValoresEnvio, ayuda?: boolean) => ({
     id: campo,
@@ -82,10 +116,19 @@ export function FormularioEnvio({
       <Campo id="correo" etiqueta="Correo" opcional error={errores.correo}>
         <input {...props("correo")} type="email" autoComplete="email" />
       </Campo>
-      <Campo id="cedula" etiqueta="Cédula" opcional error={errores.cedula} ayuda="Solo si la necesitas para factura o la transportadora.">
-        <input {...props("cedula", true)} type="text" inputMode="numeric" autoComplete="off" />
+      <Campo id="tipoDocumento" etiqueta="Tipo de documento" opcional={!documentoObligatorio} error={errores.tipoDocumento}>
+        <select {...props("tipoDocumento")} autoComplete="off">
+          <option value="">Elige el tipo</option>
+          {TIPOS_DOCUMENTO.map((t) => (
+            <option key={t} value={t}>
+              {ETIQUETA_TIPO_DOCUMENTO[t]}
+            </option>
+          ))}
+        </select>
       </Campo>
-      <div className="hidden sm:block" />
+      <Campo id="numeroDocumento" etiqueta="Número de documento" opcional={!documentoObligatorio} error={errores.numeroDocumento} ayuda={AYUDA_DOCUMENTO[DOCUMENTO_OBLIGATORIO || "opcional"]}>
+        <input {...props("numeroDocumento", true)} type="text" inputMode={valores.tipoDocumento === "CC" ? "numeric" : "text"} autoComplete="off" maxLength={MAX_DOCUMENTO} autoCapitalize="characters" spellCheck={false} />
+      </Campo>
       <Campo id="departamento" etiqueta="Departamento" error={errores.departamento}>
         <select {...props("departamento")} autoComplete="address-level1" onChange={(e) => alCambiar({ departamento: e.target.value, municipio: "" })}>
           <option value="">Elige el departamento</option>
@@ -106,6 +149,25 @@ export function FormularioEnvio({
           ))}
         </select>
       </Campo>
+      <Campo
+        id="codigoPostal"
+        etiqueta="Código postal"
+        opcional
+        error={errores.codigoPostal}
+        ayudaFija
+        ayuda={
+          <>
+            Ayuda a la transportadora a ubicar tu dirección. Si no lo sabes, búscalo en el{" "}
+            <a className="underline underline-offset-4" href={VISOR_CODIGO_POSTAL} target="_blank" rel="noopener noreferrer">
+              visor de 4-72
+            </a>
+            .
+          </>
+        }
+      >
+        <input {...props("codigoPostal", true)} aria-describedby={errores.codigoPostal ? "codigoPostal-error codigoPostal-ayuda" : "codigoPostal-ayuda"} type="text" inputMode="numeric" autoComplete="postal-code" maxLength={6} />
+      </Campo>
+      <div className="hidden sm:block" />
       <div className="sm:col-span-2">
         <Campo id="direccion" etiqueta="Dirección" error={errores.direccion} ayuda="Calle o carrera, número, apartamento o casa.">
           <input {...props("direccion", true)} type="text" autoComplete="street-address" />

@@ -52,7 +52,7 @@ test.describe("pedido", () => {
     // 3. Resumen: las casillas vienen sin marcar
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByText("La forma de pago se confirma por WhatsApp antes de que pagues")).toBeVisible();
-    const autorizacion = page.getByRole("checkbox", { name: /Autorizo el tratamiento/ });
+    const autorizacion = page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ });
     const terminos = page.getByRole("checkbox", { name: /Acepto los términos/ });
     await expect(autorizacion).not.toBeChecked();
     await expect(terminos).not.toBeChecked();
@@ -135,6 +135,51 @@ test.describe("pedido", () => {
     const guardado = await page.evaluate(() => [localStorage.getItem("desantander.carrito.v1"), localStorage.getItem("desantander.carrito.v2")]);
     expect(guardado[0]).toBeNull();
     expect(JSON.parse(guardado[1]!).lineas).toEqual([]); // la línea huérfana se descarta
+  });
+
+  test("documento y código postal: opcionales, validados, en el mensaje y nunca en localStorage", async ({ page }) => {
+    await agregarCasaMartinez(page);
+    await page.goto("/pedido/?paso=envio");
+    await llenarEnvio(page);
+
+    // Sin documento ni código postal no hay error; el selector ofrece los cuatro tipos.
+    await expect(page.getByLabel("Tipo de documento")).toContainText("Cédula de ciudadanía");
+    await expect(page.getByLabel("Tipo de documento")).toContainText("Permiso por Protección Temporal (PPT)");
+    const visor = page.getByRole("link", { name: "visor de 4-72" });
+    await expect(visor).toHaveAttribute("href", "https://visor.codigopostal.gov.co/472/visor/");
+    await expect(visor).toHaveAttribute("target", "_blank");
+    await expect(visor).toHaveAttribute("rel", "noopener noreferrer");
+    await expect(page.getByLabel("Código postal")).toHaveAttribute("autocomplete", "postal-code");
+    await expect(page.getByLabel("Número de documento")).toHaveAttribute("autocomplete", "off");
+
+    // Número sin tipo y código postal de otro departamento.
+    await page.getByLabel("Número de documento").fill("1.098.765.432");
+    await page.getByLabel("Código postal").fill("110111");
+    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await expect(page.getByText("Elige el tipo de documento.")).toBeVisible();
+    await expect(page.getByText("Este código no corresponde a Santander. Revísalo en el visor de 4-72.")).toBeVisible();
+
+    await page.getByLabel("Tipo de documento").selectOption("CC");
+    await expect(page.getByLabel("Número de documento")).toHaveAttribute("inputmode", "numeric");
+    await page.getByLabel("Código postal").fill("680001");
+    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+
+    await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
+    await expect(page.getByText("Documento: CC 1098765432")).toBeVisible();
+    await expect(page.getByText("Código postal: 680001")).toBeVisible();
+    await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
+    await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+
+    const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+    const texto = decodeURIComponent(href.split("?text=")[1]);
+    expect(texto).toContain("Documento: CC 1098765432");
+    expect(texto).toContain("Ciudad: Bucaramanga, Santander\nCódigo postal: 680001");
+    expect(texto).not.toContain("Cédula");
+
+    const almacenado = await page.evaluate(() => Object.keys(localStorage).map((k) => `${k}=${localStorage.getItem(k)}`).join("\n"));
+    expect(almacenado).toContain("desantander.carrito.v2");
+    for (const dato of ["1098765432", "1.098.765.432", "680001", "110111", "numeroDocumento", "tipoDocumento", "codigoPostal"]) expect(almacenado).not.toContain(dato);
   });
 
   test("sin pedido, /pedido/ explica que está vacío y recargar el resumen vuelve al envío", async ({ page }) => {
