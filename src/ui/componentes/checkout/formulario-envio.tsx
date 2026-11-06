@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo, type ReactNode, type SelectHTMLAttributes } from "react";
 import { DOCUMENTO_OBLIGATORIO, MAX_DOCUMENTO, MAX_INDICACIONES, TIPOS_DOCUMENTO, type FinalidadDocumento, type TipoDocumento } from "@/domain/pedido/envio";
 import divipolaCrudo from "@/data/divipola.json";
 import { IconoChevron } from "../marca/iconos";
@@ -65,6 +65,29 @@ const entrada = "mt-1 w-full rounded-md border border-line-strong bg-surface-rai
 /** `entrada` sin margen ni color de texto: el texto visible lo pinta un <span> encima (QA-002). */
 const entradaSuperpuesta = `${entrada.replace("mt-1 ", "").replace(" text-ink ", " ").replace(" px-3 ", " pl-4 ")} col-start-1 row-start-1 appearance-none pr-10 text-transparent forced-colors:text-[CanvasText] [&>option]:text-ink`;
 
+/**
+ * QA-002 / QA-005: un <select> nativo no parte líneas y corta las opciones largas («Permiso por Protección
+ * Temporal (PPT)», «Archipiélago de San Andrés, Providencia y Santa Catalina»). El texto visible lo pinta un
+ * <span> (aria-hidden) en la misma celda de la rejilla, que sí parte líneas y da la altura; el select conserva
+ * el valor, el foco y la lectura para lectores de pantalla. Como la flecha nativa toma el color del texto
+ * (transparente), el select va sin apariencia nativa y la flecha es un IconoChevron. Con colores forzados el
+ * span se oculta y se ve el texto nativo del select. Los textos de las opciones no cambian.
+ */
+function SelectSuperpuesto({ textoVisible, disabled, children, ...rest }: Omit<SelectHTMLAttributes<HTMLSelectElement>, "className"> & { textoVisible: string }) {
+  const tinta = disabled ? "text-ink-muted" : "text-ink";
+  return (
+    <div className="mt-1 grid">
+      <select {...rest} disabled={disabled} className={entradaSuperpuesta}>
+        {children}
+      </select>
+      <span aria-hidden="true" className={`pointer-events-none col-start-1 row-start-1 self-center border border-transparent py-3 pl-4 pr-10 text-base forced-colors:hidden ${tinta}`}>
+        {textoVisible}
+      </span>
+      <IconoChevron width={16} height={16} className={`pointer-events-none col-start-1 row-start-1 mr-3 self-center justify-self-end ${tinta}`} />
+    </div>
+  );
+}
+
 /** `ayudaFija`: la ayuda sigue visible junto al error (cuando trae un enlace que sirve para corregirlo). */
 function Campo({ id, etiqueta, error, ayuda, ayudaFija, opcional, children }: { id: string; etiqueta: string; error?: string; ayuda?: ReactNode; ayudaFija?: boolean; opcional?: boolean; children: ReactNode }) {
   return (
@@ -97,15 +120,16 @@ export function FormularioEnvio({
 }) {
   const documentoObligatorio = DOCUMENTO_OBLIGATORIO !== false;
   const municipios = useMemo(() => DEPARTAMENTOS.find((d) => d.nombre === valores.departamento)?.municipios ?? [], [valores.departamento]);
-  const props = (campo: keyof ValoresEnvio, ayuda?: boolean) => ({
+  /** Atributos comunes del campo, sin clase: los usa `SelectSuperpuesto`, que pone la suya. */
+  const propsSelect = (campo: keyof ValoresEnvio, ayuda?: boolean) => ({
     id: campo,
     name: campo,
     value: valores[campo],
     "aria-invalid": errores[campo] ? (true as const) : undefined,
     "aria-describedby": errores[campo] ? `${campo}-error` : ayuda ? `${campo}-ayuda` : undefined,
     onChange: (e: { target: { value: string } }) => alCambiar({ [campo]: e.target.value }),
-    className: entrada,
   });
+  const props = (campo: keyof ValoresEnvio, ayuda?: boolean) => ({ ...propsSelect(campo, ayuda), className: entrada });
 
   return (
     <div className="grid gap-5 sm:grid-cols-2">
@@ -121,53 +145,53 @@ export function FormularioEnvio({
         <input {...props("correo")} type="email" autoComplete="email" />
       </Campo>
       <Campo id="tipoDocumento" etiqueta="Tipo de documento" opcional={!documentoObligatorio} error={errores.tipoDocumento}>
-        {/* QA-002: un <select> nativo no parte líneas y a 320 px cortaba «Permiso por Protección Temporal (PPT)».
-            El texto visible lo pinta un <span> (aria-hidden) en la misma celda de la rejilla, que sí parte líneas
-            y da la altura; el select conserva el valor, el foco y la lectura para lectores de pantalla.
-            Como la flecha nativa toma el color del texto (transparente), el select va sin apariencia nativa y la
-            flecha es un IconoChevron. Con colores forzados el span se oculta y se ve el texto nativo del select. */}
-        <div className="mt-1 grid">
-          <select
-            {...props("tipoDocumento")}
-            autoComplete="off"
-            className={entradaSuperpuesta}
-          >
-            <option value="">Elige el tipo</option>
-            {TIPOS_DOCUMENTO.map((t) => (
-              <option key={t} value={t}>
-                {ETIQUETA_TIPO_DOCUMENTO[t]}
-              </option>
-            ))}
-          </select>
-          <span aria-hidden="true" className="pointer-events-none col-start-1 row-start-1 self-center border border-transparent py-3 pl-4 pr-10 text-base text-ink forced-colors:hidden">
-            {TIPOS_DOCUMENTO.includes(valores.tipoDocumento as TipoDocumento) ? ETIQUETA_TIPO_DOCUMENTO[valores.tipoDocumento as TipoDocumento] : "Elige el tipo"}
-          </span>
-          <IconoChevron width={16} height={16} className="pointer-events-none col-start-1 row-start-1 mr-3 self-center justify-self-end text-ink" />
-        </div>
+        <SelectSuperpuesto
+          {...propsSelect("tipoDocumento")}
+          autoComplete="off"
+          textoVisible={TIPOS_DOCUMENTO.includes(valores.tipoDocumento as TipoDocumento) ? ETIQUETA_TIPO_DOCUMENTO[valores.tipoDocumento as TipoDocumento] : "Elige el tipo"}
+        >
+          <option value="">Elige el tipo</option>
+          {TIPOS_DOCUMENTO.map((t) => (
+            <option key={t} value={t}>
+              {ETIQUETA_TIPO_DOCUMENTO[t]}
+            </option>
+          ))}
+        </SelectSuperpuesto>
       </Campo>
       <Campo id="numeroDocumento" etiqueta="Número de documento" opcional={!documentoObligatorio} error={errores.numeroDocumento} ayuda={AYUDA_DOCUMENTO[DOCUMENTO_OBLIGATORIO || "opcional"]}>
         <input {...props("numeroDocumento", true)} type="text" inputMode={valores.tipoDocumento === "CC" ? "numeric" : "text"} autoComplete="off" maxLength={MAX_DOCUMENTO} autoCapitalize="characters" spellCheck={false} />
       </Campo>
       <Campo id="departamento" etiqueta="Departamento" error={errores.departamento}>
-        <select {...props("departamento")} autoComplete="address-level1" onChange={(e) => alCambiar({ departamento: e.target.value, municipio: "" })}>
+        {/* QA-005: «Archipiélago de San Andrés, Providencia y Santa Catalina» (≈452 px) no cabe en ningún viewport. */}
+        <SelectSuperpuesto
+          {...propsSelect("departamento")}
+          autoComplete="address-level1"
+          onChange={(e) => alCambiar({ departamento: e.target.value, municipio: "" })}
+          textoVisible={valores.departamento || "Elige el departamento"}
+        >
           <option value="">Elige el departamento</option>
           {DEPARTAMENTOS.map((d) => (
             <option key={d.codigo} value={d.nombre}>
               {d.nombre}
             </option>
           ))}
-        </select>
+        </SelectSuperpuesto>
       </Campo>
       <Campo id="municipio" etiqueta="Municipio" error={errores.municipio}>
-        <select {...props("municipio")} autoComplete="address-level2" disabled={municipios.length === 0}>
-          {/* QA-004: «Primero elige el departamento» (≈247 px) no cabía en el select a 320 px (≈224 px útiles). */}
+        {/* QA-004: «Primero elige el departamento» (≈247 px) no cabía en el select a 320 px (≈224 px útiles). */}
+        <SelectSuperpuesto
+          {...propsSelect("municipio")}
+          autoComplete="address-level2"
+          disabled={municipios.length === 0}
+          textoVisible={valores.municipio || (municipios.length ? "Elige el municipio" : "Elige el departamento")}
+        >
           <option value="">{municipios.length ? "Elige el municipio" : "Elige el departamento"}</option>
           {municipios.map((m) => (
             <option key={m.codigo} value={m.nombre}>
               {m.nombre}
             </option>
           ))}
-        </select>
+        </SelectSuperpuesto>
       </Campo>
       <Campo
         id="codigoPostal"
