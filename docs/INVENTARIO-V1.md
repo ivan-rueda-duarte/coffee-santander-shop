@@ -161,7 +161,7 @@ Resultado de recorrer la matriz de la sección 2 contra la v2.
 | 15 (sello SCA, «Mejor puntaje») | **Cambia:** solo con puntaje verificado; hoy no se ve (decisión 2). El rótulo «Mejor puntaje SCA del catálogo» se retiró. |
 | 19 (modal con foco atrapado) | Reemplazado por ruta. El **cajón** del pedido y la **hoja** de filtros conservan foco atrapado, `inert` (Radix), Esc y devolución del foco. |
 | 20–26 (carrito, 20 por línea, vaciar con deshacer, persistencia, pestañas, cajón, barra móvil) | Hecho. Migra `desantander.carrito.v1`. |
-| 27–31 (ciudad y pago, WhatsApp, panel de confirmación, mensaje) | Hecho con cambios: envío completo obligatorio en `/pedido/` y mensaje nuevo (plantilla del prompt, sin número de pedido). «Copiar mensaje», «Abrir WhatsApp», «Editar pedido» y «Vaciar pedido» se conservan. |
+| 27–31 (ciudad y pago, WhatsApp, panel de confirmación, mensaje) | Hecho con cambios: envío completo obligatorio en `/pedido/` y mensaje nuevo (plantilla del prompt, sin número de pedido). «Copiar mensaje», «Enviar por WhatsApp», «Editar pedido» y «Vaciar pedido» se conservan. |
 | 32–35 (foco, movimiento reducido, avisos, salto al contenido) | Hecho. |
 | 36–38, 40 (cómo pedir, historia, footer, anclas) | Hecho; los textos sin respaldo de la v1 no se reutilizan (punto 24). |
 | 39 (franja, tramas, velo cálido) | Hecho con los componentes de marca. |

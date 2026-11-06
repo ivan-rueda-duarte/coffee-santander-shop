@@ -8,7 +8,7 @@ export const paginaInicio = defineType({
   title: "Página de inicio",
   type: "document",
   fields: [
-    defineField({ name: "antetitulo", title: "Antetítulo", type: "string", description: "En mayúsculas lo pone el diseño. Ejemplo: Café de especialidad · Santander", validation: advertenciaDeMarca }),
+    defineField({ name: "antetitulo", title: "Antetítulo", type: "string", description: "En mayúsculas lo pone el diseño. Ejemplo: Café de origen · Santander", validation: advertenciaDeMarca }),
     defineField({ name: "titular", title: "Titular (antes del remate)", type: "string", description: "Ejemplo: «Del cañón»", validation: (r) => [r.required().max(60), advertenciaDeMarca(r)] }),
     defineField({ name: "remate", title: "Remate en itálica", type: "string", description: "Una sola palabra o frase corta. Ejemplo: «a tu taza»", validation: (r) => r.max(40) }),
     defineField({ name: "bajada", title: "Bajada", type: "text", rows: 2, description: "Máximo 25 palabras.", validation: (r) => [r.max(200), advertenciaDeMarca(r)] }),
@@ -39,7 +39,7 @@ export const paginaHistoria = defineType({
       title: "Del cafetal a la taza",
       type: "array",
       of: [defineArrayMember({ type: "paso" })],
-      description: "Cada paso debe corresponder a lo que realmente hace la marca.",
+      description: "Cada paso debe ser cierto para todos los cafés que se venden y tener soporte escrito de la finca o del proveedor.",
     }),
     defineField({
       name: "cita",

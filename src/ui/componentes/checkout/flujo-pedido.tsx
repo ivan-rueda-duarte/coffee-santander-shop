@@ -279,11 +279,11 @@ function Contenido() {
           <h1 id="t-confirmacion" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido está listo para enviar por WhatsApp</h1>
           {resultado.envio.tipo === "por_cotizar" ? (
             <p className="body mt-3" data-testid="texto-confirmacion">
-              Pulsa «Enviar por WhatsApp» y manda el mensaje. Con este mensaje nos pides el pedido. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.
+              Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.
             </p>
           ) : (
             <p className="body mt-3" data-testid="texto-confirmacion">
-              Pulsa «Enviar por WhatsApp» y manda el mensaje. Con él nos pides el pedido. Después te respondemos para confirmarlo y acordar el pago.
+              Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos para confirmarlo y acordar la forma de pago.
             </p>
           )}
           {resultado.indicacionesResumidas && <p className="caption mt-2 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}

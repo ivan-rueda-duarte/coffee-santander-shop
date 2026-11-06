@@ -25,7 +25,7 @@ export function Portada({ catalogo, contenido }: { catalogo: VistaCatalogo; cont
     contenido?.bajada ??
     (n > 0
       ? "Café de origen de marca propia, de provincias de Santander. Elige tu provincia y pide por WhatsApp."
-      : "Estamos preparando la próxima cosecha. Escríbenos por WhatsApp y te avisamos cuando haya café.");
+      : "Por ahora no tenemos café disponible. Escríbenos por WhatsApp y te avisamos cuando haya.");
 
   return (
     <div data-theme="dark">
@@ -98,7 +98,7 @@ export function ComoPedir({ catalogo, contenido }: { catalogo: VistaCatalogo; co
 // Solo afirmaciones confirmadas por la marca (PRODUCT.md, «Brand Commitments»).
 const HISTORIA_RESPALDO = {
   parrafos: [
-    "De Santander es una marca propia de café de origen. Trabajamos con fincas de familias productoras santandereanas con tradición cafetera y llevamos su café desde el productor hasta tu casa.",
+    "De Santander es una marca propia de café de origen. Trabajamos con fincas de familias productoras santandereanas con tradición cafetera. Su café va de la finca a tu taza: lo despachamos desde Bucaramanga a todo Colombia.",
     "En cada café verás la provincia, el municipio, la altitud, la variedad y el proceso.",
   ],
   proceso: [
