@@ -56,6 +56,11 @@ test.describe("pedido", () => {
     const terminos = page.getByRole("checkbox", { name: /Acepto los términos/ });
     await expect(autorizacion).not.toBeChecked();
     await expect(terminos).not.toBeChecked();
+    // Textos exactos de docs/legal/microcopy-legal.md §4.3 y §5.1 (v0.4); la razón social sale de data/config.csv.
+    await expect(autorizacion).toHaveAccessibleName(
+      "Autorizo a De Santander SAS a tratar mis datos personales para gestionar este pedido: confirmarlo, coordinar la entrega con la transportadora o el mensajero y, si escribí mi documento, emitir la factura a mi nombre. Entiendo que el pedido se envía por WhatsApp (Meta), que puede tratar mis datos fuera de Colombia. Más en la política de tratamiento de datos.",
+    );
+    await expect(terminos).toHaveAccessibleName("Acepto los términos y condiciones.");
     await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
     await expect(page.getByText("Debes autorizar el tratamiento de tus datos")).toBeVisible();
     await expect(page.getByText("Debes aceptar los términos")).toBeVisible();

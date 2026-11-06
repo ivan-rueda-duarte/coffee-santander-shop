@@ -261,7 +261,8 @@ function Contenido() {
             <label className="flex cursor-pointer items-start gap-3 text-sm">
               <input type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-describedby={erroresResumen?.errores.autorizacionDatos ? "e-aut" : undefined} />
               <span>
-                Autorizo a {responsableDatos} a tratar mis datos personales para atender este pedido: confirmarlo, coordinar la entrega con la transportadora {FINALIDAD_EN_AUTORIZACION[DOCUMENTO_OBLIGATORIO || "opcional"]}. Sé que el pedido viaja por WhatsApp (Meta), que puede tratar datos fuera de Colombia. Más en la{" "}
+                {/* Texto exacto de docs/legal/microcopy-legal.md §4.3 (v0.4). */}
+                Autorizo a {responsableDatos} a tratar mis datos personales para gestionar este pedido: confirmarlo, coordinar la entrega con la transportadora o el mensajero {FINALIDAD_EN_AUTORIZACION[DOCUMENTO_OBLIGATORIO || "opcional"]}. Entiendo que el pedido se envía por WhatsApp (Meta), que puede tratar mis datos fuera de Colombia. Más en la{" "}
                 <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">política de tratamiento de datos</Link>.
               </span>
             </label>
