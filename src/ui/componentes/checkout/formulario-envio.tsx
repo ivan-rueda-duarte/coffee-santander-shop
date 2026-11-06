@@ -160,7 +160,8 @@ export function FormularioEnvio({
       </Campo>
       <Campo id="municipio" etiqueta="Municipio" error={errores.municipio}>
         <select {...props("municipio")} autoComplete="address-level2" disabled={municipios.length === 0}>
-          <option value="">{municipios.length ? "Elige el municipio" : "Primero elige el departamento"}</option>
+          {/* QA-004: «Primero elige el departamento» (≈247 px) no cabía en el select a 320 px (≈224 px útiles). */}
+          <option value="">{municipios.length ? "Elige el municipio" : "Elige el departamento"}</option>
           {municipios.map((m) => (
             <option key={m.codigo} value={m.nombre}>
               {m.nombre}
