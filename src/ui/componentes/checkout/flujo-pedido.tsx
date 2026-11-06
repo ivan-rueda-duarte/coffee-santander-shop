@@ -291,7 +291,7 @@ function Contenido() {
             <BotonEnlace href={resultado.enlace} tamano="lg" target="_blank" rel="noopener noreferrer">
               <IconoWhatsapp className="ds-btn__icon" /> Enviar por WhatsApp
             </BotonEnlace>
-            <Boton variante="secundario" tamano="lg" onClick={copiar}>
+            <Boton variante="secundario" tamano="lg" className="max-sm:w-full" onClick={copiar}>
               <IconoCopiar className="ds-btn__icon" /> Copiar mensaje
             </Boton>
           </div>
