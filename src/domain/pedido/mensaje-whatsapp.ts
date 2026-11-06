@@ -2,7 +2,7 @@ import { formatearCOP } from "../comun/dinero";
 import { nombreDestino, TEXTO_POR_COTIZAR, totalConEnvio } from "../envio/envio";
 import type { ResultadoEnvio } from "../envio/tipos";
 import { ETIQUETA_MOLIENDA, type Molienda } from "../catalogo/tipos";
-import { formatearCelular, type DatosEnvio } from "./envio";
+import { formatearCelular, SIGLA_DOCUMENTO, type DatosEnvio } from "./envio";
 
 export const LIMITE_MENSAJE = 2000;
 const LARGO_INDICACIONES_RESUMIDAS = 120;
@@ -63,9 +63,10 @@ function cuerpo(p: PedidoMensaje, indicaciones: string | undefined): string {
     "Envío a:",
     `Nombre: ${e.nombre}`,
     `Celular: ${formatearCelular(e.celular)}`,
-    ...(e.cedula ? [`Cédula: ${e.cedula}`] : []),
     ...(e.correo ? [`Correo: ${e.correo}`] : []),
+    ...(e.tipoDocumento && e.numeroDocumento ? [`Documento: ${SIGLA_DOCUMENTO[e.tipoDocumento]} ${e.numeroDocumento}`] : []),
     `Ciudad: ${e.municipio}, ${e.departamento}`,
+    ...(e.codigoPostal ? [`Código postal: ${e.codigoPostal}`] : []),
     `Dirección: ${direccion}`,
     ...(indicaciones ? [`Indicaciones: ${indicaciones}`] : []),
     `Forma de pago: ${e.formaPago}`,

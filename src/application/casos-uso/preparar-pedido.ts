@@ -38,8 +38,9 @@ export type ResultadoPedido =
  * Convierte el carrito y el formulario en el mensaje de WhatsApp.
  * Los precios salen siempre del catálogo, nunca del navegador; las líneas de cafés retirados,
  * agotados, con una molienda que no se ofrece o con más del máximo se rechazan con un mensaje.
+ * `codigosDepartamento` (nombre → código DIVIPOLA) sirve para validar el código postal.
  */
-export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido): ResultadoPedido {
+export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido, codigosDepartamento: Readonly<Record<string, string>>): ResultadoPedido {
   const { tienda } = catalogo;
   const errores: Record<string, string> = {};
   const problemasLineas: string[] = [];
@@ -58,7 +59,7 @@ export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido): Resu
   }
   if (problemasLineas.length) errores.lineas = "Revisa tu pedido: hay cafés que cambiaron.";
 
-  const envio = validar(crearEsquemaEnvio(tienda.formasPago), entrada.envio);
+  const envio = validar(crearEsquemaEnvio(tienda.formasPago, codigosDepartamento), entrada.envio);
   if (!envio.ok) Object.assign(errores, envio.errores);
 
   const consentimientos = validar(esquemaConsentimientos, {

@@ -95,6 +95,9 @@ describe("obtenerFichaCafe", () => {
   });
 });
 
+const CODIGOS = { Santander: "68", "Bogotá, D.C.": "11", Amazonas: "91" };
+const preparar = (c: typeof catalogo, e: EntradaPedido) => prepararPedido(c, e, CODIGOS);
+
 const envioValido = {
   nombre: "Ana Rueda",
   celular: "300 123 4567",
@@ -115,8 +118,19 @@ const entrada = (cambios: Partial<EntradaPedido> = {}): EntradaPedido => ({
 });
 
 describe("prepararPedido", () => {
+  it("valida el código postal con el código del departamento y lo lleva al mensaje", () => {
+    const mal = preparar(catalogo, entrada({ envio: { ...envioValido, codigoPostal: "110111" } }));
+    expect(mal.ok).toBe(false);
+    if (!mal.ok) expect(mal.errores.codigoPostal).toBe("Este código no corresponde a Santander. Revísalo en el visor de 4-72.");
+    const bien = preparar(catalogo, entrada({ envio: { ...envioValido, codigoPostal: "680001", tipoDocumento: "CC", numeroDocumento: "1.098.765.432" } }));
+    expect(bien.ok).toBe(true);
+    if (bien.ok) {
+      expect(bien.pedido.texto).toContain("Documento: CC 1098765432");
+      expect(bien.pedido.texto).toContain("Código postal: 680001");
+    }
+  });
   it("arma el mensaje con precios del catálogo y el enlace de WhatsApp", () => {
-    const r = prepararPedido(catalogo, entrada());
+    const r = preparar(catalogo, entrada());
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.pedido.totales.subtotalCop).toBe(125000);
@@ -133,28 +147,28 @@ describe("prepararPedido", () => {
   it("calcula el envío con el departamento y el municipio del formulario", () => {
     const bogota = { ...envioValido, departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C." };
     const dos250 = [{ cafeSlug: OIBA.slug, gramos: 250, molienda: "grano" as const, cantidad: 2 }];
-    const r = prepararPedido(catalogo, entrada({ lineas: dos250, envio: bogota }));
+    const r = preparar(catalogo, entrada({ lineas: dos250, envio: bogota }));
     expect(r.ok && r.pedido.texto).toContain("Subtotal: $50.000\nEnvío (Bogotá · zona 3): $18.000\nTotal: $68.000");
     expect(r.ok && r.pedido.totalCop).toBe(68000);
   });
   it("en zona especial el envío va por cotizar y el total no lo incluye", () => {
     const leticia = { ...envioValido, departamento: "Amazonas", municipio: "Leticia" };
-    const r = prepararPedido(catalogo, entrada({ envio: leticia }));
+    const r = preparar(catalogo, entrada({ envio: leticia }));
     expect(r.ok && r.pedido.texto).toContain("Subtotal: $125.000\nEnvío: POR COTIZAR (zona especial)\nTotal sin envío: $125.000");
     expect(r.ok && r.pedido.envio).toMatchObject({ tipo: "por_cotizar", motivo: "zona_especial" });
     expect(r.ok && r.pedido.totalCop).toBe(125000);
   });
   it("de más de 5 kg va por cotizar aunque la zona tenga tarifa", () => {
-    const r = prepararPedido(catalogo, entrada({ lineas: [{ cafeSlug: SOCORRO.slug, gramos: 500, molienda: "grano", cantidad: 11 }] }));
+    const r = preparar(catalogo, entrada({ lineas: [{ cafeSlug: SOCORRO.slug, gramos: 500, molienda: "grano", cantidad: 11 }] }));
     expect(r.ok && r.pedido.texto).toContain("Envío: POR COTIZAR (más de 5 kg)");
   });
   it("rechaza un pedido vacío", () => {
-    const r = prepararPedido(catalogo, entrada({ lineas: [] }));
+    const r = preparar(catalogo, entrada({ lineas: [] }));
     expect(r).toMatchObject({ ok: false, errores: { lineas: "Tu pedido está vacío." } });
   });
   it("explica cada línea con problema", () => {
     const agotado = { ...catalogo, cafes: [...CAFES_PRUEBA, crearCafe({ slug: "ago", nombre: "Café Ago", presentaciones: [{ gramos: 250, precioCop: 1, disponible: false }] }), crearCafe({ slug: "solo-grano", nombre: "Café Solo Grano", moliendas: ["grano"] })] };
-    const r = prepararPedido(
+    const r = preparar(
       agotado,
       entrada({
         lineas: [
@@ -178,19 +192,19 @@ describe("prepararPedido", () => {
     expect(r.errores.lineas).toMatch(/Revisa tu pedido/);
   });
   it("valida el envío y los consentimientos juntos", () => {
-    const r = prepararPedido(catalogo, entrada({ envio: { ...envioValido, nombre: "", celular: "1" }, autorizacionDatos: false, aceptaTerminos: false }));
+    const r = preparar(catalogo, entrada({ envio: { ...envioValido, nombre: "", celular: "1" }, autorizacionDatos: false, aceptaTerminos: false }));
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(Object.keys(r.errores).sort()).toEqual(["aceptaTerminos", "autorizacionDatos", "celular", "nombre"]);
   });
   it("una forma de pago fuera de la lista del catálogo es un error", () => {
-    const r = prepararPedido(catalogo, entrada({ envio: { ...envioValido, formaPago: "Cheque" } }));
+    const r = preparar(catalogo, entrada({ envio: { ...envioValido, formaPago: "Cheque" } }));
     expect(r).toMatchObject({ ok: false, errores: { formaPago: "Elige una forma de pago." } });
   });
   it("avisa cuando las indicaciones se resumen", () => {
     const largo = { ...envioValido, indicaciones: "y".repeat(300) };
     const muchas = Array.from({ length: 12 }, (_, i) => ({ cafeSlug: i % 2 ? SOCORRO.slug : SAN_GIL.slug, gramos: i % 3 ? 250 : 500, molienda: i % 4 < 2 ? ("grano" as const) : ("molido" as const), cantidad: 1 + i }));
-    const r = prepararPedido(catalogo, entrada({ lineas: muchas, envio: largo }));
+    const r = preparar(catalogo, entrada({ lineas: muchas, envio: largo }));
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.pedido.texto.length).toBeLessThanOrEqual(2000);
   });

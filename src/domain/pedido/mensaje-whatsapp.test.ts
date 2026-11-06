@@ -6,10 +6,12 @@ import type { ResultadoEnvio } from "../envio/tipos";
 const envio: DatosEnvio = {
   nombre: "Ana Rueda",
   celular: "3001234567",
-  cedula: undefined,
+  tipoDocumento: undefined,
+  numeroDocumento: undefined,
   correo: undefined,
   departamento: "Santander",
   municipio: "Bucaramanga",
+  codigoPostal: undefined,
   direccion: "Calle 45 # 12-30",
   barrio: "Cabecera",
   indicaciones: "Dejar en portería",
@@ -112,10 +114,29 @@ describe("construirMensaje", () => {
     expect(texto).not.toContain("Indicaciones");
     expect(texto).toContain("Dirección: Calle 45 # 12-30\n");
   });
-  it("incluye cédula y correo si se dieron", () => {
-    const { texto } = construirMensaje({ ...pedido, envio: { ...envio, cedula: "1098765432", correo: "ana@correo.co" } });
-    expect(texto).toContain("Cédula: 1098765432");
-    expect(texto).toContain("Correo: ana@correo.co");
+  it("incluye documento, correo y código postal si se dieron, en su orden", () => {
+    const { texto } = construirMensaje({ ...pedido, envio: { ...envio, tipoDocumento: "CC", numeroDocumento: "1098765432", correo: "ana@correo.co", codigoPostal: "680001" } });
+    expect(texto).toContain("Correo: ana@correo.co\nDocumento: CC 1098765432\nCiudad: Bucaramanga, Santander\nCódigo postal: 680001\nDirección:");
+    expect(texto).not.toContain("Cédula");
+  });
+  it.each([
+    ["CE", "Documento: CE E12345"],
+    ["PPT", "Documento: PPT E12345"],
+    ["PAS", "Documento: Pasaporte E12345"],
+  ] as const)("usa la sigla del tipo %s", (tipoDocumento, linea) => {
+    const { texto } = construirMensaje({ ...pedido, envio: { ...envio, tipoDocumento, numeroDocumento: "E12345" } });
+    expect(texto).toContain(linea);
+  });
+  it("omite documento y código postal si no se escribieron", () => {
+    const { texto } = construirMensaje(pedido);
+    expect(texto).not.toContain("Documento:");
+    expect(texto).not.toContain("Código postal:");
+  });
+  it("con los datos de envío al máximo cabe en 2.000 caracteres", () => {
+    const lleno = { ...envio, nombre: "N".repeat(80), correo: `${"c".repeat(100)}@correo.co`, tipoDocumento: "PAS" as const, numeroDocumento: "A".repeat(20), codigoPostal: "680001", direccion: "D".repeat(120), barrio: "B".repeat(60), indicaciones: "I".repeat(300) };
+    const r = construirMensaje({ ...pedido, envio: lleno });
+    expect(r.texto.length).toBeLessThan(LIMITE_MENSAJE);
+    expect(r.texto).toContain("Documento: Pasaporte AAAAAAAAAAAAAAAAAAAA");
   });
   it("omite la provincia si el café no la tiene", () => {
     const { texto } = construirMensaje({ ...pedido, lineas: [{ ...pedido.lineas[0], provincia: null }] });
