@@ -102,6 +102,8 @@ export default async function PaginaEnvios() {
             </div>
           ))}
         </dl>
+        {/* D6 (LEG-068): microcopy §5.8, mientras los plazos máximos por zona no estén confirmados (D-9). */}
+        <p className="body mt-3 max-w-2xl text-ink-muted" data-testid="plazo-legal">Si no publicamos un plazo máximo para tu zona, entregamos en máximo 30 días calendario, como manda la ley.</p>
 
         <h2 className="h3 mt-12 text-ink-title">Si no hay reparto a domicilio</h2>
         <p className="body mt-2 max-w-2xl">
@@ -114,7 +116,7 @@ export default async function PaginaEnvios() {
         </p>
 
         <div className="mt-10 rounded-lg bg-surface-sunken p-6">
-          <p className="body-l">¿Tu destino no aparece o pides más de 5 kg?</p>
+          <p className="body-l">¿Tu destino es de zona 5 o pides más de 5 kg?</p>
           <p className="body mt-1 text-ink-muted">Escríbenos al {formatearWhatsapp(catalogo.tienda.whatsapp)} y te cotizamos.</p>
           <BotonEnlace href={`https://wa.me/${catalogo.tienda.whatsapp}`} className="mt-4" target="_blank" rel="noopener noreferrer">
             Escribir por WhatsApp

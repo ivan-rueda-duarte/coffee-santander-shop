@@ -152,6 +152,7 @@ test.describe("envío por zonas: por cotizar", () => {
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toHaveText("Este valor no incluye el envío. Te lo informamos por WhatsApp y tú decides si lo aceptas antes de pagar.");
+    await expect(page.getByTestId("aviso-retracto")).toContainText("no admite retracto");
     await expect(totalDe(page)).toContainText("Total sin envío");
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
@@ -213,6 +214,16 @@ test.describe("página /envios/ y enlaces", () => {
       if (a === "por_cotizar") await expect(fila).toContainText("Por cotizar");
       else for (const v of [a, b, c]) await expect(fila).toContainText(cop(v));
     }
+  });
+
+  test("D6: la sección de plazos cierra con la línea de 30 días y la llamada a WhatsApp nombra la zona 5", async ({ page }) => {
+    await page.goto("/envios/");
+    await expect(page.getByRole("heading", { name: "Plazos orientativos" })).toBeVisible();
+    await expect(page.getByTestId("plazo-legal")).toHaveText("Si no publicamos un plazo máximo para tu zona, entregamos en máximo 30 días calendario, como manda la ley.");
+    await expect(page.getByText("¿Tu destino es de zona 5 o pides más de 5 kg?")).toBeVisible();
+    await expect(page.getByText("¿Tu destino no aparece")).toHaveCount(0);
+    // Los máximos por zona (3/6/10/20 días hábiles) no están confirmados (D-9): no se publican.
+    await expect(page.getByText(/Máximo:? \d+ días hábiles/)).toHaveCount(0);
   });
 
   test("enlaces del pie, del carrito y del resumen a /envios/ y /legal/envios-devoluciones/ responden 200", async ({ page }) => {
