@@ -30,6 +30,7 @@ Cada ítem marca un `TODO(dato)`: no se muestra en la interfaz hasta que exista 
 
 ## Contenido
 - TODO(dato): fotografías de producto y de fincas, con lugar, fecha y crédito.
+- **TODO(dato) P24 (LEG-104): origen de la foto de la Historia `public/assets/fotografia/cafetal-montana.jpg`** (también en `legacy/` y `page_style/`). En el repositorio no consta autor, lugar, fecha ni licencia; solo la nota interna «Fotografías propias de la marca» del kit de diseño. Pregunta al dueño: a) ¿la tomó usted u otra persona de la sociedad? Indique autor, municipio y año → se publica con `Foto: {autor} · {municipio}, Santander · {año}`; b) ¿la tomó un tercero? Indique autor y entregue el permiso escrito de uso → se publica con su crédito; c) ¿no se sabe? → solo si usted confirma por escrito que tiene derecho a usarla, se publica con texto alternativo neutro («Montañas verdes con cultivos en ladera, un camino de tierra y nubes bajas.») y sin crédito; si no, se retira antes del lanzamiento. Mientras tanto: alt neutro y sin crédito (microcopy §2, v1.1).
 - TODO(dato): confirmar los textos de "Historia" de la v1 (primeras regiones cafeteras, proceso de beneficio).
 
 ## Envío

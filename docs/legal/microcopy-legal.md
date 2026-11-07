@@ -1,4 +1,4 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.0 — 2026-11-06.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.1 — 2026-11-06.
 
 # Microcopy legal
 
@@ -7,6 +7,8 @@ Textos exactos del sitio que tienen fundamento legal. El desarrollador los copia
 Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran.
 
 Cambios de la v1.0 (Paquete legal v1 y decisiones del dueño del 2026-11-06; revisión LEG-081 a LEG-100): leyenda de IVA del 5 % (§1.4); «Notificación sanitaria INVIMA» con titular y fabricante (§3); ayuda de molienda de fábrica (§3); casillas con versión y fecha (§4.3, §5.1); plantilla completa del mensaje sin número de solicitud (§5.5); línea de retracto de 5 días hábiles (§5.3); vendedor completo en pie y resumen (§5.4); plazos estimado y máximo por zona (§5.6, §5.8); comisión incluida en la tarifa (§1.7). Se retiran la casilla de promociones (v0.6 §4.7), la comisión de recaudo con dos estados (v0.6 §6) y la línea «no admite retracto».
+
+Cambios de la v1.1 (2026-11-06, LEG-101 a LEG-105; QA-006, QA-008 y revisión de marca): nueva §5.9 (botón «Preparar pedido para WhatsApp» mientras falta una casilla: microayuda por caso, `aria-disabled` y errores al pulsar); §4.3 y §5.1 remiten a §5.9 y ya no exigen `disabled`; §2 «Cómo pedir», paso 3, con la regla de las formas de pago («Bre-B» y «o»); §2 nueva fila de la foto de respaldo de la Historia (texto alternativo neutro y sin crédito mientras no conste el origen); §2 nota sobre la itálica de remate en los títulos de las páginas legales. El texto público de los cuatro documentos (versión 1) no cambia.
 
 ## 1. Precio, IVA y envío
 
@@ -88,12 +90,17 @@ No hay línea de comisión, ni rótulo «Total sin comisión de recaudo», ni «
 | Historia, proceso | *(sin pasos; el bloque «Del cafetal a la taza» no se muestra)* |
 | «Cómo pedir», paso 1 | `Cada café viene en bolsa de {tamaños}, en grano entero o molido, tal como lo empaca su fabricante. El precio de cada bolsa está en su tarjeta y en su ficha.` |
 | «Cómo pedir», paso 2 | `Completas tus datos de envío y se abre WhatsApp con tu solicitud de compra ya escrita. Con ese mensaje nos pides el pedido; queda en firme cuando aceptas el total en el chat.` |
-| «Cómo pedir», paso 3 | `Despachamos desde {ciudad_despacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con {formas de pago}.` (sin cambio) |
+| «Cómo pedir», paso 3 | `Despachamos desde {ciudad_despacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con {formas de pago}.` Con la configuración actual, exacto: `… Pagas con efectivo contraentrega o transferencia Bre-B.` Regla de `{formas de pago}` (v1.1, LEG-103): cada forma tal como está en `formas_pago` de `data/config.csv`, con **solo la primera letra** en minúscula (nunca `toLowerCase` del texto completo: «Bre-B» es nombre propio); se unen con «o», no con «y» («a o b»; con tres o más, «a, b o c»), porque el cliente paga con una de ellas |
+| Historia, foto de respaldo (`secciones-inicio.tsx`, cuando Sanity no trae foto) | Texto alternativo: `Montañas verdes con cultivos en ladera, un camino de tierra y nubes bajas.` Crédito: **ninguno** (`credito: ""`, sin `figcaption`). Mientras el dueño no confirme autor, lugar y permiso de uso (LEG-104, P24), no se dice «Santander», «cafetal», «finca», «niebla de la mañana» ni «De Santander» como crédito. Cuando lo confirme: `Foto: {autor} · {municipio}, Santander · {año}` (solo con los tres datos) |
 | Confirmación, título | `Tu pedido está listo para enviar por WhatsApp` |
 | Confirmación con tarifa | `Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos para confirmarlo y acordar la forma de pago.` |
 | Confirmación por cotizar | `Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.` |
 
 Exige la norma información veraz sobre el origen empresarial (Ley 1480, arts. 23, 24, 29 y 30). Modelo C decidido el 2026-11-06 (LEG-069 a LEG-072); el paquete v1 no lo cambia.
+
+**Foto de respaldo (LEG-104).** Exige la norma que la imagen no induzca a error sobre el origen del producto (Ley 1480, arts. 23 y 30) y respetar la paternidad y la licencia de la obra fotográfica (Ley 23 de 1982 y Decisión 351 de 1993 de la CAN: VERIFICAR artículos). En el repositorio no consta autor, lugar, fecha ni licencia de `cafetal-montana.jpg`: solo la nota interna «Fotografías propias de la marca» de `page_style/assets/Fotografia/README.md`, sin soporte. Un crédito «De Santander» atribuye una autoría no demostrada; el texto alternativo actual afirma un lugar («de Santander») y un cultivo («cafetal») que no se pueden comprobar en la imagen. Se recomienda, además, quitar la foto si el dueño no puede confirmar el permiso de uso (términos §14 dice que las fotos son de la sociedad o de quien la autorizó).
+
+**Títulos de las páginas legales con itálica de marca (LEG-105).** Se permite, solo como tipografía: el texto del título debe ser letra por letra el nombre del documento que usan las casillas, el pie y los enlaces (p. ej. «Términos *y condiciones*»), sin añadir ni quitar palabras.
 
 ## 3. Ficha del café
 
@@ -142,7 +149,7 @@ La ayuda solo es cierta si el contador confirma la factura a nombre del comprado
 
 Ejemplo renderizado: «Autorizo a De Santander a tratar mis datos personales para gestionar mi pedido, conforme a la Política de Tratamiento de Datos versión 1 del 6 de noviembre de 2026, que leí.»
 
-Reglas: sin marcar por defecto; separada de la de términos; versión y fecha leídas de `data/config.csv` (nunca fijas en el código); error `Debes autorizar el tratamiento de tus datos para continuar.`; el botón «Preparar pedido para WhatsApp» queda deshabilitado mientras falte una de las dos casillas. Exige la norma (Ley 1581, arts. 9 y 12). **Se recomienda**, no se exige, añadir al final `Entiendo que el pedido se envía por WhatsApp (Meta), que puede tratar mis datos fuera de Colombia.` (LEG-095).
+Reglas: sin marcar por defecto; separada de la de términos; versión y fecha leídas de `data/config.csv` (nunca fijas en el código); error `Debes autorizar el tratamiento de tus datos para continuar.`; mientras falte una de las dos casillas, el botón «Preparar pedido para WhatsApp» no avanza, se muestra la microayuda y, al pulsarlo, el error (§5.9, v1.1; sustituye «deshabilitado»). Exige la norma (Ley 1581, arts. 9 y 12). **Se recomienda**, no se exige, añadir al final `Entiendo que el pedido se envía por WhatsApp (Meta), que puede tratar mis datos fuera de Colombia.` (LEG-095).
 
 ### 4.4 Resumen y mensaje de WhatsApp (documento y código postal)
 
@@ -174,7 +181,7 @@ Reglas: sin marcar por defecto; separada de la de términos; versión y fecha le
 | Resumen, segunda casilla, sin marcar | `Leí y acepto los ` + enlace `Términos y condiciones versión {version_terminos} del {fecha_terminos en letras}` (a `/legal/terminos/`) + `.` |
 | Error | `Debes aceptar los términos para continuar.` |
 
-Ejemplo: «Leí y acepto los Términos y condiciones versión 1 del 6 de noviembre de 2026.» Exige la norma que las dos casillas estén separadas y sin marcar (Ley 1581, art. 9; Ley 1480, art. 50).
+Ejemplo: «Leí y acepto los Términos y condiciones versión 1 del 6 de noviembre de 2026.» Exige la norma que las dos casillas estén separadas y sin marcar (Ley 1581, art. 9; Ley 1480, art. 50). Comportamiento del botón mientras falte esta casilla: §5.9.
 
 ### 5.2 Constancia en el mensaje de WhatsApp
 
@@ -267,6 +274,27 @@ Respuesta al «ACEPTO» (operación, no código): antes de procesar, la tienda e
 | `metadata.description` | `Cómo calculamos el envío de tu pedido: zonas, tarifas por peso con IVA incluido y plazos de entrega desde Bucaramanga.` |
 | Enlace final | `Lee la política completa de envíos, devoluciones, retracto y garantía.` (a `/legal/envios-devoluciones/`) |
 
+### 5.9 Botón «Preparar pedido para WhatsApp» mientras falta una casilla (v1.1; LEG-101, LEG-102; QA-006)
+
+**Vía recomendada: botón activo para el foco con `aria-disabled="true"` + microayuda visible + errores al pulsar.** No se usa el atributo `disabled`.
+
+| Dónde | Caso | Texto exacto |
+|---|---|---|
+| Microayuda, texto visible justo encima o debajo del botón, `caption`, enlazada al botón con `aria-describedby` | Faltan las dos casillas | `Para preparar tu pedido, marca las dos casillas: la autorización de tus datos y los términos y condiciones.` |
+| Mismo lugar | Falta solo la autorización de datos | `Para preparar tu pedido, falta que autorices el tratamiento de tus datos.` |
+| Mismo lugar | Faltan solo los términos | `Para preparar tu pedido, falta que aceptes los términos y condiciones.` |
+| Mismo lugar | Las dos marcadas | *(la microayuda desaparece y el botón deja de tener `aria-disabled`)* |
+| Variante de una sola frase (si diseño prefiere no cambiar el texto según el caso) | Falta una o las dos | `Para preparar tu pedido, marca las dos casillas.` |
+| Error bajo la casilla de datos, al pulsar el botón si no está marcada (`aria-invalid="true"` y `aria-describedby` en la casilla) | — | `Debes autorizar el tratamiento de tus datos para continuar.` (sin cambio) |
+| Error bajo la casilla de términos, al pulsar el botón si no está marcada (igual) | — | `Debes aceptar los términos para continuar.` (sin cambio) |
+
+Reglas:
+1. Al pulsar el botón con `aria-disabled="true"`: no se arma el resumen ni el enlace `wa.me`, no se marca ninguna casilla por el cliente, se muestran los errores de las casillas que falten y el foco va a la primera casilla sin marcar. Al marcarla, su error desaparece.
+2. La microayuda no se anuncia con `aria-live` en cada cambio (sería ruidosa); basta `aria-describedby`. Los errores sí se anuncian al aparecer (`role="alert"` o el patrón de errores que ya usa el formulario).
+3. Ningún texto de este bloque dice «compra», «confirmar», «finalizar» ni «pagar»: el botón solo prepara el mensaje; el pedido existe al enviarlo por WhatsApp y queda en firme al aceptar el total en el chat (términos §6).
+
+Fundamento. **Exige la norma** que la autorización de datos y la aceptación de los términos sean expresas, separadas y sin premarcar (Ley 1581, arts. 9 y 12; Ley 1480, art. 50; Ley 527, art. 14: VERIFICAR artículo), y que la información al consumidor sea clara y comprensible (Ley 1480, art. 23). Las dos vías (`disabled` con microayuda, o `aria-disabled` con microayuda y errores) cumplen esas normas si el botón no avanza sin las dos casillas. **Se recomienda** `aria-disabled` porque: (a) un botón `disabled` no recibe foco y quien navega con teclado o lector de pantalla no lo encuentra o no sabe por qué no responde; (b) conserva los errores junto a cada casilla, que indican exactamente cuál falta (WCAG 2.2, criterios 3.3.1, 3.3.2 y 4.1.2, como buena práctica: no es norma colombiana obligatoria para particulares; VERIFICAR la aplicabilidad de la NTC 5854); (c) resuelve la contradicción de la v1.0, que pedía a la vez «error sin cambio» y «botón deshabilitado».
+
 ## 6. Configuración y CSV (requisitos de datos)
 
 `data/config.csv` (claves nuevas o actualizadas):
@@ -309,3 +337,6 @@ Páginas legales: el contenido público de cada documento (`terminos-y-condicion
 - Toda mención a `Total sin comisión de recaudo`, `Comisión por pago contraentrega`, `POR CONFIRMAR` y a la casilla de promociones (v0.6 §4.7 y §6): no se implementan.
 - `El café no tiene IVA`, `sin IVA` (solo existían en documentos internos; no se publican).
 - `N.° DS-[número]` (plantilla del paquete; el sitio no numera).
+- `Cafetal entre montañas de Santander con niebla de la mañana` (texto alternativo de la foto de respaldo de la Historia) y el crédito `De Santander` de esa foto (v1.1, LEG-104; reemplazados por §2).
+- `transferencia bre-b` y la unión de las formas de pago con «y» en «Cómo pedir» (v1.1, LEG-103).
+- Atributo `disabled` en «Preparar pedido para WhatsApp» sin explicación (v1.1, LEG-101; reemplazado por §5.9).
