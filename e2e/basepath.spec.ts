@@ -33,7 +33,8 @@ test.describe("basePath de GitHub Pages", () => {
     await expect(page.getByRole("checkbox", { name: casillas.autorizacion, exact: true })).not.toBeChecked();
     await expect(page.getByRole("link", { name: casillas.enlacePolitica, exact: true })).toHaveAttribute("href", `${REPO}/legal/privacidad/`);
     await expect(page.getByRole("link", { name: casillas.enlaceTerminos, exact: true })).toHaveAttribute("href", `${REPO}/legal/terminos/`);
-    await expect(page.getByRole("link", { name: "Información del vendedor", exact: true })).toHaveAttribute("href", `${REPO}/legal/vendedor/`);
+    // QA (2026-11-06): el pie también tiene «Información del vendedor»; se busca el de la línea del vendedor del resumen.
+    await expect(page.getByTestId("linea-vendedor").getByRole("link", { name: "Información del vendedor", exact: true })).toHaveAttribute("href", `${REPO}/legal/vendedor/`);
 
     const esperados = ["/envios/", "/legal/envios-devoluciones/", "/legal/privacidad/", "/legal/terminos/", "/legal/vendedor/"];
     for (const ruta of esperados) {
