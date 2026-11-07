@@ -67,7 +67,7 @@ export default async function PaginaEnvios() {
             <tbody className="divide-y divide-line">
               {tarifas.map((t) => (
                 <tr key={t.clave} data-testid={`tarifa-${t.clave}`}>
-                  <th scope="row" className="px-4 py-3 align-top font-bold text-ink-title">Zona {t.zona}</th>
+                  <th scope="row" className="whitespace-nowrap px-4 py-3 align-top font-bold text-ink-title">Zona {t.zona}</th>
                   <td className="px-4 py-3 align-top">
                     {cubre(t)}
                     <span className="mt-1 block text-ink-muted">{MEDIOS[t.medio] ?? t.medio}</span>
@@ -84,9 +84,10 @@ export default async function PaginaEnvios() {
             </tbody>
           </table>
         </div>
-        {/* Microcopy §1.4 y §1.7 (paquete legal v1): IVA incluido y comisión de recaudo dentro de la tarifa. */}
-        <p className="caption mt-3 text-ink-muted" data-testid="leyenda-iva">{leyendaIvaTarifas(catalogo.tienda.ivaTarifa)}</p>
-        <p className="body mt-3 max-w-2xl text-ink-muted" data-testid="comision-incluida">
+        {/* Microcopy §1.4 y §1.7 (paquete legal v1): IVA incluido y comisión de recaudo dentro de la tarifa.
+            Diseño #12: las dos aclaraciones de la tabla en el mismo nivel (small), la leyenda de IVA pegada a la tabla. */}
+        <p className="small mt-3 max-w-2xl text-ink-muted" data-testid="leyenda-iva">{leyendaIvaTarifas(catalogo.tienda.ivaTarifa)}</p>
+        <p className="small mt-2 max-w-2xl text-ink-muted" data-testid="comision-incluida">
           Si pagas contraentrega, la tarifa de envío de tu zona ya incluye la comisión de recaudo de la transportadora; no cobramos recargos adicionales.
         </p>
 
