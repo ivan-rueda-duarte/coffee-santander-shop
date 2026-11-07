@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { formatearCOP, formatearMiles } from "./dinero";
+import { fechaEnLetras } from "./fecha";
 import { normalizar, quitarTildes, slugify } from "./slug";
+
+describe("fechaEnLetras", () => {
+  it("escribe la fecha ISO en letras, sin cero inicial en el día", () => {
+    expect(fechaEnLetras("2026-11-06")).toBe("6 de noviembre de 2026");
+    expect(fechaEnLetras("2027-01-15")).toBe("15 de enero de 2027");
+    expect(fechaEnLetras("2026-12-31")).toBe("31 de diciembre de 2026");
+  });
+  it("rechaza lo que no es año-mes-día", () => {
+    for (const mala of ["06/11/2026", "2026-13-01", "2026-00-10", "2026-11-32", "hoy"]) expect(() => fechaEnLetras(mala)).toThrow(RangeError);
+  });
+});
 
 describe("formatearCOP", () => {
   it("usa punto de miles y sin decimales", () => {

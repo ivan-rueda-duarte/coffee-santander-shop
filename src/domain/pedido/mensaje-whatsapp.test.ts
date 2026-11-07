@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { construirEnlace, construirMensaje, formatearWhatsapp, LIMITE_MENSAJE, type PedidoMensaje } from "./mensaje-whatsapp";
+import { construirEnlace, construirMensaje, formatearWhatsapp, lineaConstancia, LIMITE_MENSAJE, type PedidoMensaje } from "./mensaje-whatsapp";
 import type { DatosEnvio } from "./envio";
 import type { ResultadoEnvio } from "../envio/tipos";
 
@@ -27,7 +27,10 @@ const pedido: PedidoMensaje = {
   subtotalCop: 125000,
   costoEnvio: { tipo: "tarifa", zona: 1, clave: "bucaramanga", pesoFacturableG: 1330, escalonKg: 2, valorCop: 11600 },
   envio,
+  ivaTarifa: 5,
+  legal: { versionTerminos: "1", versionPoliticaDatos: "1", fechaPoliticaDatos: "2026-11-06" },
 };
+const CONSTANCIA = "Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026.";
 const porCotizar = (motivo: "zona_especial" | "mas_de_5kg"): ResultadoEnvio => ({ tipo: "por_cotizar", zona: 5, pesoFacturableG: 1330, motivo });
 
 describe("construirMensaje", () => {
@@ -35,12 +38,12 @@ describe("construirMensaje", () => {
     const { texto, indicacionesResumidas } = construirMensaje(pedido);
     expect(indicacionesResumidas).toBe(false);
     expect(texto).toMatchInlineSnapshot(`
-      "¡Hola, De Santander! Quiero finalizar mi pedido
+      "¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.
 
       • Café Barichara (Guanentá) — Grano entero — 500 g × 2 = $100.000
       • Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000
 
-      Subtotal: $125.000
+      Subtotal de productos: $125.000 (IVA del 5 % incluido)
       Envío (Bucaramanga · zona 1): $11.600
       Total: $136.600
 
@@ -50,7 +53,9 @@ describe("construirMensaje", () => {
       Ciudad: Bucaramanga, Santander
       Dirección: Calle 45 # 12-30 · Barrio: Cabecera
       Indicaciones: Dejar en portería
-      Forma de pago: Transferencia Bre-B"
+      Forma de pago: Transferencia Bre-B
+
+      Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026."
     `);
   });
   it("con tarifa suma el envío al total (Bogotá, D.C. se muestra como Bogotá)", () => {
@@ -61,12 +66,12 @@ describe("construirMensaje", () => {
       envio: { ...envio, departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C." },
     });
     expect(texto).toMatchInlineSnapshot(`
-      "¡Hola, De Santander! Quiero finalizar mi pedido
+      "¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.
 
       • Café Barichara (Guanentá) — Grano entero — 500 g × 2 = $100.000
       • Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000
 
-      Subtotal: $96.000
+      Subtotal de productos: $96.000 (IVA del 5 % incluido)
       Envío (Bogotá · zona 3): $18.000
       Total: $114.000
 
@@ -76,18 +81,20 @@ describe("construirMensaje", () => {
       Ciudad: Bogotá, D.C., Bogotá, D.C.
       Dirección: Calle 45 # 12-30 · Barrio: Cabecera
       Indicaciones: Dejar en portería
-      Forma de pago: Transferencia Bre-B"
+      Forma de pago: Transferencia Bre-B
+
+      Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026."
     `);
   });
   it("por cotizar (zona especial) no suma envío y rotula el total", () => {
     const { texto } = construirMensaje({ ...pedido, subtotalCop: 96000, costoEnvio: porCotizar("zona_especial"), envio: { ...envio, departamento: "Amazonas", municipio: "Leticia" } });
     expect(texto).toMatchInlineSnapshot(`
-      "¡Hola, De Santander! Quiero finalizar mi pedido
+      "¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.
 
       • Café Barichara (Guanentá) — Grano entero — 500 g × 2 = $100.000
       • Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000
 
-      Subtotal: $96.000
+      Subtotal de productos: $96.000 (IVA del 5 % incluido)
       Envío: POR COTIZAR (zona especial)
       Total sin envío: $96.000
 
@@ -99,13 +106,15 @@ describe("construirMensaje", () => {
       Indicaciones: Dejar en portería
       Forma de pago: Transferencia Bre-B
 
-      Quedo atento al valor del envío para confirmar mi pedido."
+      Quedo atento al valor del envío para confirmar mi pedido.
+
+      Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026."
     `);
   });
   it("por cotizar por peso dice más de 5 kg", () => {
     const { texto } = construirMensaje({ ...pedido, costoEnvio: porCotizar("mas_de_5kg") });
     expect(texto).toContain("Envío: POR COTIZAR (más de 5 kg)\nTotal sin envío: $125.000");
-    expect(texto.endsWith("\n\nQuedo atento al valor del envío para confirmar mi pedido.")).toBe(true);
+    expect(texto).toContain(`\n\nQuedo atento al valor del envío para confirmar mi pedido.\n\n${CONSTANCIA}`);
     expect(construirMensaje(pedido).texto).not.toContain("Quedo atento");
   });
   it("omite los datos opcionales que no hay", () => {
@@ -138,13 +147,28 @@ describe("construirMensaje", () => {
     expect(r.texto.length).toBeLessThan(LIMITE_MENSAJE);
     expect(r.texto).toContain("Documento: Pasaporte AAAAAAAAAAAAAAAAAAAA");
   });
+  it("la constancia de versiones cierra siempre el mensaje y sale de la configuración (LEG-050, LEG-088)", () => {
+    expect(construirMensaje(pedido).texto.endsWith(`\n\n${CONSTANCIA}`)).toBe(true);
+    const otra = construirMensaje({ ...pedido, legal: { versionTerminos: "2", versionPoliticaDatos: "3", fechaPoliticaDatos: "2027-02-01" } }).texto;
+    expect(otra.endsWith("Acepto los Términos y condiciones versión 2 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 3 del 1 de febrero de 2027.")).toBe(true);
+    expect(lineaConstancia(pedido.legal)).toBe(CONSTANCIA);
+  });
+  it("sin tarifa de IVA el subtotal no afirma ninguna (LEG-082)", () => {
+    const { texto } = construirMensaje({ ...pedido, ivaTarifa: null });
+    expect(texto).toContain("Subtotal de productos: $125.000\nEnvío");
+    expect(texto).not.toMatch(/IVA/);
+  });
+  it("no lleva número de solicitud ni «finalizar» (decisión del dueño, LEG-090)", () => {
+    const { texto } = construirMensaje(pedido);
+    expect(texto).not.toMatch(/DS-|finalizar/i);
+  });
   it("omite la provincia si el café no la tiene", () => {
     const { texto } = construirMensaje({ ...pedido, lineas: [{ ...pedido.lineas[0], provincia: null }] });
     expect(texto).toContain("• Café Barichara — Grano entero");
   });
   it("resume las indicaciones largas si no cabe en 2.000 caracteres", () => {
     const largo = { ...envio, indicaciones: "z".repeat(400) };
-    const lineas = Array.from({ length: 9 }, (_, i) => ({ ...pedido.lineas[0], nombreCafe: `Café ${"muy largo ".repeat(10)}${i}` }));
+    const lineas = Array.from({ length: 8 }, (_, i) => ({ ...pedido.lineas[0], nombreCafe: `Café ${"muy largo ".repeat(10)}${i}` }));
     const conIndicaciones = construirMensaje({ ...pedido, lineas, envio: largo }, 2000);
     expect(conIndicaciones.texto.length).toBeLessThanOrEqual(LIMITE_MENSAJE);
     expect(conIndicaciones.indicacionesResumidas).toBe(true);

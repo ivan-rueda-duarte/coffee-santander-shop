@@ -18,7 +18,7 @@ for (const archivo of [".env.local", ".env"]) {
 async function main() {
   const { catalogo, advertencias } = cargarCatalogoDesdeDisco();
   console.log(
-    `Datos correctos: ${catalogo.cafes.length} cafés, ${catalogo.provincias.length} provincias, ${catalogo.municipios.length} municipios, ${catalogo.productores.length} productores, ${catalogo.envios.tarifas.length} tarifas y ${catalogo.envios.zonas.length} reglas de envío.`,
+    `Datos correctos: ${catalogo.cafes.length} cafés, ${catalogo.provincias.length} provincias, ${catalogo.municipios.length} municipios, ${catalogo.productores.length} productores, ${catalogo.envios.tarifas.length} tarifas, ${catalogo.envios.zonas.length} reglas de envío y ${catalogo.envios.plazos.length} plazos por zona.`,
   );
   if (advertencias.length) {
     console.warn(`\n${advertencias.length} ${advertencias.length === 1 ? "aviso" : "avisos"} (no impiden publicar):`);

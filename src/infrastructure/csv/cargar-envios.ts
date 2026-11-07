@@ -1,6 +1,6 @@
 import { normalizar, slugify } from "@/domain/comun/slug";
 import { esquemaReglaZona, esquemaTarifa } from "@/domain/envio/esquema";
-import { ZONA_ESPECIAL, ZONA_POR_DEFECTO, type ReglaZona, type ReglasEnvio, type TarifaEnvio, type Zona } from "@/domain/envio/tipos";
+import { ZONA_ESPECIAL, ZONA_POR_DEFECTO, ZONAS, type PlazoEnvio, type ReglaZona, type ReglasEnvio, type TarifaEnvio, type Zona } from "@/domain/envio/tipos";
 import { Errores, LectorFila, verificarUnicos } from "./campos";
 import { tabla, type LeerArchivo } from "./tabla";
 
@@ -11,8 +11,37 @@ export interface DatosDivipola {
 
 export const ARCHIVO_TARIFAS = "tarifas_envio.csv";
 export const ARCHIVO_ZONAS = "zonas_envio.csv";
+export const ARCHIVO_PLAZOS = "plazos_envio.csv";
 
 const POR_COTIZAR = "por_cotizar";
+/** En plazos_envio.csv el máximo de la zona 5 se escribe así (con espacio, como se lee). */
+const PLAZO_POR_COTIZAR = "por cotizar";
+
+/**
+ * Lee data/plazos_envio.csv: una fila por zona (1 a 5) con plazo estimado y máximo. La zona 5 dice "por cotizar"
+ * en el máximo; las demás deben publicar un máximo real (Ley 1480, art. 50 lit. h).
+ */
+function cargarPlazos(leer: LeerArchivo, errores: Errores): PlazoEnvio[] {
+  const plazos: PlazoEnvio[] = [];
+  const zonas: { valor: string; linea: number }[] = [];
+  tabla(leer, ARCHIVO_PLAZOS, ["zona", "plazo_estimado", "plazo_maximo"], [], errores).forEach((fila) => {
+    const f = new LectorFila(ARCHIVO_PLAZOS, fila, errores);
+    const zona = f.entero("zona", { min: 1, max: 5 });
+    const estimado = f.texto("plazo_estimado", true);
+    const maximoCrudo = f.texto("plazo_maximo", true);
+    if (zona === null || !estimado || !maximoCrudo) return;
+    zonas.push({ valor: String(zona), linea: f.linea });
+    const porCotizar = normalizar(maximoCrudo) === PLAZO_POR_COTIZAR;
+    if (zona === ZONA_ESPECIAL && !porCotizar) f.error("plazo_maximo", `en la zona ${ZONA_ESPECIAL} debe decir "${PLAZO_POR_COTIZAR}": el máximo se informa al cotizar.`);
+    if (zona !== ZONA_ESPECIAL && porCotizar) f.error("plazo_maximo", `la zona ${zona} tiene tarifa publicada y necesita un plazo máximo (por ejemplo "3 días hábiles").`);
+    plazos.push({ zona: zona as Zona, estimado, maximo: porCotizar ? null : maximoCrudo });
+  });
+  verificarUnicos(ARCHIVO_PLAZOS, "zona", zonas, errores);
+  for (const zona of ZONAS) {
+    if (!plazos.some((p) => p.zona === zona)) errores.agregar(`${ARCHIVO_PLAZOS}: falta la fila de la zona ${zona}.`);
+  }
+  return plazos.sort((a, b) => a.zona - b.zona);
+}
 
 /** Escalón: entero en pesos, o "por_cotizar" (null). Devuelve undefined si la celda no se pudo leer. */
 function leerEscalon(f: LectorFila, columna: string, valor: string): number | null | undefined {
@@ -21,7 +50,7 @@ function leerEscalon(f: LectorFila, columna: string, valor: string): number | nu
 }
 
 /**
- * Lee data/tarifas_envio.csv y data/zonas_envio.csv.
+ * Lee data/tarifas_envio.csv, data/zonas_envio.csv y data/plazos_envio.csv.
  * Además de los tipos, comprueba que cada departamento y municipio exista en DIVIPOLA (sin importar tildes ni
  * mayúsculas), que haya tarifa para cada zona y para cada municipio de zona 1, y que exista la zona 4.
  */
@@ -108,5 +137,5 @@ export function cargarEnvios(leer: LeerArchivo, errores: Errores, divipola: Dato
     else if (tarifa.zona !== 1) errores.agregar(`${ARCHIVO_TARIFAS}: la tarifa "${clave}" debe ser de la zona 1.`);
   }
 
-  return { tarifas, zonas: reglas };
+  return { tarifas, zonas: reglas, plazos: cargarPlazos(leer, errores) };
 }

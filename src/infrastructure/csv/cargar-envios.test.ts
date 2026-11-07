@@ -25,10 +25,19 @@ municipio,"Bogotá, D.C.","Bogotá, D.C.",3,
 departamento,Amazonas,,5,
 `;
 
+const PLAZOS = `zona,plazo_estimado,plazo_maximo
+1,Mismo día o siguiente día hábil,1 día hábil
+2,1 a 3 días hábiles,3 días hábiles
+3,1 a 3 días hábiles,3 días hábiles
+4,2 a 6 días hábiles,6 días hábiles
+5,5 a 12 días hábiles,por cotizar
+`;
+
 function errores(tarifas: string, zonas: string): string[] {
   const leer: LeerArchivo = (n) => {
     if (n === "tarifas_envio.csv") return tarifas;
     if (n === "zonas_envio.csv") return zonas;
+    if (n === "plazos_envio.csv") return PLAZOS;
     throw new Error("no existe");
   };
   const e = new Errores();
@@ -96,5 +105,6 @@ describe("cargarEnvios", () => {
     cargarEnvios(() => { throw new Error("no existe"); }, e, DIVIPOLA);
     expect(e.lista).toContain("tarifas_envio.csv: no se encontró el archivo en data/.");
     expect(e.lista).toContain("zonas_envio.csv: no se encontró el archivo en data/.");
+    expect(e.lista).toContain("plazos_envio.csv: no se encontró el archivo en data/.");
   });
 });

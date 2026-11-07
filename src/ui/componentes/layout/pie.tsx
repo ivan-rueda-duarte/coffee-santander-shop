@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ConfigTienda } from "@/domain/pedido/tienda";
-import { vendedorCompleto } from "@/domain/pedido/tienda";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { Franja, Textura } from "../marca/superficies";
 import { Marca } from "./encabezado";
@@ -58,15 +57,21 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
                 </li>
               ))}
             </ul>
-            {vendedorCompleto(v) && (
-              <address className="mt-4 text-ink-muted not-italic">
-                {v.razonSocial} · NIT {v.nit}
-                <br />
-                {v.domicilio}
-                <br />
-                <a href={`mailto:${v.correoContacto}`} className="underline underline-offset-4">
-                  {v.correoContacto}
-                </a>
+            {/* Vendedor (Ley 1480, art. 50 lit. a; microcopy §5.4): cada línea solo si el dato existe. Sin representante ni matrícula (LEG-085). */}
+            {v.razonSocial && (
+              <address className="mt-4 space-y-1 text-ink-muted not-italic" data-testid="pie-vendedor">
+                <p>{v.nit ? `${v.razonSocial} · NIT ${v.nit}` : v.razonSocial}</p>
+                {v.domicilio && <p>Domicilio: {v.domicilio}</p>}
+                {v.direccionNotificacion && <p>Notificaciones judiciales: {v.direccionNotificacion}</p>}
+                {v.correoContacto && (
+                  <p>
+                    Correo de atención y de notificación judicial:{" "}
+                    <a href={`mailto:${v.correoContacto}`} className="underline underline-offset-4">
+                      {v.correoContacto}
+                    </a>
+                  </p>
+                )}
+                <p>WhatsApp {formatearWhatsapp(tienda.whatsapp)}</p>
               </address>
             )}
           </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { FichaCafe } from "@/application/casos-uso/obtener-ficha-cafe";
 import { ETIQUETA_PERFIL } from "@/domain/catalogo/perfiles";
+import { detalleNotificacionSanitaria, ROTULO_NOTIFICACION_SANITARIA } from "@/domain/catalogo/rotulado";
 import { ETIQUETA_PROCESO, ETIQUETA_TUESTE, grupoDeTueste, mostrarSelloSca } from "@/domain/catalogo/tipos";
 import { formatearMiles } from "@/domain/comun/dinero";
 import { nombresDeVariedades } from "@/domain/marca/variedad";
@@ -48,7 +49,8 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
     ["Variedad", nombresDeVariedades(cafe.variedades)],
     ["Proceso", ETIQUETA_PROCESO[cafe.proceso]],
     ["Tueste", ETIQUETA_TUESTE[cafe.tueste]],
-    ["Registro sanitario", cafe.registroSanitario ?? ""],
+    // Res. 5109 de 2005 y microcopy §3: solo con `nsa`; sin titular ni fabricante se omite esa parte, nunca «pendiente».
+    [ROTULO_NOTIFICACION_SANITARIA, detalleNotificacionSanitaria(cafe) ?? ""],
   ];
   // Las fotos del CSV (public/fotos/cafes/<slug>/) mandan; si no hay, se usan las de Sanity.
   const fotos = cafe.fotos.length

@@ -1,6 +1,7 @@
 import type { Catalogo } from "@/domain/catalogo/catalogo";
 import { perfilesDeNotas } from "@/domain/catalogo/perfiles";
 import {
+  EXPRESIONES_FABRICANTE,
   MOLIENDAS,
   PROCESOS,
   TUESTES,
@@ -11,7 +12,7 @@ import {
   type Productor,
   type Provincia,
 } from "@/domain/catalogo/tipos";
-import type { ConfigTienda } from "@/domain/pedido/tienda";
+import type { ConfigTienda, DatosVendedor } from "@/domain/pedido/tienda";
 import { Errores, LectorFila, verificarUnicos } from "./campos";
 import { ErrorDatos, type FilaCsv } from "./lector";
 import { cargarEnvios, type DatosDivipola } from "./cargar-envios";
@@ -107,7 +108,8 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
     ARCHIVO_CATALOGO,
     ["slug", "nombre", "municipio_slug", "altura_msnm", "variedades", "proceso", "tueste", "notas_cata", "moliendas"],
     [
-      "productor_slug", "proceso_detalle", "puntaje_sca", "puntaje_verificado", "puntaje_fuente", "puntaje_fecha", "registro_sanitario",
+      "marca", "fabricante", "fabricante_expresion", "nsa", "titular_nsa",
+      "productor_slug", "proceso_detalle", "puntaje_sca", "puntaje_verificado", "puntaje_fuente", "puntaje_fecha",
       ...TAMANOS_GRAMOS.map(columnaPrecio), "agotados", "fotos", "foto_descripcion", "destacado", "activo", "orden",
     ],
     errores,
@@ -140,6 +142,15 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
     }
 
     const activo = f.booleano("activo", true);
+
+    // Rotulado (Res. 5109 de 2005): si hay fabricante, la expresión del rótulo es obligatoria, y al revés.
+    const fabricante = f.textoOpcional("fabricante");
+    const fabricanteExpresion = f.opcion("fabricante_expresion", EXPRESIONES_FABRICANTE, false);
+    if (fabricante && !fabricanteExpresion && !f.texto("fabricante_expresion")) f.error("fabricante_expresion", `es obligatoria cuando hay fabricante. Opciones: ${EXPRESIONES_FABRICANTE.join(", ")}.`);
+    if (!fabricante && fabricanteExpresion) f.error("fabricante", "está vacía pero fabricante_expresion tiene valor; escribe el fabricante o deja las dos vacías.");
+    const nsa = f.textoOpcional("nsa");
+    const titularNsa = f.textoOpcional("titular_nsa");
+    if (!nsa && titularNsa) f.error("nsa", "está vacía pero titular_nsa tiene valor; escribe la notificación sanitaria o deja las dos vacías.");
 
     // Precios por tamaño: una columna por tamaño; vacía = ese tamaño no se vende.
     const presentaciones: Presentacion[] = [];
@@ -184,7 +195,11 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
       puntajeVerificado: verificado,
       puntajeFuente: fuente,
       puntajeFecha: fecha,
-      registroSanitario: f.textoOpcional("registro_sanitario"),
+      marca: f.textoOpcional("marca"),
+      fabricante,
+      fabricanteExpresion,
+      nsa,
+      titularNsa,
       moliendas: f.opciones("moliendas", MOLIENDAS, true),
       presentaciones: presentaciones.sort((a, b) => a.gramos - b.gramos),
       fotos,
@@ -196,6 +211,8 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
 
     if (activo && municipio && municipio.porVerificar) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" está en ${municipio.nombre}, cuya provincia está por verificar; no aparecerá en ninguna provincia.`);
     if (activo && puntaje !== null && !verificado) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" tiene puntaje SCA sin verificar; no se mostrará el sello ni se usará en filtros.`);
+    // Decisión del dueño (P9, LEG-089): un café activo sin notificación sanitaria se publica igual; se avisa, no se bloquea.
+    if (activo && !nsa) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" está activo sin notificación sanitaria (columna nsa); la ficha no mostrará la fila sanitaria. Riesgo aceptado por el dueño (LEG-024/066).`);
   });
   verificarUnicos(ARCHIVO_CATALOGO, "slug", cCafe, errores);
 
@@ -212,8 +229,13 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
   };
 }
 
-const CLAVES_REQUERIDAS = ["nombre_tienda", "whatsapp", "ciudad_despacho", "nota_envio", "formas_pago", "max_cantidad"] as const;
-const CLAVES_OPCIONALES = ["razon_social", "nit", "domicilio", "correo_contacto"] as const;
+const CLAVES_REQUERIDAS = [
+  "nombre_tienda", "whatsapp", "ciudad_despacho", "nota_envio", "formas_pago", "max_cantidad",
+  // Versión y fecha de los documentos legales: las casillas, la constancia del mensaje y las páginas las leen de aquí (LEG-088).
+  "version_terminos", "fecha_terminos", "version_politica_datos", "fecha_politica_datos",
+] as const;
+const CLAVES_VENDEDOR = ["razon_social", "nit", "domicilio", "direccion_notificacion", "correo_contacto", "correo_notificacion", "matricula_mercantil", "representante_legal", "area_datos"] as const;
+const CLAVES_OPCIONALES = ["iva_tarifa", ...CLAVES_VENDEDOR] as const;
 
 function leerConfig(leer: LeerArchivo, errores: Errores): ConfigTienda | null {
   const filas = tabla(leer, "config.csv", ["clave", "valor"], [], errores);
@@ -254,7 +276,25 @@ function leerConfig(leer: LeerArchivo, errores: Errores): ConfigTienda | null {
   const maxCantidad = max?.f.entero("valor", { min: 1, max: 100 }) ?? null;
   const formasPago = pagos?.f.lista("valor", true) ?? [];
 
-  if (!nombre || !whatsapp || !ciudad || !nota || !pagos || maxCantidad === null) return null;
+  const versionTerminos = obtener("version_terminos");
+  const versionPolitica = obtener("version_politica_datos");
+  const fechaTerminos = obtener("fecha_terminos")?.f.fecha("valor") ?? null;
+  const fechaPolitica = obtener("fecha_politica_datos")?.f.fecha("valor") ?? null;
+  const iva = obtener("iva_tarifa");
+  const ivaTarifa = iva ? iva.f.entero("valor", { min: 0, max: 100 }) : null;
+
+  if (!nombre || !whatsapp || !ciudad || !nota || !pagos || maxCantidad === null || !versionTerminos || !versionPolitica || !fechaTerminos || !fechaPolitica) return null;
+  const vendedor: DatosVendedor = {
+    razonSocial: opcional("razon_social"),
+    nit: opcional("nit"),
+    domicilio: opcional("domicilio"),
+    direccionNotificacion: opcional("direccion_notificacion"),
+    correoContacto: opcional("correo_contacto"),
+    correoNotificacion: opcional("correo_notificacion"),
+    matriculaMercantil: opcional("matricula_mercantil"),
+    representanteLegal: opcional("representante_legal"),
+    areaDatos: opcional("area_datos"),
+  };
   return {
     nombre: nombre.f.texto("valor"),
     whatsapp: numero,
@@ -262,11 +302,13 @@ function leerConfig(leer: LeerArchivo, errores: Errores): ConfigTienda | null {
     notaEnvio: nota.f.texto("valor"),
     formasPago,
     maxCantidad,
-    vendedor: {
-      razonSocial: opcional("razon_social"),
-      nit: opcional("nit"),
-      domicilio: opcional("domicilio"),
-      correoContacto: opcional("correo_contacto"),
+    ivaTarifa,
+    legal: {
+      versionTerminos: versionTerminos.f.texto("valor"),
+      fechaTerminos,
+      versionPoliticaDatos: versionPolitica.f.texto("valor"),
+      fechaPoliticaDatos: fechaPolitica,
     },
+    vendedor,
   };
 }

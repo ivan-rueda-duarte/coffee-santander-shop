@@ -46,9 +46,19 @@ export interface ReglaZona {
   zona: Zona;
 }
 
+/** Una fila de data/plazos_envio.csv. `maximo` es null en la zona 5 («por cotizar»). */
+export interface PlazoEnvio {
+  zona: Zona;
+  /** «1 a 3 días hábiles». */
+  estimado: string;
+  /** «3 días hábiles»; null = se informa al cotizar (nunca más de 30 días calendario). */
+  maximo: string | null;
+}
+
 export interface ReglasEnvio {
   tarifas: readonly TarifaEnvio[];
   zonas: readonly ReglaZona[];
+  plazos: readonly PlazoEnvio[];
 }
 
 /** Lo mínimo que hace falta de cada línea del pedido para pesarlo. */

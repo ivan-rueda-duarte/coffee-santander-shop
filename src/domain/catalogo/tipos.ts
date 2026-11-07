@@ -11,6 +11,10 @@ export type GrupoTueste = (typeof GRUPOS_TUESTE)[number];
 export const MOLIENDAS = ["grano", "molido"] as const;
 export type Molienda = (typeof MOLIENDAS)[number];
 
+/** Expresión del rótulo que acompaña al fabricante o envasador (Res. 5109 de 2005). */
+export const EXPRESIONES_FABRICANTE = ["FABRICADO POR", "ENVASADO POR"] as const;
+export type ExpresionFabricante = (typeof EXPRESIONES_FABRICANTE)[number];
+
 export const PERFILES = ["chocolate", "frutal", "floral", "caramelo", "citrico", "especiado", "panela", "nueces"] as const;
 export type Perfil = (typeof PERFILES)[number];
 
@@ -73,8 +77,14 @@ export interface Cafe {
   /** Quién cató y cuándo (fecha ISO). Obligatorios para verificar un puntaje. */
   puntajeFuente: string | null;
   puntajeFecha: string | null;
-  /** Registro sanitario INVIMA; se muestra solo cuando existe. */
-  registroSanitario: string | null;
+  /** Marca con la que el fabricante vende el café (tal como en la bolsa). La tienda no es la marca (modelo C). */
+  marca: string | null;
+  /** Razón social del fabricante o envasador, tal como en el rótulo. */
+  fabricante: string | null;
+  fabricanteExpresion: ExpresionFabricante | null;
+  /** Notificación sanitaria INVIMA (NSA-…); se muestra solo cuando existe. */
+  nsa: string | null;
+  titularNsa: string | null;
   moliendas: Molienda[];
   presentaciones: Presentacion[];
   /** Rutas de las fotos del café en public/ (la primera es la principal). Vacío = ilustración de la marca. */

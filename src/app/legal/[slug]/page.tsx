@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { vendedorCompleto } from "@/domain/pedido/tienda";
+import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { BotonEnlace } from "@/ui/componentes/marca/boton";
 import { Migas } from "@/ui/componentes/ficha/ficha-cafe";
 import { canonica, cargarCatalogo, repositorioContenido } from "../../_datos/catalogo";
@@ -43,6 +43,17 @@ export default async function PaginaLegal({ params }: PageProps<"/legal/[slug]">
   if (!titulo) notFound();
   const [contenido, catalogo] = await Promise.all([repositorioContenido.legal(slug), cargarCatalogo()]);
   const v = catalogo.tienda.vendedor;
+  // Filas de /legal/vendedor/ (microcopy §5.4): cada una solo si el dato existe.
+  const filasVendedor: [string, string | null][] = [
+    ["Razón social", v.razonSocial],
+    ["NIT", v.nit],
+    ["Matrícula mercantil", v.matriculaMercantil],
+    ["Representante legal", v.representanteLegal],
+    ["Domicilio", v.domicilio],
+    ["Dirección de notificación judicial", v.direccionNotificacion],
+    ["Correo", v.correoContacto],
+    ["WhatsApp", formatearWhatsapp(catalogo.tienda.whatsapp)],
+  ];
 
   return (
     <article className="bg-surface px-5 py-10 md:px-8 md:py-16">
@@ -79,10 +90,10 @@ export default async function PaginaLegal({ params }: PageProps<"/legal/[slug]">
           </div>
         )}
 
-        {slug === "vendedor" && vendedorCompleto(v) && (
-          <dl className="mt-8 divide-y divide-line border-y border-line text-sm">
-            {[["Razón social", v.razonSocial], ["NIT", v.nit], ["Domicilio", v.domicilio], ["Contacto", v.correoContacto]].map(([k, val]) => (
-              <div key={k} className="grid grid-cols-[9rem_1fr] gap-4 py-3">
+        {slug === "vendedor" && v.razonSocial && (
+          <dl className="mt-8 divide-y divide-line border-y border-line text-sm" data-testid="datos-vendedor">
+            {filasVendedor.filter((f): f is [string, string] => Boolean(f[1])).map(([k, val]) => (
+              <div key={k} className="grid gap-1 py-3 sm:grid-cols-[14rem_1fr] sm:gap-4">
                 <dt className="font-semibold text-ink-muted">{k}</dt>
                 <dd className="font-semibold">{val}</dd>
               </div>

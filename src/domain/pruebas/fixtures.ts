@@ -30,7 +30,11 @@ export function crearCafe(c: Partial<Cafe> & Pick<Cafe, "slug" | "nombre">): Caf
     puntajeVerificado: false,
     puntajeFuente: null,
     puntajeFecha: null,
-    registroSanitario: null,
+    marca: null,
+    fabricante: null,
+    fabricanteExpresion: null,
+    nsa: null,
+    titularNsa: null,
     moliendas: ["grano", "molido"],
     presentaciones: [
       { gramos: 250, precioCop: 25000, disponible: true },
@@ -146,4 +150,25 @@ export const REGLAS_ENVIO_PRUEBA: ReglasEnvio = {
     { nivel: "municipio", departamento: "Antioquia", municipio: "Rionegro", zona: 3 },
     { nivel: "municipio", departamento: "Santander", municipio: "Rionegro", zona: 2 },
   ],
+  plazos: [
+    { zona: 1, estimado: "Mismo día o siguiente día hábil", maximo: "1 día hábil" },
+    { zona: 2, estimado: "1 a 3 días hábiles", maximo: "3 días hábiles" },
+    { zona: 3, estimado: "1 a 3 días hábiles", maximo: "3 días hábiles" },
+    { zona: 4, estimado: "2 a 6 días hábiles", maximo: "6 días hábiles" },
+    { zona: 5, estimado: "5 a 12 días hábiles", maximo: null },
+  ],
 };
+
+/** Datos de prueba del vendedor y de las versiones legales (mismos valores que data/config.csv). */
+export const VENDEDOR_PRUEBA = {
+  razonSocial: "De Santander SAS",
+  nit: "902.121.184-8",
+  domicilio: "Bucaramanga, Santander",
+  direccionNotificacion: "Calle 37 n.° 23-77, apartamento 702, Bucaramanga, Santander",
+  correoContacto: "desantander.tienda@gmail.com",
+  correoNotificacion: "desantander.tienda@gmail.com",
+  matriculaMercantil: "740574",
+  representanteLegal: "Ivan Fernando Rueda Duarte",
+  areaDatos: "Área comercial",
+};
+export const LEGAL_PRUEBA = { versionTerminos: "1", fechaTerminos: "2026-11-06", versionPoliticaDatos: "1", fechaPoliticaDatos: "2026-11-06" };

@@ -81,6 +81,8 @@ export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido, codig
     subtotalCop: totales.subtotalCop,
     costoEnvio,
     envio: envio.datos,
+    ivaTarifa: tienda.ivaTarifa,
+    legal: tienda.legal,
   });
   return { ok: true, pedido: { texto, enlace: construirEnlace(tienda.whatsapp, texto), indicacionesResumidas, totales, envio: costoEnvio, totalCop: totalConEnvio(totales.subtotalCop, costoEnvio).totalCop } };
 }

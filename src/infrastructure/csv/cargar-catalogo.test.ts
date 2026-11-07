@@ -17,10 +17,17 @@ tona,Tona,68820,,si
 finca-a,Finca A,finca,socorro,si
 finca-b,Finca B,finca,socorro,no
 `,
-  "catalogo.csv": `slug,nombre,precio_250g,precio_500g,precio_1000g,agotados,fotos,foto_descripcion,municipio_slug,productor_slug,altura_msnm,variedades,proceso,proceso_detalle,tueste,notas_cata,puntaje_sca,puntaje_verificado,puntaje_fuente,puntaje_fecha,registro_sanitario,moliendas,destacado,activo,orden
-cafe-socorro,Café Socorro,25000,50000,,,1.jpg|2.png,Bolsa sobre yute,socorro,finca-a,1800,Caturra|Castillo,lavado,Lavado tradicional,medio,Caramelo|Cacao,88,si,Laboratorio X,2026-03-15,,grano|molido,si,si,2
-cafe-san-gil,Café San Gil,25000,,,250,,,san-gil,,1650,Colombia,lavado,,medio_oscuro,Chocolate|Nuez,86.5,no,,,,grano,no,si,1
-cafe-viejo,Café Viejo,25000,,,,,,socorro,,1700,Bourbon,lavado,,medio,Cereza,,no,,,,grano|molido,no,no,3
+  "catalogo.csv": `slug,nombre,precio_250g,precio_500g,precio_1000g,agotados,fotos,foto_descripcion,municipio_slug,productor_slug,altura_msnm,variedades,proceso,proceso_detalle,tueste,notas_cata,puntaje_sca,puntaje_verificado,puntaje_fuente,puntaje_fecha,marca,fabricante,fabricante_expresion,nsa,titular_nsa,moliendas,destacado,activo,orden
+cafe-socorro,Café Socorro,25000,50000,,,1.jpg|2.png,Bolsa sobre yute,socorro,finca-a,1800,Caturra|Castillo,lavado,Lavado tradicional,medio,Caramelo|Cacao,88,si,Laboratorio X,2026-03-15,Socorro,Tostadora S.A.S.,FABRICADO POR,NSA-000001-2026,Tostadora S.A.S.,grano|molido,si,si,2
+cafe-san-gil,Café San Gil,25000,,,250,,,san-gil,,1650,Colombia,lavado,,medio_oscuro,Chocolate|Nuez,86.5,no,,,,,,,,grano,no,si,1
+cafe-viejo,Café Viejo,25000,,,,,,socorro,,1700,Bourbon,lavado,,medio,Cereza,,no,,,,,,,,grano|molido,no,no,3
+`,
+  "plazos_envio.csv": `zona,plazo_estimado,plazo_maximo
+1,Mismo día o siguiente día hábil,1 día hábil
+2,1 a 3 días hábiles,3 días hábiles
+3,1 a 3 días hábiles,3 días hábiles
+4,2 a 6 días hábiles,6 días hábiles
+5,5 a 12 días hábiles,por cotizar
 `,
   "tarifas_envio.csv": `zona,clave,nombre,medio,hasta_1kg_cop,hasta_2kg_cop,hasta_5kg_cop,mas_5kg,vigencia_desde
 1,bucaramanga,Bucaramanga,mensajero,8800,11600,15400,por_cotizar,2026-11-05
@@ -42,9 +49,16 @@ ciudad_despacho,Bucaramanga
 nota_envio,Enviamos a todo Colombia.
 formas_pago,Efectivo contraentrega|Transferencia Bre-B
 max_cantidad,20
+version_terminos,1
+fecha_terminos,2026-11-06
+version_politica_datos,2
+fecha_politica_datos,2026-12-01
 nit,901.234.567-8
+domicilio,"Bucaramanga, Santander"
 `,
 };
+/** Las cuatro claves legales obligatorias, para pruebas que reescriben config.csv. */
+const LEGAL = "version_terminos,1\nfecha_terminos,2026-11-06\nversion_politica_datos,1\nfecha_politica_datos,2026-11-06\n";
 
 const con = (cambios: Record<string, string>): LeerArchivo => {
   const archivos = { ...BASE, ...cambios };
@@ -103,18 +117,39 @@ describe("cargarCatalogo con datos válidos", () => {
     expect(catalogo.envios.zonas).toHaveLength(4);
     expect(catalogo.envios.zonas[2]).toEqual({ nivel: "municipio", departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C.", zona: 3 });
   });
-  it("lee la configuración y los datos del vendedor", () => {
+  it("lee los plazos por zona (la zona 5 sin máximo)", () => {
+    expect(catalogo.envios.plazos.map((p) => p.zona)).toEqual([1, 2, 3, 4, 5]);
+    expect(catalogo.envios.plazos[0]).toEqual({ zona: 1, estimado: "Mismo día o siguiente día hábil", maximo: "1 día hábil" });
+    expect(catalogo.envios.plazos[4]).toEqual({ zona: 5, estimado: "5 a 12 días hábiles", maximo: null });
+  });
+  it("lee la configuración, las versiones legales y los datos del vendedor (los que no hay quedan en null)", () => {
     expect(catalogo.tienda).toMatchObject({
       nombre: "De Santander",
       whatsapp: "573001129874",
       ciudadDespacho: "Bucaramanga",
       formasPago: ["Efectivo contraentrega", "Transferencia Bre-B"],
       maxCantidad: 20,
-      vendedor: { razonSocial: null, nit: "901.234.567-8", domicilio: null, correoContacto: null },
+      ivaTarifa: null,
+      legal: { versionTerminos: "1", fechaTerminos: "2026-11-06", versionPoliticaDatos: "2", fechaPoliticaDatos: "2026-12-01" },
+      vendedor: { razonSocial: null, nit: "901.234.567-8", domicilio: "Bucaramanga, Santander", direccionNotificacion: null, correoContacto: null, matriculaMercantil: null, representanteLegal: null },
     });
+  });
+  it("lee la tarifa de IVA cuando existe", () => {
+    const r = cargarCatalogo(con({ "config.csv": `${BASE["config.csv"]}iva_tarifa,5\n` }));
+    expect(r.catalogo.tienda.ivaTarifa).toBe(5);
+  });
+  it("lee marca, fabricante con su expresión y la notificación sanitaria", () => {
+    const c = catalogo.cafes.find((x) => x.slug === "cafe-socorro")!;
+    expect(c).toMatchObject({ marca: "Socorro", fabricante: "Tostadora S.A.S.", fabricanteExpresion: "FABRICADO POR", nsa: "NSA-000001-2026", titularNsa: "Tostadora S.A.S." });
+    expect(catalogo.cafes.find((x) => x.slug === "cafe-san-gil")).toMatchObject({ marca: null, fabricante: null, fabricanteExpresion: null, nsa: null, titularNsa: null });
   });
   it("avisa del puntaje sin verificar", () => {
     expect(advertencias.some((a) => a.includes("Café San Gil") && a.includes("sin verificar"))).toBe(true);
+  });
+  it("avisa (no falla) por un café activo sin notificación sanitaria; el inactivo no avisa", () => {
+    const sinNsa = advertencias.filter((a) => a.includes("sin notificación sanitaria"));
+    expect(sinNsa).toHaveLength(1);
+    expect(sinNsa[0]).toContain("Café San Gil");
   });
   it("avisa de notas de cata sin perfil", () => {
     const r = cargarCatalogo(con({ "catalogo.csv": BASE["catalogo.csv"].replace("Caramelo|Cacao", "Caramelo|Humo") }));
@@ -153,7 +188,7 @@ describe("fotos del café", () => {
 
 describe("formato del archivo", () => {
   it("acepta punto y coma (Excel en español) y BOM", () => {
-    const pv = "﻿clave;valor\nnombre_tienda;De Santander\nwhatsapp;573001129874\nciudad_despacho;Bucaramanga\nnota_envio;Hola, mundo\nformas_pago;A|B\nmax_cantidad;5\n";
+    const pv = `﻿clave;valor\nnombre_tienda;De Santander\nwhatsapp;573001129874\nciudad_despacho;Bucaramanga\nnota_envio;Hola, mundo\nformas_pago;A|B\nmax_cantidad;5\n${LEGAL.replaceAll(",", ";")}`;
     const r = cargarCatalogo(con({ "config.csv": pv }));
     expect(r.catalogo.tienda).toMatchObject({ nombre: "De Santander", notaEnvio: "Hola, mundo", formasPago: ["A", "B"], maxCantidad: 5 });
   });
@@ -255,7 +290,7 @@ describe("errores con archivo, línea y columna", () => {
   });
   it("configuración incompleta o inválida", () => {
     const e = errores({
-      "config.csv": "clave,valor\nnombre_tienda,De Santander\nwhatsapp,+57 300 112 9874\nwhatsapp,1\nciudad_despacho,Bucaramanga\nmax_cantidad,mucho\nextra,x\nformas_pago,\n",
+      "config.csv": `clave,valor\nnombre_tienda,De Santander\nwhatsapp,+57 300 112 9874\nwhatsapp,1\nciudad_despacho,Bucaramanga\nmax_cantidad,mucho\nextra,x\nformas_pago,\n${LEGAL}`,
     });
     expect(e.some((m) => m.includes('whatsapp "+57 300 112 9874" debe llevar solo dígitos'))).toBe(true);
     expect(e.some((m) => m.includes('"whatsapp" ya aparece en la línea 3'))).toBe(true);
@@ -264,8 +299,38 @@ describe("errores con archivo, línea y columna", () => {
     expect(e).toContain('config.csv: falta un valor para la clave "nota_envio".');
     expect(e).toContain('config.csv: falta un valor para la clave "formas_pago".');
   });
+  it("las versiones y fechas legales son obligatorias y la fecha debe ser válida (LEG-088)", () => {
+    const sinLegal = errores({ "config.csv": BASE["config.csv"].replace(/version_terminos.*\n/, "").replace("fecha_politica_datos,2026-12-01", "fecha_politica_datos,6 de noviembre") });
+    expect(sinLegal).toContain('config.csv: falta un valor para la clave "version_terminos".');
+    expect(sinLegal.some((m) => m.includes('"6 de noviembre" no es una fecha válida'))).toBe(true);
+    const iva = errores({ "config.csv": `${BASE["config.csv"]}iva_tarifa,cinco\n` });
+    expect(iva.some((m) => m.includes('"cinco" no es un número entero'))).toBe(true);
+  });
+  it("fabricante exige la expresión del rótulo, y la expresión o el titular exigen su dato", () => {
+    const e = errores({
+      "catalogo.csv": BASE["catalogo.csv"]
+        .replace("Socorro,Tostadora S.A.S.,FABRICADO POR,NSA-000001-2026,Tostadora S.A.S.", "Socorro,Tostadora S.A.S.,,NSA-000001-2026,Tostadora S.A.S.")
+        .replace("86.5,no,,,,,,,,grano", "86.5,no,,,,,ENVASADO POR,,Alguien,grano"),
+    });
+    expect(e.some((m) => m.includes('línea 2, columna "fabricante_expresion": es obligatoria cuando hay fabricante'))).toBe(true);
+    expect(e.some((m) => m.includes('línea 3, columna "fabricante": está vacía pero fabricante_expresion tiene valor'))).toBe(true);
+    expect(e.some((m) => m.includes('línea 3, columna "nsa": está vacía pero titular_nsa tiene valor'))).toBe(true);
+    const expresion = errores({ "catalogo.csv": BASE["catalogo.csv"].replace("FABRICADO POR", "Fabricado por") });
+    expect(expresion.some((m) => m.includes('"fabricante_expresion": "Fabricado por" no es válido. Opciones: FABRICADO POR, ENVASADO POR'))).toBe(true);
+  });
+  it("la columna vieja registro_sanitario ya no existe", () => {
+    const e = errores({ "catalogo.csv": BASE["catalogo.csv"].replace(",nsa,", ",registro_sanitario,") });
+    expect(e.some((m) => m.includes('la columna "registro_sanitario" no existe'))).toBe(true);
+  });
+  it("plazos: exige las cinco zonas, máximo real en 1 a 4 y «por cotizar» en la 5", () => {
+    const e = errores({ "plazos_envio.csv": "zona,plazo_estimado,plazo_maximo\n1,Mismo día,por cotizar\n5,5 a 12 días hábiles,30 días\n5,x,por cotizar\n" });
+    expect(e.some((m) => m.includes('plazos_envio.csv, línea 2, columna "plazo_maximo": la zona 1 tiene tarifa publicada y necesita un plazo máximo'))).toBe(true);
+    expect(e.some((m) => m.includes('línea 3, columna "plazo_maximo": en la zona 5 debe decir "por cotizar"'))).toBe(true);
+    expect(e.some((m) => m.includes('columna "zona": "5" ya aparece en la línea 3'))).toBe(true);
+    for (const z of [2, 3, 4]) expect(e).toContain(`plazos_envio.csv: falta la fila de la zona ${z}.`);
+  });
   it("ErrorDatos resume cuántos problemas hay", () => {
-    expect(() => cargarCatalogo(con({ "config.csv": "clave,valor\n" }))).toThrow(/Hay 6 problemas/);
+    expect(() => cargarCatalogo(con({ "config.csv": "clave,valor\n" }))).toThrow(/Hay 10 problemas/);
   });
 });
 

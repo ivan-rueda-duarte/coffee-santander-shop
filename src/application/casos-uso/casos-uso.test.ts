@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Catalogo } from "@/domain/catalogo/catalogo";
 import { buscarCafe, crearBuscadorDePrecios, provinciasConCafes, provinciasProximas } from "@/domain/catalogo/catalogo";
-import { vendedorCompleto } from "@/domain/pedido/tienda";
-import { crearCafe, CAFES_PRUEBA, MALAGA, OIBA, PROVINCIAS_PRUEBA, REGLAS_ENVIO_PRUEBA, SAN_GIL, SOCORRO } from "@/domain/pruebas/fixtures";
+import { crearCafe, CAFES_PRUEBA, LEGAL_PRUEBA, MALAGA, OIBA, PROVINCIAS_PRUEBA, REGLAS_ENVIO_PRUEBA, SAN_GIL, SOCORRO, VENDEDOR_PRUEBA } from "@/domain/pruebas/fixtures";
 import type { CatalogoRepositorio, ContenidoRepositorio } from "../puertos";
 import { obtenerCatalogo } from "./obtener-catalogo";
 import { obtenerFichaCafe } from "./obtener-ficha-cafe";
@@ -26,7 +25,9 @@ const catalogo: Catalogo = {
     notaEnvio: "Enviamos a todo Colombia.",
     formasPago: PAGOS,
     maxCantidad: 20,
-    vendedor: { razonSocial: null, nit: null, domicilio: null, correoContacto: null },
+    ivaTarifa: 5,
+    legal: LEGAL_PRUEBA,
+    vendedor: VENDEDOR_PRUEBA,
   },
   envios: REGLAS_ENVIO_PRUEBA,
 };
@@ -49,11 +50,6 @@ describe("helpers del catálogo", () => {
   it("separa provincias con cafés de las próximas", () => {
     expect(provinciasConCafes(catalogo).map((p) => p.slug)).toEqual(["comunera", "garcia-rovira", "guanenta"]);
     expect(provinciasProximas(catalogo).map((p) => p.slug)).toEqual(["soto"]);
-  });
-  it("el vendedor está completo solo con los cuatro datos", () => {
-    expect(vendedorCompleto(catalogo.tienda.vendedor)).toBe(false);
-    expect(vendedorCompleto({ razonSocial: "A", nit: "1", domicilio: "d", correoContacto: "a@b.co" })).toBe(true);
-    expect(vendedorCompleto({ razonSocial: "A", nit: "1", domicilio: "d", correoContacto: null })).toBe(false);
   });
 });
 
@@ -137,7 +133,9 @@ describe("prepararPedido", () => {
     expect(r.pedido.totales.bolsas).toBe(3);
     expect(r.pedido.texto).toContain("• Café Málaga (García Rovira) — Grano entero — 500 g × 2 = $100.000");
     expect(r.pedido.texto).toContain("• Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000");
-    expect(r.pedido.texto).toContain("Subtotal: $125.000\nEnvío (Bucaramanga · zona 1): $11.600\nTotal: $136.600");
+    expect(r.pedido.texto).toContain("Subtotal de productos: $125.000 (IVA del 5 % incluido)\nEnvío (Bucaramanga · zona 1): $11.600\nTotal: $136.600");
+    expect(r.pedido.texto.startsWith("¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.")).toBe(true);
+    expect(r.pedido.texto.endsWith("Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026.")).toBe(true);
     expect(r.pedido.envio).toMatchObject({ tipo: "tarifa", zona: 1, pesoFacturableG: 1330, valorCop: 11600 });
     expect(r.pedido.totalCop).toBe(136600);
     expect(r.pedido.enlace.startsWith("https://wa.me/573001129874?text=")).toBe(true);
@@ -148,13 +146,15 @@ describe("prepararPedido", () => {
     const bogota = { ...envioValido, departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C." };
     const dos250 = [{ cafeSlug: OIBA.slug, gramos: 250, molienda: "grano" as const, cantidad: 2 }];
     const r = preparar(catalogo, entrada({ lineas: dos250, envio: bogota }));
-    expect(r.ok && r.pedido.texto).toContain("Subtotal: $50.000\nEnvío (Bogotá · zona 3): $18.000\nTotal: $68.000");
+    expect(r.ok && r.pedido.texto).toContain("Subtotal de productos: $50.000 (IVA del 5 % incluido)\nEnvío (Bogotá · zona 3): $18.000\nTotal: $68.000");
     expect(r.ok && r.pedido.totalCop).toBe(68000);
   });
   it("en zona especial el envío va por cotizar y el total no lo incluye", () => {
     const leticia = { ...envioValido, departamento: "Amazonas", municipio: "Leticia" };
     const r = preparar(catalogo, entrada({ envio: leticia }));
-    expect(r.ok && r.pedido.texto).toContain("Subtotal: $125.000\nEnvío: POR COTIZAR (zona especial)\nTotal sin envío: $125.000");
+    expect(r.ok && r.pedido.texto).toContain("Subtotal de productos: $125.000 (IVA del 5 % incluido)\nEnvío: POR COTIZAR (zona especial)\nTotal sin envío: $125.000");
+    // La constancia va después de la línea de «por cotizar» (microcopy §5.2).
+    expect(r.ok && r.pedido.texto).toMatch(/Quedo atento al valor del envío para confirmar mi pedido\.\n\nAcepto los Términos y condiciones versión 1/);
     expect(r.ok && r.pedido.envio).toMatchObject({ tipo: "por_cotizar", motivo: "zona_especial" });
     expect(r.ok && r.pedido.totalCop).toBe(125000);
   });

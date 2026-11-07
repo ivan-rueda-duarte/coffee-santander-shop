@@ -24,6 +24,11 @@ Reglas generales
 |---|---|
 | `slug` | Identificador del café (`cafe-arreboles`). Define también la carpeta de sus fotos. |
 | `nombre` | Nombre que se ve en el sitio. |
+| `marca` *(opcional)* | Marca con la que el fabricante vende el café, tal como está en la bolsa. De Santander es la tienda, no la marca. Se muestra en la ficha («Marca») y en los datos para buscadores solo cuando existe. |
+| `fabricante` *(opcional)* | Razón social del fabricante o envasador, tal como en el rótulo de la bolsa. |
+| `fabricante_expresion` | `FABRICADO POR` o `ENVASADO POR`, la expresión que usa el rótulo. **Obligatoria si hay `fabricante`** (y no puede ir sola). |
+| `nsa` *(opcional)* | Notificación sanitaria del INVIMA (`NSA-003219-2017`). Reemplaza a la antigua columna `registro_sanitario`. La ficha muestra «Notificación sanitaria INVIMA N.° …» solo cuando existe. Un café **activo sin `nsa`** se publica igual, pero `npm run datos` avisa (decisión del dueño, riesgo aceptado; legal recomienda `activo=no`). |
+| `titular_nsa` *(opcional)* | Titular de la notificación sanitaria, tal como en el INVIMA. Exige `nsa`. |
 | `precio_250g`, `precio_500g`, `precio_1000g` | Precio en pesos de cada tamaño, solo dígitos (`25000`). **Vacío = ese tamaño no se vende.** Hace falta al menos un precio. |
 | `agotados` *(opcional)* | Tamaños sin existencias, en lista: `500` o `250\|500`. El café sigue visible y ese tamaño aparece agotado. |
 | `fotos` *(opcional)* | Nombres de los archivos de foto, en lista y en el orden en que se muestran: `1.jpg\|2.jpg\|3.jpg`. La primera es la principal. Ver "Fotos" más abajo. |
@@ -38,8 +43,7 @@ Reglas generales
 | `notas_cata` | Lista de notas. De ellas sale el perfil de taza. |
 | `puntaje_sca` *(opcional)* | De 0 a 100. |
 | `puntaje_verificado` *(opcional)* | `si` solo si el puntaje tiene soporte. Exige `puntaje_fuente` (quién lo cató) y `puntaje_fecha` (`2026-03-15`). Sin verificar, no se muestra el sello. |
-| `registro_sanitario` *(opcional)* | Registro INVIMA; se muestra cuando existe. |
-| `moliendas` | `grano`, `molido` o `grano\|molido`. |
+| `moliendas` | `grano`, `molido` o `grano\|molido`. El café viene así de fábrica: la tienda no muele. |
 | `destacado`, `activo`, `orden` *(opcionales)* | `activo=no` retira el café del sitio sin borrar la fila. |
 
 Los tamaños admitidos son 250, 500 y 1000 g. Otro tamaño exige agregar una columna en el código (`TAMANOS_GRAMOS` en `src/domain/catalogo/tipos.ts`).
@@ -63,9 +67,17 @@ Vacío por ahora. Cuando haya al menos dos productores con datos aparecerá el f
 
 ## config.csv
 
-Pares `clave,valor`: `nombre_tienda`, `whatsapp` (con indicativo y solo dígitos: `573001129874`), `ciudad_despacho`, `nota_envio` (texto corto del pie de página), `formas_pago` (lista con `|`) y `max_cantidad`. Las claves `razon_social`, `nit`, `domicilio` y `correo_contacto` son datos legales del vendedor: mientras estén vacías no se muestran en el sitio.
+Pares `clave,valor`. Si el valor lleva comas, va entre comillas (`domicilio,"Bucaramanga, Santander"`).
 
-## tarifas_envio.csv y zonas_envio.csv (envíos por zona)
+| Clave | Qué es |
+|---|---|
+| `nombre_tienda`, `whatsapp`, `ciudad_despacho`, `nota_envio`, `formas_pago`, `max_cantidad` | Obligatorias. `whatsapp` con indicativo y solo dígitos (`573001129874`); `nota_envio` es el texto corto del pie; `formas_pago` es una lista con `\|`. |
+| `version_terminos`, `fecha_terminos`, `version_politica_datos`, `fecha_politica_datos` | **Obligatorias.** Versión («1») y fecha (`2026-11-06`) de los Términos y condiciones y de la Política de tratamiento de datos. Las leen las casillas del resumen, la última línea del mensaje de WhatsApp y el rótulo «Versión … · vigente desde …» de las páginas legales; nada va fijo en el código. Si cambia la fecha real de publicación o se publica una versión nueva, se cambian aquí **y** en los documentos de `docs/legal/` el mismo día (`npm run datos` falla si no coinciden). |
+| `iva_tarifa` *(opcional)* | Tarifa de IVA incluida en los precios (`5`). Con valor, el sitio dice «Precios con IVA del 5 % incluido (art. 468-1 del Estatuto Tributario)»; vacía, dice solo «con todos los impuestos incluidos». Solo se publica con el concepto escrito del contador. |
+| `razon_social`, `nit`, `domicilio`, `direccion_notificacion`, `correo_contacto`, `correo_notificacion` | Datos del vendedor (Ley 1480, art. 50). Se muestran en el pie, en el resumen del pedido y en `/legal/vendedor/`; cada dato se pinta solo si existe. `nit` con dígito de verificación (`902.121.184-8`). |
+| `matricula_mercantil`, `representante_legal`, `area_datos` | Solo se muestran en `/legal/vendedor/` (el representante es un dato personal; no va en el pie). `area_datos` es el área que atiende consultas de datos personales. |
+
+## tarifas_envio.csv, zonas_envio.csv y plazos_envio.csv (envíos por zona)
 
 El costo del envío lo calcula el sitio con estas dos tablas; la política completa está en `docs/ENVIOS.md`. Pasos para cambiar una tarifa: edita el número en `tarifas_envio.csv`, ejecuta `npm run datos` y reconstruye el sitio. Conviene revisarlas cada enero.
 
@@ -92,3 +104,15 @@ Debe existir siempre la tarifa de la zona 4 (`zona4`): es la que se aplica a tod
 | `nota` *(opcional)* | Comentario para quien edita. |
 
 El peso que se factura es el de las bolsas más 80 g de empaque (constante `EMPAQUE_G` en `src/domain/envio/tipos.ts`), y el límite de cada escalón también suma esos 80 g (1.080, 2.080 y 5.080 g).
+
+## plazos_envio.csv (plazos de entrega por zona)
+
+Una fila por zona (las cinco son obligatorias). Lo que se escribe aquí se publica en el resumen del pedido y en `/envios/` y **obliga ante el cliente** (Ley 1480, art. 50): si no se cumple el máximo, el cliente puede cancelar y hay que devolverle todo en 15 días calendario. Confirma los plazos con la transportadora antes de cambiarlos.
+
+| Columna | Qué es |
+|---|---|
+| `zona` | 1 a 5. |
+| `plazo_estimado` | Lo que suele tardar, en días hábiles, tal como se lee: `1 a 3 días hábiles`, `Mismo día o siguiente día hábil`. |
+| `plazo_maximo` | El plazo que la tienda se compromete a cumplir: `3 días hábiles`. En la zona 5 debe decir `por cotizar` (el sitio añade «nunca más de 30 días calendario»); en las zonas 1 a 4 tiene que ser un plazo real. |
+
+Los plazos se cuentan desde que el cliente acepta el total en el chat y, si paga por Bre-B, desde que se recibe el pago (texto legal en `docs/legal/envios-devoluciones-retracto.md`).
