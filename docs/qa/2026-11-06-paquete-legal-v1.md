@@ -1,5 +1,64 @@
 # Ronda QA — Paquete legal v1 — 2026-11-06
 
+## Ronda de verificación (2026-11-06, noche) — HEAD `e030eb7`
+
+Rama `feat/paquete-legal-v1`, HEAD `e030eb7`. Incluye el estilo del diseñador (`37ae67c`), que la ronda anterior no había verificado (O-1), y las correcciones `efbb699` (QA-006), `81bdbff` (QA-007), `bb1b5f4` (QA-008 y LEG-104) y `6e807f1` (diseño #12 y #13 de `/envios/`). Árbol de `src/` limpio durante toda la ronda. Chromium (Playwright 1.64). Al empezar no había nada escuchando en el puerto 3000 y no toqué ese puerto. Usé mis propios `serve` en 4173 (normal) y 4180 (basePath) y los detuve al terminar.
+
+### Comandos ejecutados
+| Comando | Resultado |
+|---|---|
+| `npm run lint` | pasa (exit 0) |
+| `npm run typecheck` | pasa |
+| `npm test -- --coverage` | pasa: 24 archivos, 370 pruebas. `src/domain`: 99,71 % sentencias, 96,41 % ramas, 99,55 % funciones, 100 % líneas |
+| `npm run datos` | pasa: 2 cafés, 7 provincias, 87 municipios, 8 tarifas, 61 reglas, 5 plazos; 3 avisos sin cambios (SCA sin verificar, «Afrutado» sin perfil, Arreboles sin NSA con riesgo aceptado); 4 documentos legales publicables |
+| `npm run build` (Turbopack) | pasa, 17 páginas |
+| `e2e/verificacion-paquete-legal-v1.spec.ts` (nuevo, 30 pruebas) | 30/30 pasan. Con `--repeat-each=3`, 90/90: nada intermitente |
+| `npm run e2e` (suite completa, sin basePath) | 160 pasan, 4 omitidas (basePath) |
+| `GITHUB_PAGES=true npm run build` **con Turbopack, en el propio repositorio**. Copié `out/` a `scratchpad/bp/coffee-santander-shop/`, lo serví en 4180 y después reconstruí `out/` con el build normal (verificado: 0 apariciones de `coffee-santander-shop` en `out/index.html`) | pasa. **O-2 resuelta**: esta vez Turbopack sí construyó con basePath, sin necesidad de webpack |
+| `E2E_BASEPATH_URL=http://localhost:4180 npx playwright test` (completo) | **164/164 pasan**, 0 omitidas, 0 recursos con 4xx/5xx bajo `/coffee-santander-shop/` |
+| `grep -riE "gourmet\|premium\|exótic\|mágic\|el mejor\|Café de Santander" out/ --include=*.html` | 0 |
+| Secretos (`service_role\|SANITY_API_TOKEN\|sk…{20,}`) en `out/` | 0 |
+| `grep -E "Rueda Duarte\|740574" out/index.html` | 0 |
+| `grep -rl "niebla de la mañana\|Cafetal entre montañas" out src` | 0 |
+| «bre-b» en minúscula en el texto visible, `alt`, `aria-label`, `title` y `meta` de las 15 páginas de `out/` (recorridas con Playwright) | 0. En el HTML crudo solo aparece dentro de los `id` de ancla `#10-si-pagaste-por-bre-b-…` y `#11-si-pagaste-por-bre-b-…`, que son slugs y no se ven |
+
+### Veredicto: APTO CON OBSERVACIONES
+QA-006, QA-007 y QA-008 quedan **cerrados**. LEG-104 y los puntos #12 y #13 de `/envios/` están verificados. El cambio de estilo `37ae67c` no trae regresiones funcionales, de accesibilidad ni de reflujo. Hay un defecto nuevo de severidad Baja (QA-009, visual) y ningún Bloqueante ni Alto abierto. Las observaciones de legal (O-5, O-6, O-7 y el dictamen «No conforme» por LEG-024/066, LEG-082 y D-1/D-2) siguen igual: son decisiones del dueño, no defectos de QA.
+
+### Verificación por punto
+- **QA-006 → Cerrado.** El botón no lleva `disabled`, tiene `aria-disabled="true"` y su descripción accesible es la microayuda (`#ayuda-preparar`, visible encima del botón y sin `aria-live`). Los tres textos coinciden letra por letra con §5.9 (dos casillas, solo datos, solo términos). Con las dos casillas marcadas desaparecen la microayuda, `aria-disabled` y `aria-describedby`. **Teclado real**: Tab desde la casilla de términos llega al botón. Con 0 casillas, Espacio no avanza: aparecen los dos errores exactos con `role="alert"`, `aria-invalid="true"` y `aria-describedby` en cada casilla, y el foco pasa a «Autorizo…». Con 1 casilla (Enter, o clic real de ratón en el centro del botón) solo aparece el error de la casilla que falta, con `aria-invalid` solo en ella y el foco en ella. Al marcarla, su error desaparece. En ningún caso aparece un enlace `wa.me/…?text=`, la URL cambia ni se marca una casilla sola. **Contraste**: botón con `aria-disabled` en #5f554c sobre #efe4d1, 5,77:1. Microayuda en #5f554c sobre pergamino, ≥ 6,46:1. Errores ≥ 4,5:1. Axe sin violaciones serias ni críticas a 320, 360 y 1440 px, también con los errores visibles. Captura: `docs/qa/capturas/boton-aria-disabled-360.png`. Nota de prueba: Playwright trata `aria-disabled` como deshabilitado y `click()` espera sin fin. Por eso las pruebas pulsan con teclado, con `page.mouse.click` o con `force: true`. No es un defecto del sitio.
+- **QA-007 → Cerrado.** Las cuatro páginas legales no desbordan a 320 ni a 360 px (`scrollWidth` igual a la ventana y ningún elemento de `main` pasa del borde derecho). Columna de lectura a 1440 px: el `.body-l` mide lo mismo que 68 «0» en su fuente (≤ 68ch y > 90 % de 68ch). Índice «En este documento» en términos, privacidad y envíos (14 a 18 títulos): los enlaces coinciden 1:1 con los h2, los ids son únicos y en `[a-z0-9-]`, y `/legal/vendedor/` (2 títulos) no lleva índice. Probé el salto con Enter, desde un título del medio y desde el último, a 360 y 1440 px: la URL toma el `#id`, el h2 queda por debajo del encabezado fijo (75 px, con `scroll-mt-24` de 96 px) y a menos de 80 px de él, y el siguiente Tab sigue desde el título, sin volver al índice. Axe limpio a 320, 360 y 1440 px. Capturas: `legal-privacidad-320.png` y `legal-terminos-1440.png`. Ver QA-009 (peso del título del índice).
+- **QA-008 → Cerrado.** «Cómo pedir», paso 3, exacto: «Despachamos desde Bucaramanga a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con efectivo contraentrega o transferencia Bre-B.». No hay «bre-b» en minúscula en ningún texto visible de `out/`.
+- **LEG-104 → Verificado.** La foto `cafetal-montana.jpg` lleva el alt exacto «Montañas verdes con cultivos en ladera, un camino de tierra y nubes bajas.», su `figure` no tiene `figcaption` y no hay ningún `.ds-photo__caption` en inicio. Observación para legal (O-8): la comprobación de LEG-104 (`rg "niebla de la mañana|montañas de Santander" src out` vacío) no puede quedar vacía, porque el h1 de inicio dice «El café que crece entre cañones y *montañas de Santander*». Es texto de portada, no el alt ni el crédito de la foto, así que no lo cuento como defecto. Conviene que legal ajuste el criterio o confirme el titular.
+- **/envios/ (diseño #12 y #13) → Verificado.** `leyenda-iva` y `comision-incluida` llevan clase `small` (14/22 px) en `text-ink-muted`, con contraste ≥ 4,5:1. A 320, 360 y 1440 px, cada `th` «Zona N» tiene `white-space: nowrap` y ocupa una sola línea. No hay desborde de página (la tabla se desplaza dentro de su región, como en QA-001) y axe está limpio. Captura: `envios-tabla-320.png`.
+
+### Regresión del estilo `37ae67c` (pruebas y revisión visual)
+- **Ficha**: bajo 640 px las filas de la ficha técnica se apilan (rótulo arriba, valor abajo; también la de «Notificación sanitaria INVIMA») y desde `sm` van a dos columnas. Leyenda de IVA con `margin-top: 4px` y alineada a la derecha. Con un fabricante de 80 caracteres inyectado en la ficha a 320 px no hay desborde. Axe limpio a 320, 360 y 1440 px. Capturas: `ficha-tecnica-320.png` y `ficha-tecnica-360.png`.
+- **Pie**: los cuatro enlaces legales miden ≥ 28 px de alto, el `address` lleva filete de 1 px, no hay desborde ni elementos fuera de la ventana a 320, 360 y 1440 px, y axe está limpio. Capturas: `pie-vendedor-320.png` (nueva), `pie-vendedor-360.png` y `pie-vendedor-1440.png` (regeneradas). En las capturas de elemento a 320 px aparece encima el encabezado fijo: es un efecto de la captura, no del sitio.
+- **Línea «por cotizar» (Leticia)**: bajo 640 px va en `flex-direction: column`, con el valor a ancho completo, alineado a la izquierda y debajo del plazo. A 1440 px vuelve a una fila con el valor a la derecha. Captura: `linea-por-cotizar-360.png`.
+- **Aviso de retracto**: `small` de 14 px en `text-ink`, contraste ≥ 7:1 y texto exacto (lo comprueba la suite). Captura: `aviso-retracto-360.png`.
+- **Tarjeta con marca larga**: la columna `marca` del CSV está vacía, así que inyecté en el DOM dos filas «Marca» (una de 70 caracteres con espacios y otra de 45 sin puntos de corte). A 320, 360 y 1440 px el `dd` parte la palabra (`overflow-wrap: anywhere`), no desborda la tarjeta ni la página, y axe está limpio. Captura: `tarjeta-marca-larga-320.png`.
+- Revisé visualmente `resumen-leticia-360.png`, `legal-privacidad-320.png`, `legal-terminos-1440.png` y las anteriores: no hay solapes, cortes ni textos fuera de su caja.
+
+### Capturas
+Regeneradas y conservadas, porque cambian por el estilo, la microayuda o el pie (todas cambian de alto): `autorizacion-datos-320/360`, `documento-postal-errores-320/360`, `envio-bogota-360/1440`, `envio-leticia-360/1440`, `envios-pagina-360/1440`, `pie-vendedor-360/1440`, `resumen-bogota-360/1440`, `resumen-leticia-360/1440` y `resumen-retracto-320/360/1440`. Restauré `ppt-360.png`, que no tenía ningún píxel distinto por encima del umbral. Nuevas: `aviso-retracto-360`, `boton-aria-disabled-360`, `envios-tabla-320`, `ficha-tecnica-320/360`, `legal-privacidad-320`, `legal-terminos-1440`, `linea-por-cotizar-360`, `pie-vendedor-320` y `tarjeta-marca-larga-320`.
+
+### Defecto nuevo
+#### QA-009 — El título del índice «En este documento» no sale en negrita
+- Severidad: Baja (visual; no afecta a la accesibilidad ni a la función).
+- Entorno: Chromium, cualquier viewport, `e030eb7`. Viene de `81bdbff`.
+- Pasos: 1. Abrir `/legal/terminos/`. 2. Inspeccionar `#indice-legal`.
+- Esperado: peso 700, según la clase `font-bold` que escribió el desarrollador en `src/app/legal/[slug]/page.tsx`, línea 82, para separar el rótulo de la lista de enlaces.
+- Obtenido: `font-weight: 500`. La clase `.small` de `src/styles/marca.css` (línea 119, fuera de `@layer`) gana a la utilidad `font-bold` de Tailwind, que va en capa. En la captura `docs/qa/capturas/legal-terminos-1440.png` el rótulo se ve con el mismo peso que los enlaces. Es el único caso en `src/` donde una clase tipográfica (`small`, `caption`, `body`) se combina con una utilidad de peso.
+- Corrección sugerida: `!font-bold`, o un rótulo con `overline`, según decida disenador-marca. El peso del rótulo no está especificado en `docs/diseno/2026-11-06-paquete-legal-v1.md`.
+- Criterio de cierre: `getComputedStyle(#indice-legal).fontWeight` igual a "700", o la variante que especifique diseño. Lo mido con Playwright en la siguiente ronda (no dejé una prueba fija porque el valor esperado depende de diseño).
+- Responsable sugerido: desarrollador-fullstack (con disenador-marca).
+- Estado: **Abierto**.
+
+---
+
+## Ronda inicial (HEAD `6a53341`)
+
 Rama `feat/paquete-legal-v1`, HEAD `6a53341` (código en `212322c`, `a2aa0ee`, `36ec25b`, `c785cb1`, `63d93d3`). Chromium (Playwright 1.64) contra `out/` servido con `serve`. Entrega verificada: `docs/legal/revisiones/2026-11-06-paquete-v1.md` («Entrega para desarrollador-fullstack» y «Puntos para que QA verifique») y `docs/legal/microcopy-legal.md` v1.0.
 
 **Estado del árbol durante la ronda.** Al empezar, el árbol estaba limpio. A las 20:48, después del primer `npm run build` (20:47), aparecieron cambios **sin commit** de otra sesión en `src/styles/componentes.css`, `totales-pedido.tsx`, `flujo-pedido.tsx`, `bloque-compra.tsx`, `ficha-cafe.tsx`, `pie.tsx` y `docs/diseno/2026-11-06-paquete-legal-v1.md`. Para probar exactamente HEAD copié ese `out/` (build de 20:47, sin los cambios) a una carpeta temporal y corrí todo el e2e contra esa copia. **Esos cambios no están verificados en esta ronda.** No había ningún proceso escuchando en el puerto 3000 al empezar ni al terminar; no maté nada ahí (solo mis `serve` de 4173 y 4180).
@@ -42,6 +101,9 @@ Ningún defecto Bloqueante ni Alto abierto. Tres defectos nuevos: dos Medios (ac
 | QA-006 | Media | Accesibilidad / checkout | «Preparar pedido para WhatsApp» deshabilitado sin explicar qué falta; los errores de §4.3 y §5.1 ya no pueden aparecer | desarrollador-fullstack (texto con disenador-marca) |
 | QA-007 | Media | Accesibilidad (reflujo) | Páginas legales desbordan 16 px a 320 px por el correo sin puntos de corte | desarrollador-fullstack |
 | QA-008 | Baja | Contenido / inicio | «Cómo pedir» paso 3 dice «efectivo contraentrega y transferencia bre-b» | desarrollador-fullstack |
+| QA-009 | Baja | Visual / legal | Título del índice «En este documento» sin negrita (`.small` anula `font-bold`) | desarrollador-fullstack (con disenador-marca) |
+
+Estados al cierre de la ronda de verificación: QA-006 **Cerrado**, QA-007 **Cerrado**, QA-008 **Cerrado**, QA-009 **Abierto**.
 
 ### QA-006 — Botón «Preparar pedido para WhatsApp» deshabilitado sin explicación
 - Severidad: Media.
@@ -51,7 +113,7 @@ Ningún defecto Bloqueante ni Alto abierto. Tres defectos nuevos: dos Medios (ac
 - Obtenido: `<button disabled>` sin `aria-describedby` ni texto de ayuda. Tab salta el botón (los botones `disabled` no reciben foco), así que con lector de pantalla el paso termina en la segunda casilla sin aviso. El botón se ve como una píldora beige de bajo contraste (captura `docs/qa/capturas/resumen-retracto-360.png`). Los mensajes de error de las casillas (`e-aut`, `e-ter` en `flujo-pedido.tsx`) son código muerto: nada los muestra. WCAG 3.3.2 (instrucciones) y buena práctica de 4.1.2. Axe no lo detecta.
 - Nota: microcopy §4.3 pide a la vez «error sin cambio» y «botón deshabilitado». Con `disabled` el error nunca aparece. La variante `aria-disabled` cumple las dos cosas; el texto de ayuda nuevo, si se elige esa vía, conviene pasarlo por disenador-marca.
 - Evidencia y criterio de cierre: `e2e/paquete-legal-v1.spec.ts` › «QA-006: el botón deshabilitado explica qué falta…». Falla con «el botón deshabilitado no tiene aria-describedby». Traza: `test-results/paquete-legal-v1-resumen-d-0d33d-ciado-con-aria-describedby--chromium/trace.zip`. Si se elige `aria-disabled`, ajusto la prueba para exigir los dos errores al pulsar.
-- Estado: **Corregido — pendiente verificación** (commit `efbb699`). Causa raíz: el botón usaba `disabled`, que no recibe foco ni explica qué falta, y dejaba muertos los errores `e-aut`/`e-ter`. Vía de microcopy §5.9 v1.1: `aria-disabled`, microayuda por caso con `aria-describedby` y errores con `aria-invalid` al pulsar.
+- Estado: **Cerrado** (2026-11-06, ronda de verificación sobre `e030eb7`; criterio: `e2e/verificacion-paquete-legal-v1.spec.ts` y `e2e/paquete-legal-v1.spec.ts` en verde). Corregido en el commit `efbb699`. Causa raíz: el botón usaba `disabled`, que no recibe foco ni explica qué falta, y dejaba muertos los errores `e-aut`/`e-ter`. Vía de microcopy §5.9 v1.1: `aria-disabled`, microayuda por caso con `aria-describedby` y errores con `aria-invalid` al pulsar.
 
 ### QA-007 — Páginas legales con desborde horizontal a 320 px
 - Severidad: Media (WCAG 1.4.10 Reflujo, AA, que se mide justo a 320 px CSS; axe no lo detecta).
@@ -60,7 +122,7 @@ Ningún defecto Bloqueante ni Alto abierto. Tres defectos nuevos: dos Medios (ac
 - Esperado: 320. Obtenido: 336 en las cuatro. El responsable es «desantander.tienda@gmail.com.», que en `body-l` (18 px) no cabe en los 260 px del `li` ni en los 280 px del `p` y no tiene puntos de corte (`LI sw=296 cw=260`, `P sw=296 cw=280`). En el pie y la ficha, los cambios sin commit de la otra sesión añaden `[overflow-wrap:anywhere]`, pero no en `src/app/legal/[slug]/page.tsx`.
 - Corrección sugerida: `[overflow-wrap:anywhere]` (o `break-words`) en el contenedor `.body-l` de la página legal y en el `dd` del `dl` del vendedor.
 - Evidencia y criterio de cierre: `e2e/paquete-legal-v1.spec.ts` › «QA-007 a 320 px: las cuatro páginas legales sin violaciones serias de axe ni desborde». Traza: `test-results/paquete-legal-v1-páginas-l-618d4-s-serias-de-axe-ni-desborde-chromium/trace.zip`. Captura: `docs/qa/capturas/legal-vendedor-320.png`.
-- Estado: **Corregido — pendiente verificación** (commit `81bdbff`). Causa raíz: el correo sin puntos de corte no podía partirse en el cuerpo `.body-l` ni en el `dd` del vendedor; ahora llevan `[overflow-wrap:anywhere]`.
+- Estado: **Cerrado** (2026-11-06, ronda de verificación sobre `e030eb7`; criterio: `e2e/verificacion-paquete-legal-v1.spec.ts` y `e2e/paquete-legal-v1.spec.ts` en verde). Corregido en el commit `81bdbff`. Causa raíz: el correo sin puntos de corte no podía partirse en el cuerpo `.body-l` ni en el `dd` del vendedor; ahora llevan `[overflow-wrap:anywhere]`.
 
 ### QA-008 — «bre-b» en minúscula en «Cómo pedir»
 - Severidad: Baja.
@@ -70,7 +132,7 @@ Ningún defecto Bloqueante ni Alto abierto. Tres defectos nuevos: dos Medios (ac
 - Obtenido: «Pagas con efectivo contraentrega y transferencia bre-b.».
 - Corrección sugerida: poner en minúscula solo la primera letra de cada forma de pago, o redactar las formas en minúscula en un campo aparte. Si se cambia «y» por «o», que legal lo confirme (microcopy §2 lo da como «{formas de pago}»).
 - Evidencia y criterio de cierre: `e2e/paquete-legal-v1.spec.ts` › «QA-008: «Cómo pedir» paso 3…».
-- Estado: **Corregido — pendiente verificación** (commit `bb1b5f4`). Causa raíz: `toLowerCase()` sobre el texto completo de cada forma de pago y unión con «y»; ahora solo la primera letra va en minúscula y se unen con «o».
+- Estado: **Cerrado** (2026-11-06, ronda de verificación sobre `e030eb7`; criterio: `e2e/verificacion-paquete-legal-v1.spec.ts` y `e2e/paquete-legal-v1.spec.ts` en verde). Corregido en el commit `bb1b5f4`. Causa raíz: `toLowerCase()` sobre el texto completo de cada forma de pago y unión con «y»; ahora solo la primera letra va en minúscula y se unen con «o».
 
 ## Revisión de las pruebas del desarrollador (`git diff 5331c9c HEAD -- e2e/`)
 - **Textos**: las pruebas pasaron a usar `textosCasillas()` y `AVISO_RETRACTO` (`e2e/ayudas.ts`), que leen versión y fecha de `config.csv`. Las comparaciones exactas se conservan.
@@ -92,5 +154,6 @@ Ningún defecto Bloqueante ni Alto abierto. Tres defectos nuevos: dos Medios (ac
 No se recorrió en esta ronda (el alcance es el paquete legal). Cambios de comportamiento respecto a la v1, todos por decisión documentada: se concede el retracto de 5 días hábiles, las casillas tienen versión y el mensaje nuevo pide confirmar el total.
 
 ## Cobertura
+- Ronda de verificación: E2E 164 pruebas (160 + 4 de basePath), todas en verde. Nuevo `e2e/verificacion-paquete-legal-v1.spec.ts` (30 pruebas): QA-006 con teclado, 0 y 1 casillas y contraste; QA-007 con reflujo por elemento, 68ch e índice de anclas con salto y foco; QA-008 en el texto visible de `out/`; LEG-104; `/envios/` #12 y #13; ficha apilada, pie, «por cotizar», aviso de retracto y tarjeta con marca larga a 320, 360 y 1440 px.
 - Unitarias: 370 pruebas; `src/domain` 99,71 % sentencias y 96,41 % ramas (≥ 90 %).
 - E2E: 134 pruebas (130 sin basePath + 4 con basePath). Nuevo `e2e/paquete-legal-v1.spec.ts` (30 pruebas): páginas legales letra por letra y `dl` del vendedor; axe y reflujo a 320, 360 y 1440 px en páginas legales, resumen y ficha; plazos de las zonas 1, 4 y 5; mensaje en el caso normal y en el peor caso; pie a 360 y 1440 px; fichas Casa Martínez y Arreboles; `/envios/`; ayuda de contraentrega; privacidad (URL, almacenamiento, peticiones a terceros); basePath; QA-006, QA-007 y QA-008.
