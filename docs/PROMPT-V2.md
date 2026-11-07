@@ -340,7 +340,7 @@ Forma de pago: Transferencia Bre-B
 - Ley 1581 de 2012 y Decreto 1377 de 2013: autorización previa, expresa e informada, casilla sin marcar, enlace a la política, guardar fecha/hora y versión de la política. La política debe mencionar que los datos pasan por WhatsApp (Meta) y se alojan en Supabase fuera de Colombia (transferencia internacional): elige la región de Supabase más cercana (`sa-east-1`) y deja el punto en PENDIENTES.
 - Ley 1480 de 2011 (comercio electrónico): visibles en el footer y en el resumen la razón social, el NIT, el domicilio y el contacto del vendedor (`TODO(dato)` hasta que los dé), el precio total con impuestos, que el envío se confirma antes del pago, y el enlace a envíos, devoluciones y retracto.
 - Marca: nunca "Café de Santander" como nombre o titular; nada de "premium" o "gourmet" en la interfaz (el proceso "Lavado premium" de la v1 se muestra como "Lavado" mientras se decide); toda cifra lleva fuente y fecha.
-- Registro sanitario INVIMA por café: campo previsto; se muestra cuando exista.
+- Notificación sanitaria INVIMA por café (`nsa`, con titular y fabricante): se muestra solo cuando exista; un café activo sin `nsa` solo genera aviso en `npm run datos` (decisión del dueño, 2026-11-06).
 - Sin datos personales en analítica ni en la URL. La URL de `wa.me` sí lleva el mensaje: es aceptable porque la abre el propio cliente.
 
 # CI/CD — GitHub Pages
@@ -357,7 +357,7 @@ Forma de pago: Transferencia Bre-B
 - Ejecuta la revisión de acabado de la skill `impeccable` (audit/polish) sobre inicio, ficha y pedido antes de cerrar la fase de UI.
 
 # INCONSISTENCIAS CONOCIDAS (confírmalas en la FASE 0 y pregúntame)
-1. **Filtro por marca vs. PRODUCT.md:** PRODUCT.md dice que no hay filtro por marca porque todos los cafés son marca propia. Propuesta: filtro "Productor / finca", oculto hasta que haya datos (hoy `finca` está vacío en los 5 cafés).
+1. **Filtro por marca vs. PRODUCT.md:** PRODUCT.md (modelo C, 2026-11-06) dice que De Santander es una tienda que vende café de otras marcas y que el filtro por marca se decidirá cuando haya al menos dos marcas con datos (P17). Propuesta: filtro "Productor / finca", oculto hasta que haya datos (hoy `finca` está vacío en los 5 cafés).
 2. **Procesos:** "Lavado tradicional / controlado / premium / especial": ¿son distintos? Mientras tanto, todos van a `lavado` con `proceso_detalle`.
 3. **Tueste:** la v1 tiene 5 niveles y el filtro pedido tiene 3; propuesta de agrupación en la tabla de filtros.
 4. **Puntajes SCA (86–91) sin verificar:** el sello y el filtro solo se muestran con `puntaje_verificado = true`. ¿Hay soporte (fuente y fecha) para alguno?

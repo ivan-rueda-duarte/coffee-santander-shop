@@ -1,6 +1,6 @@
 # De Santander · tienda de café de origen
 
-Tienda web de **De Santander**, café de especialidad de marca propia de las provincias de Santander, Colombia. El visitante explora el catálogo por provincia (en filtros o en un mapa interactivo), abre la ficha de un café, elige molienda y presentación, arma su pedido y lo envía por WhatsApp con todos los datos de envío ya escritos. La interfaz va en español de Colombia.
+Tienda web de **De Santander**, que vende café de origen de marcas de las provincias de Santander, Colombia (la tienda comercializa; la marca y el fabricante de cada café figuran en su bolsa y en su ficha). El visitante explora el catálogo por provincia (en filtros o en un mapa interactivo), abre la ficha de un café, elige molienda y presentación, arma su pedido y lo envía por WhatsApp con todos los datos de envío ya escritos. La interfaz va en español de Colombia.
 
 Es un sitio estático (Next.js, `output: 'export'`) pensado para GitHub Pages: no hay servidor ni base de datos. El pedido nace cuando la persona envía el mensaje desde WhatsApp.
 
