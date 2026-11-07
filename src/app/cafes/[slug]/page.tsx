@@ -39,12 +39,14 @@ export default async function PaginaCafe({ params }: PageProps<"/cafes/[slug]">)
   const { cafe } = ficha;
 
   // Product con ofertas en COP. No hay reseñas, así que no se declara aggregateRating.
+  // Modelo C (microcopy §3): `brand` solo con la marca real de la bolsa; De Santander es la tienda, no la marca.
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: cafe.nombre,
     description: cafe.notasCata.length ? `Café de ${cafe.municipio}. Notas de ${cafe.notasCata.join(", ")}.` : `Café de ${cafe.municipio}.`,
-    brand: { "@type": "Brand", name: "De Santander" },
+    brand: cafe.marca ? { "@type": "Brand", name: cafe.marca } : undefined,
+    manufacturer: cafe.fabricante ? { "@type": "Organization", name: cafe.fabricante } : undefined,
     url: URL_SITIO ? `${URL_SITIO}/cafes/${cafe.slug}/` : undefined,
     image: imagenPrincipal(ficha),
     offers: cafe.presentaciones.map((p) => ({

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Pie } from "@/ui/componentes/layout/pie";
-import { cargarCatalogo, URL_SITIO } from "./_datos/catalogo";
+import { cargarCatalogo, cargarCatalogoNavegador, URL_SITIO } from "./_datos/catalogo";
 import { Proveedores } from "./proveedores";
 import "./globals.css";
 
@@ -23,8 +23,9 @@ const montserrat = localFont({
   display: "swap",
 });
 
+// Modelo C (docs/legal/microcopy-legal.md §2): tienda de café de otras marcas, no como marca.
 const DESCRIPCION =
-  "De Santander: café de origen de marca propia, organizado por provincias de Santander, Colombia. Elige por provincia, arma tu pedido y envíalo por WhatsApp.";
+  "De Santander: tienda de café de origen de provincias de Santander, Colombia. Elige por provincia, arma tu pedido y envíalo por WhatsApp.";
 
 export const metadata: Metadata = {
   metadataBase: URL_SITIO ? new URL(URL_SITIO) : undefined,
@@ -36,11 +37,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#f7f1e6" };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const catalogo = await cargarCatalogo();
+  const [catalogo, catalogoNavegador] = await Promise.all([cargarCatalogo(), cargarCatalogoNavegador()]);
   return (
     <html lang="es" data-theme="light" className={`${fraunces.variable} ${montserrat.variable}`}>
       <body className="min-h-screen">
-        <Proveedores catalogo={catalogo}>
+        <Proveedores catalogo={catalogoNavegador}>
           <main id="contenido">{children}</main>
           <Pie tienda={catalogo.tienda} anio={new Date().getFullYear()} />
         </Proveedores>

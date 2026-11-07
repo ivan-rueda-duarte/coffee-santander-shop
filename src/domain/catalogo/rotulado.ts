@@ -2,7 +2,7 @@ import type { Cafe } from "./tipos";
 
 // Rotulado sanitario de la ficha (docs/legal/microcopy-legal.md §3; Res. 5109 de 2005, art. 5).
 
-/** Rótulo de la fila (reemplaza a «Registro sanitario»: la NSA es una notificación, no un registro). */
+/** Rótulo de la fila: la NSA es una notificación, no un registro. */
 export const ROTULO_NOTIFICACION_SANITARIA = "Notificación sanitaria INVIMA";
 
 /**

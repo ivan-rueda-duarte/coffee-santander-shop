@@ -4,7 +4,7 @@ import { canonica, cargarCatalogo } from "../_datos/catalogo";
 
 export const metadata: Metadata = {
   title: "Cafés",
-  description: "Todos los cafés de De Santander, con filtros por provincia, municipio, proceso, variedad, tueste, perfil de taza y altitud.",
+  description: "Todos los cafés de la tienda De Santander, con filtros por provincia, municipio, proceso, variedad, tueste, perfil de taza y altitud.",
   alternates: { canonical: canonica("/cafes/") },
 };
 

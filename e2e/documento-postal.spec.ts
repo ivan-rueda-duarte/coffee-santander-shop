@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { textosCasillas } from "./ayudas";
 
 // Documento opcional y código postal manual (LEG-040 a LEG-048; docs/legal/microcopy-legal.md §4).
 
@@ -30,7 +31,7 @@ const enResumen = (page: Page) => expect(page.getByRole("heading", { name: "Revi
 
 async function mensaje(page: Page) {
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
-  await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+  await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
   await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
   const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
@@ -47,14 +48,16 @@ test.describe("documento opcional y código postal", () => {
     await revisar(page);
     await enResumen(page);
     await expect(page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ })).not.toBeChecked();
-    await expect(page.getByRole("checkbox", { name: /Acepto los términos/ })).not.toBeChecked();
+    await expect(page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ })).not.toBeChecked();
     await expect(page.getByText(/^Documento:/)).toHaveCount(0);
     await expect(page.getByText(/^Código postal:/)).toHaveCount(0);
-    await expect(page.getByText(/y, si escribí mi documento, emitir la factura a mi nombre/)).toBeVisible();
+    // Casilla corta del paquete v1 (P21 = a): la finalidad del documento está en la política §3, no en la casilla.
+    await expect(page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ })).toHaveAccessibleName(textosCasillas().autorizacion);
+    expect(textosCasillas().autorizacion).not.toMatch(/documento|factura/i);
     // Las casillas siguen separadas: marcar una no marca la otra.
-    await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+    await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
     await expect(page.getByRole("checkbox", { name: /Autorizo a/ })).not.toBeChecked();
-    await page.getByRole("checkbox", { name: /Acepto los términos/ }).uncheck();
+    await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).uncheck();
     const texto = await mensaje(page);
     expect(texto).not.toMatch(/Documento:|Código postal:|Cédula/);
   });

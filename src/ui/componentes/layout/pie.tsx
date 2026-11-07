@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ConfigTienda } from "@/domain/pedido/tienda";
+import { leyendaIvaPie } from "@/domain/pedido/iva";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { Franja, Textura } from "../marca/superficies";
 import { Marca } from "./encabezado";
@@ -19,7 +20,8 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.2fr_1fr_1fr] md:px-8">
           <div>
             <Marca pie />
-            <p className="body mt-4 max-w-xs text-ink-muted">Café de origen de marca propia, de provincias de Santander, Colombia.</p>
+            {/* Modelo C (microcopy §2): la tienda vende café de otras marcas; no se presenta como marca. */}
+            <p className="body mt-4 max-w-xs text-ink-muted">Café de origen de provincias de Santander, Colombia.</p>
           </div>
 
           <dl className="space-y-4 text-sm">
@@ -76,7 +78,10 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
             )}
           </div>
         </div>
-        <p className="mx-auto max-w-6xl px-5 pb-6 text-xs text-ink-muted md:px-8">© {anio} De Santander. Precios en pesos colombianos.</p>
+        {/* Microcopy §1.4: «© {anio} De Santander SAS. Precios en pesos colombianos, con IVA del 5 % incluido.» (sin tarifa: «con todos los impuestos incluidos»). */}
+        <p className="mx-auto max-w-6xl px-5 pb-6 text-xs text-ink-muted md:px-8" data-testid="pie-copyright">
+          © {anio} {v.razonSocial ?? tienda.nombre}. {leyendaIvaPie(tienda.ivaTarifa)}
+        </p>
       </Textura>
       <Franja />
     </footer>

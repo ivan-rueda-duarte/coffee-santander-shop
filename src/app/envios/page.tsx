@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { coberturaPorZona } from "@/domain/envio/envio";
-import { EMPAQUE_G, type TarifaEnvio, type Zona } from "@/domain/envio/tipos";
+import { textoPlazoPagina } from "@/domain/envio/plazos";
+import { EMPAQUE_G, type TarifaEnvio } from "@/domain/envio/tipos";
+import { leyendaIvaTarifas } from "@/domain/pedido/iva";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { BotonEnlace } from "@/ui/componentes/marca/boton";
 import { Antetitulo } from "@/ui/componentes/marca/etiquetas";
@@ -11,17 +14,8 @@ import { canonica, cargarCatalogo } from "../_datos/catalogo";
 
 export const metadata: Metadata = {
   title: "Envíos",
-  description: "Cómo calculamos el envío de tu pedido: zonas, tarifas por peso y plazos orientativos desde Bucaramanga.",
+  description: "Cómo calculamos el envío de tu pedido: zonas, tarifas por peso con IVA incluido y plazos de entrega desde Bucaramanga.",
   alternates: { canonical: canonica("/envios/") },
-};
-
-// Plazos orientativos de docs/ENVIOS.md §6. Pendiente de confirmar con el agregador (docs/PENDIENTES.md).
-const PLAZOS: Record<Zona, string> = {
-  1: "Mismo día o siguiente día hábil",
-  2: "1 a 3 días hábiles",
-  3: "1 a 3 días hábiles",
-  4: "2 a 6 días hábiles",
-  5: "5 a 12 días hábiles, con entrega en la oficina de la transportadora",
 };
 
 const MEDIOS: Record<string, string> = { mensajero: "Mensajero", transportadora: "Transportadora", transportadora_o_472: "Transportadora" };
@@ -31,7 +25,7 @@ const lista = (items: string[]) => items.join(items.some((i) => i.includes(","))
 
 export default async function PaginaEnvios() {
   const catalogo = await cargarCatalogo();
-  const { tarifas } = catalogo.envios;
+  const { tarifas, plazos } = catalogo.envios;
   const cobertura = coberturaPorZona(catalogo.envios);
 
   /** Qué abarca cada fila de la tabla, generado de zonas_envio.csv. */
@@ -90,24 +84,37 @@ export default async function PaginaEnvios() {
             </tbody>
           </table>
         </div>
-        <p className="caption mt-3 text-ink-muted">Precios en pesos colombianos. Más de 5 kg, en cualquier zona, se cotiza aparte. Nunca cobramos primero y ajustamos después.</p>
+        {/* Microcopy §1.4 y §1.7 (paquete legal v1): IVA incluido y comisión de recaudo dentro de la tarifa. */}
+        <p className="caption mt-3 text-ink-muted" data-testid="leyenda-iva">{leyendaIvaTarifas(catalogo.tienda.ivaTarifa)}</p>
+        <p className="body mt-3 max-w-2xl text-ink-muted" data-testid="comision-incluida">
+          Si pagas contraentrega, la tarifa de envío de tu zona ya incluye la comisión de recaudo de la transportadora; no cobramos recargos adicionales.
+        </p>
 
-        <h2 className="h3 mt-12 text-ink-title">Plazos orientativos</h2>
-        <p className="body mt-2 max-w-2xl text-ink-muted">Son una referencia, no una fecha de entrega: dependen de la transportadora, del destino y de cuándo se confirme el pago.</p>
+        {/* Microcopy §5.8: plazos estimado y máximo por zona desde data/plazos_envio.csv (Ley 1480, art. 50 lit. h). */}
+        <h2 className="h3 mt-12 text-ink-title">Plazos de entrega</h2>
+        <p className="body mt-2 max-w-2xl text-ink-muted">
+          El estimado es lo que suele tardar. El máximo es el plazo que nos comprometemos a cumplir. Los dos se cuentan en días hábiles desde que aceptas el total en el chat y, si pagas por transferencia Bre-B, desde que recibimos el pago. Si no entregamos en el máximo, puedes cancelar y te devolvemos todo en 15 días calendario.
+        </p>
         <dl className="mt-4 divide-y divide-line border-y border-line text-sm">
-          {([1, 2, 3, 4, 5] as Zona[]).map((zona) => (
-            <div key={zona} className="grid gap-1 py-3 sm:grid-cols-[8rem_1fr] sm:gap-4">
-              <dt className="font-bold text-ink-title">Zona {zona}</dt>
-              <dd>{PLAZOS[zona]}</dd>
+          {plazos.map((p) => (
+            <div key={p.zona} className="grid gap-1 py-3 sm:grid-cols-[8rem_1fr] sm:gap-4" data-testid={`plazo-zona-${p.zona}`}>
+              <dt className="font-bold text-ink-title">Zona {p.zona}</dt>
+              <dd>{textoPlazoPagina(p)}</dd>
             </div>
           ))}
         </dl>
-        {/* D6 (LEG-068): microcopy §5.8, mientras los plazos máximos por zona no estén confirmados (D-9). */}
         <p className="body mt-3 max-w-2xl text-ink-muted" data-testid="plazo-legal">Si no publicamos un plazo máximo para tu zona, entregamos en máximo 30 días calendario, como manda la ley.</p>
 
         <h2 className="h3 mt-12 text-ink-title">Si no hay reparto a domicilio</h2>
         <p className="body mt-2 max-w-2xl">
           En municipios sin reparto a domicilio, la guía de la transportadora puede cerrar en «reclamar en oficina»: en ese caso hay que reclamar el pedido en la oficina de la transportadora.
+        </p>
+
+        {/* Microcopy §5.3 (LEG-081): el retracto se concede; el texto es el del paquete legal v1. */}
+        <h2 className="h3 mt-12 text-ink-title">Retracto</h2>
+        <p className="body mt-2 max-w-2xl" data-testid="retracto-envios">
+          Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega, salvo si el empaque está abierto. El transporte de la devolución corre por tu cuenta. Te devolvemos el dinero en máximo 15 días calendario, por el medio de pago que prefieras. Más en{" "}
+          <Link className="font-semibold underline underline-offset-4" href="/legal/envios-devoluciones/">envíos, devoluciones, retracto y garantía</Link>.
         </p>
 
         <h2 className="h3 mt-12 text-ink-title">Pedido mínimo sugerido</h2>
@@ -122,6 +129,10 @@ export default async function PaginaEnvios() {
             Escribir por WhatsApp
           </BotonEnlace>
         </div>
+
+        <p className="body mt-10">
+          <Link className="font-semibold underline underline-offset-4" href="/legal/envios-devoluciones/">Lee la política completa de envíos, devoluciones, retracto y garantía.</Link>
+        </p>
       </div>
     </article>
   );

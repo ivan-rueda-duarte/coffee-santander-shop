@@ -16,6 +16,15 @@ export const cargarCatalogo = cache(async (): Promise<VistaCatalogo> => {
 });
 
 /**
+ * Lo que viaja al navegador (CatalogoProvider). Representante legal, matrícula y área de datos solo se publican
+ * en /legal/vendedor/ (Server Component): no van en la carga de cada página (minimización, LEG-085).
+ */
+export const cargarCatalogoNavegador = cache(async (): Promise<VistaCatalogo> => {
+  const vista = await cargarCatalogo();
+  return { ...vista, tienda: { ...vista.tienda, vendedor: { ...vista.tienda.vendedor, representanteLegal: null, matriculaMercantil: null, areaDatos: null } } };
+});
+
+/**
  * Contenido editorial: Sanity si está configurado. Las páginas legales tienen respaldo en docs/legal/ (LEG-084):
  * se publican desde el repositorio, con la versión y la fecha de data/config.csv, cuando Sanity no las trae.
  */

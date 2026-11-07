@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { AVISO_RETRACTO, textosCasillas } from "./ayudas";
 
 async function agregarCasaMartinez(page: Page) {
   await page.goto("/cafes/cafe-casa-martinez/");
@@ -52,23 +53,24 @@ test.describe("pedido", () => {
     // 3. Resumen: las casillas vienen sin marcar
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByText("La forma de pago se confirma por WhatsApp antes de que pagues")).toBeVisible();
-    // D5 (microcopy §5.3): la exclusión del retracto se informa antes de las casillas, solo en el resumen.
-    await expect(page.getByTestId("aviso-retracto")).toHaveText("El café es un alimento: no admite retracto. Si llega dañado o equivocado, te respondemos con la garantía.");
+    // Microcopy §5.3 (paquete legal v1): el retracto de 5 días hábiles se informa antes de las casillas, solo en el resumen.
+    await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
     const autorizacion = page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ });
-    const terminos = page.getByRole("checkbox", { name: /Acepto los términos/ });
+    const terminos = page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ });
     await expect(autorizacion).not.toBeChecked();
     await expect(terminos).not.toBeChecked();
-    // Textos exactos de docs/legal/microcopy-legal.md §4.3 y §5.1 (v0.4); la razón social sale de data/config.csv.
-    await expect(autorizacion).toHaveAccessibleName(
-      "Autorizo a De Santander SAS a tratar mis datos personales para gestionar este pedido: confirmarlo, coordinar la entrega con la transportadora o el mensajero y, si escribí mi documento, emitir la factura a mi nombre. Entiendo que el pedido se envía por WhatsApp (Meta), que puede tratar mis datos fuera de Colombia. Más en la política de tratamiento de datos.",
-    );
-    await expect(terminos).toHaveAccessibleName("Acepto los términos y condiciones.");
-    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
-    await expect(page.getByText("Debes autorizar el tratamiento de tus datos")).toBeVisible();
-    await expect(page.getByText("Debes aceptar los términos")).toBeVisible();
+    // Textos exactos de docs/legal/microcopy-legal.md §4.3 y §5.1 (paquete v1); versión y fecha salen de data/config.csv.
+    const casillas = textosCasillas();
+    await expect(autorizacion).toHaveAccessibleName(casillas.autorizacion);
+    await expect(terminos).toHaveAccessibleName(casillas.terminos);
+    // El botón queda deshabilitado mientras falte una casilla (§4.3).
+    const preparar = page.getByRole("button", { name: "Preparar pedido para WhatsApp" });
+    await expect(preparar).toBeDisabled();
     await autorizacion.check();
+    await expect(preparar).toBeDisabled();
     await terminos.check();
-    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+    await expect(preparar).toBeEnabled();
+    await preparar.click();
 
     // 4. Confirmación
     await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
@@ -77,7 +79,10 @@ test.describe("pedido", () => {
     expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto).toContain("• Café Casa Martínez (Guanentá) — Molido — 500 g × 1 = $47.000");
-    expect(texto).toContain("Subtotal: $47.000");
+    expect(texto.startsWith("¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.")).toBe(true);
+    expect(texto).toContain("Subtotal de productos: $47.000 (IVA del 5 % incluido)");
+    expect(texto).toMatch(/\n\nAcepto los Términos y condiciones versión \S+ y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión \S+ del \d+ de \w+ de \d{4}\.$/);
+    expect(texto).not.toMatch(/DS-|finalizar/i);
     expect(texto).toContain("Envío (Bucaramanga · zona 1): $8.800");
     expect(texto).toContain("Nombre: Ana Rueda");
     expect(texto).toContain("Celular: 300 123 4567");
@@ -175,7 +180,7 @@ test.describe("pedido", () => {
     await expect(page.getByText("Documento: CC 1098765432")).toBeVisible();
     await expect(page.getByText("Código postal: 680001")).toBeVisible();
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
-    await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+    await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
     await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
 
     const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";

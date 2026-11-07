@@ -1,10 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { AVISO_RETRACTO } from "./ayudas";
 
-// D5 (LEG-064): aviso de exclusión del retracto en el resumen, texto exacto de microcopy §5.3, solo ahí.
-// D6 (LEG-068): /envios/ cierra «Plazos orientativos» con la línea de 30 días y la llamada nombra la zona 5.
+// Microcopy §5.3 (paquete legal v1, LEG-081): aviso de retracto de 5 días hábiles en el resumen, texto exacto, solo ahí.
+// Microcopy §5.8: /envios/ publica «Plazos de entrega» (estimado y máximo por zona), cierra con la línea de 30 días y la llamada nombra la zona 5.
 
-const AVISO_RETRACTO = "El café es un alimento: no admite retracto. Si llega dañado o equivocado, te respondemos con la garantía.";
 const PLAZO_LEGAL = "Si no publicamos un plazo máximo para tu zona, entregamos en máximo 30 días calendario, como manda la ley.";
 const PREGUNTA_ZONA5 = "¿Tu destino es de zona 5 o pides más de 5 kg?";
 const VIEWPORTS = [
@@ -39,14 +39,14 @@ const graves = async (page: Page) =>
 
 const sinDesborde = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 
-/** Apariciones de «retracto» en el <main> que NO sean el nombre de un enlace legal. */
+/** Apariciones de «retracto»/«retractarte» en el <main> que NO sean el nombre de un enlace legal. */
 async function retractoFueraDeEnlaces(page: Page) {
   return page.locator("main").evaluate((main) => {
     const resultado: string[] = [];
     const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
     let n: Node | null;
     while ((n = walker.nextNode())) {
-      if (!/retracto/i.test(n.textContent ?? "")) continue;
+      if (!/retract/i.test(n.textContent ?? "")) continue;
       if ((n.parentElement as HTMLElement).closest("a")) continue;
       resultado.push((n.textContent ?? "").trim());
     }
@@ -54,9 +54,9 @@ async function retractoFueraDeEnlaces(page: Page) {
   });
 }
 
-test.describe("D5: aviso de retracto en el resumen", () => {
+test.describe("aviso de retracto en el resumen", () => {
   for (const vp of VIEWPORTS) {
-    test(`a ${vp.width} px con tarifa (Bucaramanga): texto exacto, antes de las casillas, axe y sin desborde`, async ({ page }) => {
+    test(`a ${vp.width} px con tarifa (Bucaramanga): texto exacto, antes de las casillas, plazo de zona 1, axe y sin desborde`, async ({ page }) => {
       await page.setViewportSize(vp);
       await irAlResumen(page, "Santander", "Bucaramanga");
       const aviso = page.getByTestId("aviso-retracto");
@@ -69,8 +69,11 @@ test.describe("D5: aviso de retracto en el resumen", () => {
       const yTotal = (await page.getByTestId("linea-total").boundingBox())!.y;
       expect(yTotal).toBeLessThan(yAviso);
       expect(yAviso).toBeLessThan(yCasillas);
-      // Con tarifa no hay aviso de «por cotizar».
+      // Con tarifa no hay aviso de «por cotizar»; el plazo es el de la zona 1 (microcopy §5.6).
       await expect(page.getByTestId("aviso-por-cotizar")).toHaveCount(0);
+      await expect(page.getByTestId("linea-plazo")).toHaveText("Entrega estimada: Mismo día o siguiente día hábil. Plazo máximo: 1 día hábil.");
+      await expect(page.getByTestId("leyenda-iva").first()).toContainText(/Precios (con IVA del \d+ % incluido \(art\. 468-1 del Estatuto Tributario\)|en pesos colombianos con todos los impuestos incluidos)\./);
+      await expect(page.getByTestId("nota-precio-total")).toContainText("Los precios incluyen todos los impuestos y el envío se muestra por separado (art. 50 de la Ley 1480 de 2011).");
       // «retracto» solo aparece en el aviso (y en los nombres de los enlaces legales).
       expect(await retractoFueraDeEnlaces(page)).toEqual([AVISO_RETRACTO]);
       expect(await sinDesborde(page)).toBe(true);
@@ -105,6 +108,8 @@ test.describe("D5: aviso de retracto en el resumen", () => {
     await page.getByLabel("Municipio").selectOption("Bucaramanga");
     await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
     await page.getByRole("radio", { name: "Efectivo contraentrega" }).check({ force: true });
+    // Microcopy §1.7: ayuda de contraentrega al elegir esa forma de pago.
+    await expect(page.getByTestId("ayuda-contraentrega")).toHaveText("Pagas al recibir. La tarifa de envío ya incluye la comisión de recaudo; no hay recargos.");
     await page.getByRole("button", { name: /Revisar el pedido/ }).click();
     await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
     await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
@@ -121,7 +126,7 @@ test.describe("D5: aviso de retracto en el resumen", () => {
     await page.getByRole("button", { name: /^Pedido/ }).click();
     const cajon = page.getByRole("dialog", { name: "Tu pedido" });
     await expect(cajon).toBeVisible();
-    expect(await cajon.innerText()).not.toMatch(/retracto|garantía/i);
+    expect(await cajon.innerText()).not.toMatch(/retract|garantía/i);
     await page.keyboard.press("Escape");
     // Carrito (/pedido/)
     await page.goto("/pedido/");
@@ -143,12 +148,12 @@ test.describe("D5: aviso de retracto en el resumen", () => {
     await page.getByRole("button", { name: /Revisar el pedido/ }).click();
     await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
-    await page.getByRole("checkbox", { name: /Acepto los términos/ }).check();
+    await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
     await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
     await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
     await expect(page.getByTestId("aviso-retracto")).toHaveCount(0);
     const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
-    expect(decodeURIComponent(href.split("?text=")[1])).not.toMatch(/retracto/i);
+    expect(decodeURIComponent(href.split("?text=")[1])).not.toMatch(/retract/i);
   });
 
   test("inicio y catálogo: «retracto» solo como nombre del enlace legal del pie", async ({ page }) => {
@@ -159,14 +164,15 @@ test.describe("D5: aviso de retracto en el resumen", () => {
       expect(await retractoFueraDeEnlaces(page), ruta).toEqual([]);
       const enlaces = page.locator("footer a").filter({ hasText: /retracto/i });
       await expect(enlaces).toHaveCount(1);
+      await expect(enlaces).toHaveText("Envíos, devoluciones, retracto y garantía");
       await expect(enlaces).toHaveAttribute("href", "/legal/envios-devoluciones/");
     }
   });
 });
 
-test.describe("D6: /envios/ con la línea de 30 días y la pregunta de zona 5", () => {
+test.describe("/envios/: plazos de entrega, línea de 30 días y pregunta de zona 5", () => {
   for (const vp of VIEWPORTS) {
-    test(`a ${vp.width} px: plazo-legal al cierre de «Plazos orientativos», pregunta nueva, sin textos retirados, axe y sin desborde`, async ({ page }) => {
+    test(`a ${vp.width} px: plazo-legal al cierre de «Plazos de entrega», pregunta de zona 5, sin textos retirados, axe y sin desborde`, async ({ page }) => {
       await page.setViewportSize(vp);
       await page.goto("/envios/");
       await page.waitForLoadState("networkidle");
@@ -180,22 +186,25 @@ test.describe("D6: /envios/ con la línea de 30 días y la pregunta de zona 5", 
       const ySiguienteH2 = (await page.getByRole("heading", { name: "Si no hay reparto a domicilio" }).boundingBox())!.y;
       expect(yDl.y + yDl.height).toBeLessThanOrEqual(yPlazo + 1);
       expect(yPlazo).toBeLessThan(ySiguienteH2);
-      // Dentro de la sección «Plazos orientativos» (el h2 anterior más cercano).
+      // Dentro de la sección «Plazos de entrega» (el h2 anterior más cercano).
       expect(await plazo.evaluate((el) => {
         let n: Element | null = el;
         while ((n = n.previousElementSibling)) if (n.tagName === "H2") return n.textContent;
         return null;
-      })).toBe("Plazos orientativos");
+      })).toBe("Plazos de entrega");
 
       const pregunta = page.getByText(PREGUNTA_ZONA5, { exact: true });
       await expect(pregunta).toHaveCount(1);
       await expect(pregunta).toBeVisible();
       const texto = (await page.locator("body").innerText()).replace(/\s+/g, " ");
       expect(texto).not.toContain("¿Tu destino no aparece");
-      expect(texto).not.toMatch(/Máximo:?\s*\d+\s*días hábiles/i);
-      // Los cinco plazos orientativos siguen publicados como orientación (sin fechas prometidas).
+      expect(texto).not.toMatch(/Plazos orientativos|Son una referencia, no una fecha de entrega/);
+      // Las cinco zonas con estimado y máximo (microcopy §5.8); la zona 5 con el máximo al cotizar.
       for (const z of [1, 2, 3, 4, 5]) await expect(page.locator("dt", { hasText: `Zona ${z}` })).toBeVisible();
-      expect(texto).toContain("Son una referencia, no una fecha de entrega");
+      expect(texto).toMatch(/Máximo: \d+ días? hábil/);
+      expect(texto).toContain("Máximo: se informa al cotizar; nunca más de 30 días calendario.");
+      // Sección «Retracto» con el mismo texto del resumen y enlace al documento legal.
+      await expect(page.getByTestId("retracto-envios")).toContainText(AVISO_RETRACTO);
       // Botón de WhatsApp al número de la tienda.
       await expect(page.getByRole("link", { name: "Escribir por WhatsApp" })).toHaveAttribute("href", "https://wa.me/573001129874");
       await expect(page.getByText("Escríbenos al +57 300 112 9874 y te cotizamos.")).toBeVisible();

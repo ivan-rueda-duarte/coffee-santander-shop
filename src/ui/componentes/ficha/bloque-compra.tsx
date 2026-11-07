@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ETIQUETA_MOLIENDA, estaDisponible, MOLIENDAS, type Cafe, type Molienda } from "@/domain/catalogo/tipos";
 import { formatearCOP } from "@/domain/comun/dinero";
+import { leyendaIva } from "@/domain/pedido/iva";
 import { useCarrito } from "../carrito/carrito-provider";
 import { Boton } from "../marca/boton";
 import { Pastilla } from "../marca/etiquetas";
@@ -51,6 +52,8 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
             </Pildora>
           ))}
         </div>
+        {/* Microcopy §3 (LEG-083): el selector elige entre dos bolsas del fabricante; la tienda no muele. */}
+        <p className="caption mt-2 text-ink-muted" data-testid="ayuda-molienda">Grano entero o molido, tal como lo empaca el fabricante. No molemos el café.</p>
       </fieldset>
 
       <fieldset className="mt-5">
@@ -82,6 +85,8 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
           </small>
         </p>
       </div>
+      {/* Microcopy §1.4: leyenda de IVA bajo el precio (la tarifa sale de data/config.csv). */}
+      <p className="caption mt-2 text-right text-ink-muted" data-testid="leyenda-iva">{leyendaIva(catalogo.tienda.ivaTarifa)}</p>
 
       <div className="mt-5">
         {disponible && elegida?.disponible ? (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { FichaCafe } from "@/application/casos-uso/obtener-ficha-cafe";
 import { ETIQUETA_PERFIL } from "@/domain/catalogo/perfiles";
-import { detalleNotificacionSanitaria, ROTULO_NOTIFICACION_SANITARIA } from "@/domain/catalogo/rotulado";
+import { detalleNotificacionSanitaria, filaFabricante, ROTULO_NOTIFICACION_SANITARIA } from "@/domain/catalogo/rotulado";
 import { ETIQUETA_PROCESO, ETIQUETA_TUESTE, grupoDeTueste, mostrarSelloSca } from "@/domain/catalogo/tipos";
 import { formatearMiles } from "@/domain/comun/dinero";
 import { nombresDeVariedades } from "@/domain/marca/variedad";
@@ -40,8 +40,12 @@ export function Migas({ items }: { items: { texto: string; href?: string }[] }) 
 }
 
 export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
-  const { cafe, municipio, provincia, productor, relacionados, contenido } = ficha;
+  const { cafe, municipio, provincia, productor, relacionados, contenido, tienda } = ficha;
+  // Modelo C y Res. 5109 de 2005 (microcopy §3): marca y fabricante tal como en la bolsa, solo si existen; De Santander comercializa.
+  const fabricante = filaFabricante(cafe);
   const datos: [string, string][] = [
+    ["Marca", cafe.marca ?? ""],
+    fabricante ?? ["", ""],
     ["Municipio", cafe.municipio],
     ["Provincia", provincia?.nombre ?? ""],
     ["Productor o finca", productor?.nombre ?? ""],
@@ -51,6 +55,7 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
     ["Tueste", ETIQUETA_TUESTE[cafe.tueste]],
     // Res. 5109 de 2005 y microcopy §3: solo con `nsa`; sin titular ni fabricante se omite esa parte, nunca «pendiente».
     [ROTULO_NOTIFICACION_SANITARIA, detalleNotificacionSanitaria(cafe) ?? ""],
+    ["Comercializa", tienda.vendedor.razonSocial ?? ""],
   ];
   // Las fotos del CSV (public/fotos/cafes/<slug>/) mandan; si no hay, se usan las de Sanity.
   const fotos = cafe.fotos.length
@@ -131,10 +136,10 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
             <section className="mt-12" aria-labelledby="ficha-tecnica">
               <h2 id="ficha-tecnica" className="h3 text-ink-title">Ficha técnica</h2>
               <dl className="mt-3 divide-y divide-line border-y border-line">
-                {datos.filter(([, v]) => v).map(([k, v]) => (
+                {datos.filter(([k, v]) => k && v).map(([k, v]) => (
                   <div key={k} className="grid grid-cols-[9rem_1fr] gap-4 py-3 text-sm">
                     <dt className="font-semibold text-ink-muted">{k}</dt>
-                    <dd className="font-semibold">{v}</dd>
+                    <dd className="font-semibold [overflow-wrap:anywhere]">{v}</dd>
                   </div>
                 ))}
               </dl>

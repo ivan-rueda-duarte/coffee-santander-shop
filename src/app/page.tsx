@@ -12,7 +12,7 @@ export default async function Inicio() {
       <SeccionCatalogo cafes={catalogo.cafes} provincias={catalogo.provincias} />
       <SeccionMapa fuente={datosMapa.fuente} />
       <ComoPedir catalogo={catalogo} contenido={inicio} />
-      <Historia contenido={historia} />
+      <Historia catalogo={catalogo} contenido={historia} />
     </>
   );
 }

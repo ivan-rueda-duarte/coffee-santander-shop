@@ -10,6 +10,8 @@ import { BolsaIlustrada, Foto } from "../marca/superficies";
 export function TarjetaCafe({ cafe }: { cafe: Cafe }) {
   const desde = precioDesde(cafe);
   const datos: [string, string][] = [
+    // Modelo C (microcopy §3): la marca de la bolsa, solo cuando existe el dato.
+    ["Marca", cafe.marca ?? ""],
     ["Altitud", cafe.alturaMsnm ? `${formatearMiles(cafe.alturaMsnm)} m` : ""],
     ["Variedad", nombresDeVariedades(cafe.variedades)],
     ["Proceso", ETIQUETA_PROCESO[cafe.proceso]],

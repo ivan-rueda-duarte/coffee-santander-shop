@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { AVISO_RETRACTO, textosCasillas } from "./ayudas";
 
 // QA-003: los enlaces internos del resumen deben llevar el basePath de GitHub Pages.
 // Solo corre contra un build con GITHUB_PAGES=true servido bajo /coffee-santander-shop/:
@@ -27,12 +28,14 @@ test.describe("basePath de GitHub Pages", () => {
     await page.getByRole("button", { name: /Revisar el pedido/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 
-    // D2: el texto de la casilla de autorización (§4.3 v0.4) también bajo basePath, con su enlace prefijado.
-    await expect(page.getByRole("checkbox", { name: /^Autorizo a .+ a tratar mis datos personales para gestionar este pedido: confirmarlo, coordinar la entrega con la transportadora o el mensajero y, si escribí mi documento, emitir la factura a mi nombre\. Entiendo que el pedido se envía por WhatsApp \(Meta\), que puede tratar mis datos fuera de Colombia\. Más en la política de tratamiento de datos\.$/ })).not.toBeChecked();
-    await expect(page.getByRole("link", { name: "política de tratamiento de datos", exact: true })).toHaveAttribute("href", `${REPO}/legal/privacidad/`);
-    await expect(page.getByRole("link", { name: "términos y condiciones", exact: true })).toHaveAttribute("href", `${REPO}/legal/terminos/`);
+    // Casillas (microcopy §4.3 y §5.1, paquete v1) también bajo basePath, con sus enlaces prefijados.
+    const casillas = textosCasillas();
+    await expect(page.getByRole("checkbox", { name: casillas.autorizacion, exact: true })).not.toBeChecked();
+    await expect(page.getByRole("link", { name: casillas.enlacePolitica, exact: true })).toHaveAttribute("href", `${REPO}/legal/privacidad/`);
+    await expect(page.getByRole("link", { name: casillas.enlaceTerminos, exact: true })).toHaveAttribute("href", `${REPO}/legal/terminos/`);
+    await expect(page.getByRole("link", { name: "Información del vendedor", exact: true })).toHaveAttribute("href", `${REPO}/legal/vendedor/`);
 
-    const esperados = ["/envios/", "/legal/envios-devoluciones/", "/legal/privacidad/", "/legal/terminos/"];
+    const esperados = ["/envios/", "/legal/envios-devoluciones/", "/legal/privacidad/", "/legal/terminos/", "/legal/vendedor/"];
     for (const ruta of esperados) {
       const enlace = page.locator(`main a[target="_blank"][href$="${ruta}"]`).first();
       await expect(enlace, ruta).toHaveAttribute("href", `${REPO}${ruta}`);
@@ -46,8 +49,8 @@ test.describe("basePath de GitHub Pages", () => {
     const sinPrefijo = await page.locator("main a[href^='/']").evaluateAll((as, repo) => as.map((a) => a.getAttribute("href")).filter((h) => h && !h.startsWith(repo + "/")), REPO);
     expect(sinPrefijo).toEqual([]);
 
-    // D5 (LEG-064): el aviso de retracto también bajo basePath, con el texto exacto.
-    await expect(page.getByTestId("aviso-retracto")).toHaveText("El café es un alimento: no admite retracto. Si llega dañado o equivocado, te respondemos con la garantía.");
+    // Microcopy §5.3 (paquete v1): el aviso de retracto también bajo basePath, con el texto exacto.
+    await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
   });
 
   test("/envios/ bajo basePath: línea de 30 días (D6), pregunta de zona 5 y botón de WhatsApp", async ({ page }) => {
