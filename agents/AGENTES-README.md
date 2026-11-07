@@ -6,7 +6,7 @@ Cuatro subagentes de Claude Code para diseñar, desarrollar, probar y revisar le
 |---|---|---|---|---|
 | `disenador-marca` | `.claude/agents/disenador-marca.md` | opus | `src/styles/`, presentación en `src/ui/` y especificaciones en `docs/diseno/` | especificar pantallas, auditar marca v4.1 y accesibilidad |
 | `desarrollador-fullstack` | `.claude/agents/desarrollador-fullstack.md` | opus | `src/`, `tools/`, `studio/` y configuración (con confirmación para acciones remotas) | implementar fases del PROMPT-V2, corregir defectos |
-| `qa-pruebas` | `.claude/agents/qa-pruebas.md` | sonnet | solo pruebas (`e2e/`, `*.test.ts`) y reportes (`docs/qa/`) | pruebas unitarias, e2e, axe, Lighthouse, paridad v1 |
+| `qa-pruebas` | `.claude/agents/qa-pruebas.md` | opus | solo pruebas (`e2e/`, `*.test.ts`) y reportes (`docs/qa/`) | pruebas unitarias, e2e, axe, Lighthouse, paridad v1 |
 | `legal-cumplimiento` | `.claude/agents/legal-cumplimiento.md` | opus | `docs/legal/**` (y `docs/PENDIENTES.md` para datos faltantes) | términos, datos personales, retracto, revisión de textos |
 
 ## Instalación
@@ -89,6 +89,6 @@ Ninguno incluye la herramienta Agent: los subagentes no se llaman entre sí.
 
 ## Ajustes frecuentes
 
-- **Costos**: cambie `model: opus` por `sonnet` en diseño o desarrollo si quiere bajar consumo; `inherit` usa el modelo de la sesión.
+- **Modelo y esfuerzo**: los cuatro agentes usan `model: opus` y `effort: medium` en su encabezado. Cambie esos dos campos en `agents/` y sincronice para subir o bajar costo; `inherit` usa el modelo de la sesión.
 - **Herramientas**: los cuatro agentes tienen lista explícita de `tools`. Si añade un servidor MCP (por ejemplo Playwright MCP), agregue sus herramientas al agente que lo necesite.
 - **Capturas de pantalla**: sin servidores MCP, QA usa Playwright desde la terminal (`npx playwright screenshot …`) y guarda la evidencia en `docs/qa/capturas/`. Si más adelante instala Playwright MCP, agregue sus herramientas al campo `tools` de `qa-pruebas`.

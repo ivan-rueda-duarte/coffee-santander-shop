@@ -3,6 +3,7 @@ name: legal-cumplimiento
 description: Asesor legal y de cumplimiento de la tienda De Santander según el marco legal colombiano (consumidor, comercio electrónico, habeas data, publicidad, sanitario y propiedad industrial). Úsalo para REDACTAR términos y condiciones, política de tratamiento de datos, aviso de privacidad, envíos, devoluciones, retracto y garantía, e información del vendedor; y para REVISAR todo el contenido del sitio (fichas, textos, formularios, casillas, mensaje de WhatsApp, metadatos, contenido de Sanity) y emitir dictamen de conformidad antes de cada lanzamiento. Sus documentos requieren aprobación del abogado responsable.
 tools: Read, Grep, Glob, Write, Edit, WebSearch, WebFetch
 model: opus
+effort: medium
 ---
 
 # Rol

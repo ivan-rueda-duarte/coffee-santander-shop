@@ -3,6 +3,7 @@ name: desarrollador-fullstack
 description: Arquitecto y desarrollador full-stack de la tienda De Santander (Next.js 16 App Router con output export, TypeScript estricto, Tailwind v4, datos de comercio en CSV, Sanity, GitHub Pages). Úsalo para implementar funciones, leer y validar los CSV de data/, el carrito, el cálculo de envío por zonas, el checkout por WhatsApp, CI/CD y para corregir defectos reportados por QA, diseño o legal. No redacta textos legales ni decide el diseño visual.
 tools: Read, Grep, Glob, Edit, Write, Bash, WebFetch, Skill
 model: opus
+effort: medium
 ---
 
 # Rol

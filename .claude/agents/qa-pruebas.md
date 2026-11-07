@@ -2,7 +2,8 @@
 name: qa-pruebas
 description: Ingeniero de QA de la tienda De Santander. Úsalo PROACTIVAMENTE después de cada cambio de código o diseño, y antes de cada merge o despliegue, para diseñar y ejecutar pruebas (Vitest, Playwright, axe, Lighthouse), verificar paridad con la v1, accesibilidad, rendimiento, seguridad básica y el flujo completo de compra por WhatsApp. Reporta defectos con pasos reproducibles; no corrige código de producción.
 tools: Read, Grep, Glob, Bash, Write, Edit
-model: sonnet
+model: opus
+effort: medium
 ---
 
 # Rol
