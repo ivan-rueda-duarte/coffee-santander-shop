@@ -51,7 +51,7 @@ Ningún defecto Bloqueante ni Alto abierto. Tres defectos nuevos: dos Medios (ac
 - Obtenido: `<button disabled>` sin `aria-describedby` ni texto de ayuda. Tab salta el botón (los botones `disabled` no reciben foco), así que con lector de pantalla el paso termina en la segunda casilla sin aviso. El botón se ve como una píldora beige de bajo contraste (captura `docs/qa/capturas/resumen-retracto-360.png`). Los mensajes de error de las casillas (`e-aut`, `e-ter` en `flujo-pedido.tsx`) son código muerto: nada los muestra. WCAG 3.3.2 (instrucciones) y buena práctica de 4.1.2. Axe no lo detecta.
 - Nota: microcopy §4.3 pide a la vez «error sin cambio» y «botón deshabilitado». Con `disabled` el error nunca aparece. La variante `aria-disabled` cumple las dos cosas; el texto de ayuda nuevo, si se elige esa vía, conviene pasarlo por disenador-marca.
 - Evidencia y criterio de cierre: `e2e/paquete-legal-v1.spec.ts` › «QA-006: el botón deshabilitado explica qué falta…». Falla con «el botón deshabilitado no tiene aria-describedby». Traza: `test-results/paquete-legal-v1-resumen-d-0d33d-ciado-con-aria-describedby--chromium/trace.zip`. Si se elige `aria-disabled`, ajusto la prueba para exigir los dos errores al pulsar.
-- Estado: **Abierto**.
+- Estado: **Corregido — pendiente verificación** (commit `efbb699`). Causa raíz: el botón usaba `disabled`, que no recibe foco ni explica qué falta, y dejaba muertos los errores `e-aut`/`e-ter`. Vía de microcopy §5.9 v1.1: `aria-disabled`, microayuda por caso con `aria-describedby` y errores con `aria-invalid` al pulsar.
 
 ### QA-007 — Páginas legales con desborde horizontal a 320 px
 - Severidad: Media (WCAG 1.4.10 Reflujo, AA, que se mide justo a 320 px CSS; axe no lo detecta).
@@ -60,7 +60,7 @@ Ningún defecto Bloqueante ni Alto abierto. Tres defectos nuevos: dos Medios (ac
 - Esperado: 320. Obtenido: 336 en las cuatro. El responsable es «desantander.tienda@gmail.com.», que en `body-l` (18 px) no cabe en los 260 px del `li` ni en los 280 px del `p` y no tiene puntos de corte (`LI sw=296 cw=260`, `P sw=296 cw=280`). En el pie y la ficha, los cambios sin commit de la otra sesión añaden `[overflow-wrap:anywhere]`, pero no en `src/app/legal/[slug]/page.tsx`.
 - Corrección sugerida: `[overflow-wrap:anywhere]` (o `break-words`) en el contenedor `.body-l` de la página legal y en el `dd` del `dl` del vendedor.
 - Evidencia y criterio de cierre: `e2e/paquete-legal-v1.spec.ts` › «QA-007 a 320 px: las cuatro páginas legales sin violaciones serias de axe ni desborde». Traza: `test-results/paquete-legal-v1-páginas-l-618d4-s-serias-de-axe-ni-desborde-chromium/trace.zip`. Captura: `docs/qa/capturas/legal-vendedor-320.png`.
-- Estado: **Abierto**.
+- Estado: **Corregido — pendiente verificación** (commit `81bdbff`). Causa raíz: el correo sin puntos de corte no podía partirse en el cuerpo `.body-l` ni en el `dd` del vendedor; ahora llevan `[overflow-wrap:anywhere]`.
 
 ### QA-008 — «bre-b» en minúscula en «Cómo pedir»
 - Severidad: Baja.
@@ -70,7 +70,7 @@ Ningún defecto Bloqueante ni Alto abierto. Tres defectos nuevos: dos Medios (ac
 - Obtenido: «Pagas con efectivo contraentrega y transferencia bre-b.».
 - Corrección sugerida: poner en minúscula solo la primera letra de cada forma de pago, o redactar las formas en minúscula en un campo aparte. Si se cambia «y» por «o», que legal lo confirme (microcopy §2 lo da como «{formas de pago}»).
 - Evidencia y criterio de cierre: `e2e/paquete-legal-v1.spec.ts` › «QA-008: «Cómo pedir» paso 3…».
-- Estado: **Abierto**.
+- Estado: **Corregido — pendiente verificación** (commit `bb1b5f4`). Causa raíz: `toLowerCase()` sobre el texto completo de cada forma de pago y unión con «y»; ahora solo la primera letra va en minúscula y se unen con «o».
 
 ## Revisión de las pruebas del desarrollador (`git diff 5331c9c HEAD -- e2e/`)
 - **Textos**: las pruebas pasaron a usar `textosCasillas()` y `AVISO_RETRACTO` (`e2e/ayudas.ts`), que leen versión y fecha de `config.csv`. Las comparaciones exactas se conservan.
