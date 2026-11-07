@@ -6,7 +6,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
 import { fechaEnLetras } from "@/domain/comun/fecha";
 import { normalizar } from "@/domain/comun/slug";
-import { crearEsquemaEnvio, SIGLA_DOCUMENTO, validar, type DatosEnvio } from "@/domain/pedido/envio";
+import { crearEsquemaEnvio, esquemaConsentimientos, SIGLA_DOCUMENTO, validar, type DatosEnvio } from "@/domain/pedido/envio";
 import { calcularEnvio } from "@/domain/envio/envio";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { lineaVendedor } from "@/domain/pedido/tienda";
@@ -105,7 +105,27 @@ function Contenido() {
     irA("resumen");
   };
 
+  // Microcopy §5.9 (v1.1; LEG-101, LEG-102; QA-006): el botón sigue enfocable con aria-disabled y una microayuda dice qué falta.
+  const faltanCasillas = !autorizacion || !terminos;
+  const microayuda = !autorizacion && !terminos
+    ? "Para preparar tu pedido, marca las dos casillas: la autorización de tus datos y los términos y condiciones."
+    : !autorizacion
+      ? "Para preparar tu pedido, falta que autorices el tratamiento de tus datos."
+      : !terminos
+        ? "Para preparar tu pedido, falta que aceptes los términos y condiciones."
+        : null;
+  // Errores bajo cada casilla: solo tras pulsar el botón y mientras esa casilla siga sin marcar (al marcarla, desaparece).
+  const errorAutorizacion = !autorizacion ? erroresResumen?.errores.autorizacionDatos : undefined;
+  const errorTerminos = !terminos ? erroresResumen?.errores.aceptaTerminos : undefined;
+
   const finalizar = () => {
+    const consentimientos = validar(esquemaConsentimientos, { autorizacionDatos: autorizacion, aceptaTerminos: terminos });
+    if (!consentimientos.ok) {
+      // No se arma el mensaje ni el enlace wa.me y las casillas no se marcan solas: se muestran los errores y el foco va a la primera sin marcar.
+      setErroresResumen({ errores: consentimientos.errores, lineas: [] });
+      requestAnimationFrame(() => document.getElementById(!autorizacion ? "c-aut" : "c-ter")?.focus());
+      return;
+    }
     const r = prepararPedido(catalogo, { lineas, envio: valores, autorizacionDatos: autorizacion, aceptaTerminos: terminos }, CODIGOS_DEPARTAMENTO);
     if (!r.ok) {
       setErroresResumen({ errores: r.errores, lineas: r.lineas });
@@ -261,7 +281,7 @@ function Contenido() {
           <fieldset className="mt-6 space-y-3">
             <legend className="sr-only">Autorizaciones</legend>
             <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-describedby={erroresResumen?.errores.autorizacionDatos ? "e-aut" : undefined} />
+              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
               <span>
                 {/* Texto exacto de docs/legal/microcopy-legal.md §4.3 (paquete legal v1, P21 = a). «De Santander» es nombre_tienda en data/config.csv. */}
                 Autorizo a {tienda.nombre} a tratar mis datos personales para gestionar mi pedido, conforme a la{" "}
@@ -271,9 +291,9 @@ function Contenido() {
                 , que leí.
               </span>
             </label>
-            {erroresResumen?.errores.autorizacionDatos && <p id="e-aut" className="text-sm font-semibold text-danger">{erroresResumen.errores.autorizacionDatos}</p>}
+            {errorAutorizacion && <p id="e-aut" role="alert" className="text-sm font-semibold text-danger">{errorAutorizacion}</p>}
             <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-describedby={erroresResumen?.errores.aceptaTerminos ? "e-ter" : undefined} />
+              <input id="c-ter" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorTerminos ? true : undefined} aria-describedby={errorTerminos ? "e-ter" : undefined} />
               <span>
                 {/* Texto exacto de microcopy §5.1. */}
                 Leí y acepto los{" "}
@@ -283,7 +303,7 @@ function Contenido() {
                 .
               </span>
             </label>
-            {erroresResumen?.errores.aceptaTerminos && <p id="e-ter" className="text-sm font-semibold text-danger">{erroresResumen.errores.aceptaTerminos}</p>}
+            {errorTerminos && <p id="e-ter" role="alert" className="text-sm font-semibold text-danger">{errorTerminos}</p>}
           </fieldset>
 
           {/* Vendedor (Ley 1480, art. 50 lit. a; microcopy §5.4): solo los datos que existen en data/config.csv. */}
@@ -301,12 +321,24 @@ function Contenido() {
             </div>
           )}
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          {/* Microcopy §5.9: microayuda visible encima del botón, sin aria-live (basta aria-describedby). */}
+          {microayuda && (
+            <p id="ayuda-preparar" className="caption mt-8 text-ink-muted" data-testid="ayuda-preparar">{microayuda}</p>
+          )}
+          <div className={microayuda ? "mt-3 flex flex-wrap gap-3" : "mt-8 flex flex-wrap gap-3"}>
             <Boton variante="secundario" onClick={() => irA("envio")}>
               <IconoFlechaAtras className="ds-btn__icon" /> Volver
             </Boton>
-            {/* Microcopy §4.3: deshabilitado mientras falte una de las dos casillas. prepararPedido vuelve a comprobarlas. */}
-            <Boton tamano="lg" className="max-sm:w-full max-sm:!whitespace-normal" onClick={finalizar} disabled={!autorizacion || !terminos}>Preparar pedido para WhatsApp</Boton>
+            {/* Sin `disabled` (no recibiría foco): aria-disabled mientras falte una casilla. prepararPedido vuelve a comprobarlas. */}
+            <Boton
+              tamano="lg"
+              className="max-sm:w-full max-sm:!whitespace-normal"
+              onClick={finalizar}
+              aria-disabled={faltanCasillas ? true : undefined}
+              aria-describedby={microayuda ? "ayuda-preparar" : undefined}
+            >
+              Preparar pedido para WhatsApp
+            </Boton>
           </div>
         </section>
       )}

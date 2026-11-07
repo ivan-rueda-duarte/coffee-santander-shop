@@ -208,6 +208,61 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     const ayuda = page.locator(`[id="${describedby}"]`);
     await expect(ayuda).toBeVisible();
     await expect(ayuda).toHaveText(/casilla/i);
+
+    // Vía elegida (microcopy §5.9 v1.1, LEG-101/102): sin `disabled`, con aria-disabled; textos exactos por caso.
+    await expect(boton).not.toHaveAttribute("disabled", /.*/);
+    await expect(boton).toHaveAttribute("aria-disabled", "true");
+    const AYUDA_DOS = "Para preparar tu pedido, marca las dos casillas: la autorización de tus datos y los términos y condiciones.";
+    const AYUDA_DATOS = "Para preparar tu pedido, falta que autorices el tratamiento de tus datos.";
+    const AYUDA_TERMINOS = "Para preparar tu pedido, falta que aceptes los términos y condiciones.";
+    const ERROR_DATOS = "Debes autorizar el tratamiento de tus datos para continuar.";
+    const ERROR_TERMINOS = "Debes aceptar los términos para continuar.";
+    await expect(ayuda).toHaveText(AYUDA_DOS);
+    await expect(ayuda).not.toHaveAttribute("aria-live", /.*/);
+
+    const autorizacion = page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ });
+    const terminos = page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ });
+
+    // El botón recibe foco con el teclado y, al pulsarlo, no avanza: errores bajo cada casilla y foco a la primera sin marcar.
+    await boton.focus();
+    await expect(boton).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Enviar por WhatsApp/ })).toHaveCount(0);
+    await expect(page.locator('a[href^="https://wa.me/"]').filter({ hasText: /Enviar/ })).toHaveCount(0);
+    await expect(autorizacion).not.toBeChecked();
+    await expect(terminos).not.toBeChecked();
+    await expect(autorizacion).toBeFocused();
+    for (const [casilla, texto] of [[autorizacion, ERROR_DATOS], [terminos, ERROR_TERMINOS]] as const) {
+      await expect(casilla).toHaveAttribute("aria-invalid", "true");
+      const id = await casilla.getAttribute("aria-describedby");
+      expect(id).toBeTruthy();
+      await expect(page.locator(`[id="${id}"]`)).toHaveText(texto);
+    }
+    expect(await graves(page)).toEqual([]);
+
+    // Al marcar la de datos su error desaparece y la microayuda cambia al caso que falta.
+    await autorizacion.check();
+    await expect(autorizacion).not.toHaveAttribute("aria-invalid", /.*/);
+    await expect(page.getByText(ERROR_DATOS)).toHaveCount(0);
+    await expect(ayuda).toHaveText(AYUDA_TERMINOS);
+    await boton.click({ force: true });
+    await expect(terminos).toBeFocused();
+    await expect(terminos).not.toBeChecked();
+
+    // Solo falta la de datos.
+    await terminos.check();
+    await autorizacion.uncheck();
+    await expect(ayuda).toHaveText(AYUDA_DATOS);
+    await expect(boton).toHaveAttribute("aria-disabled", "true");
+
+    // Con las dos marcadas: sin microayuda ni aria-disabled, y avanza.
+    await autorizacion.check();
+    await expect(page.getByText(/^Para preparar tu pedido/)).toHaveCount(0);
+    await expect(boton).not.toHaveAttribute("aria-disabled", /.*/);
+    await expect(boton).not.toHaveAttribute("aria-describedby", /.*/);
+    await boton.click();
+    await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
   });
 
   test("mensaje con tarifa (zona 1): primera línea, subtotal con IVA, total, constancia final, sin DS-", async ({ page }) => {

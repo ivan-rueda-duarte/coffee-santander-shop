@@ -50,7 +50,7 @@
 .ds-btn--on-photo:hover{background:var(--arenisca-200)}
 .ds-btn--sm{font-size:13px;line-height:16px;padding:var(--space-2) var(--space-4)}
 .ds-btn--lg{font-size:16px;line-height:22px;padding:var(--space-4) var(--space-6)}
-.ds-btn[disabled],.ds-btn--disabled{background:var(--surface-sunken);color:var(--ink-muted);border-color:var(--line);cursor:not-allowed;filter:none}
+.ds-btn[disabled],.ds-btn[aria-disabled="true"],.ds-btn--disabled{background:var(--surface-sunken);color:var(--ink-muted);border-color:var(--line);cursor:not-allowed;filter:none}
 .ds-btn__icon{width:18px;height:18px;flex:none}
 .ds-btn__arrow{font-weight:800}
 
