@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
+import { fechaEnLetras } from "@/domain/comun/fecha";
 import { normalizar } from "@/domain/comun/slug";
-import { crearEsquemaEnvio, DOCUMENTO_OBLIGATORIO, SIGLA_DOCUMENTO, validar, type DatosEnvio, type FinalidadDocumento } from "@/domain/pedido/envio";
+import { crearEsquemaEnvio, SIGLA_DOCUMENTO, validar, type DatosEnvio } from "@/domain/pedido/envio";
 import { calcularEnvio } from "@/domain/envio/envio";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
+import { lineaVendedor } from "@/domain/pedido/tienda";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 import { useAvisos } from "../layout/avisos";
 import { useCarrito } from "../carrito/carrito-provider";
@@ -17,13 +19,6 @@ import { Boton, BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
 import { IconoCopiar, IconoFlecha, IconoFlechaAtras, IconoWhatsapp } from "../marca/iconos";
 import { CODIGOS_DEPARTAMENTO, DEPARTAMENTOS, ENVIO_VACIO, FormularioEnvio, type ValoresEnvio } from "./formulario-envio";
-
-/** Finalidad del documento en la casilla de autorización (docs/legal/microcopy-legal.md §4.3). */
-const FINALIDAD_EN_AUTORIZACION: Record<"opcional" | FinalidadDocumento, string> = {
-  opcional: "y, si escribí mi documento, emitir la factura a mi nombre",
-  guia: "y usar mi documento para generar la guía de envío",
-  factura: "y usar mi documento para emitir la factura electrónica",
-};
 
 const PASOS = [
   { id: "carrito", titulo: "Carrito" },
@@ -50,8 +45,9 @@ function Contenido() {
   const { lineas, totales, listo, preferencias, guardarPreferencias, vaciar } = useCarrito();
   const { avisar } = useAvisos();
   const tienda = catalogo.tienda;
-  // Responsable del tratamiento (§4.3): la razón social de data/config.csv. Si faltara, se nombra la tienda; no se inventa una razón social.
-  const responsableDatos = tienda.vendedor.razonSocial ?? tienda.nombre;
+  // Versión y fecha de los documentos aceptados: siempre de data/config.csv, nunca fijas en el código (LEG-088).
+  const { legal } = tienda;
+  const vendedor = lineaVendedor(tienda.vendedor, formatearWhatsapp(tienda.whatsapp));
 
   const pedido = params.get("paso");
   const paso: Paso = esPaso(pedido) ? pedido : "carrito";
@@ -239,9 +235,13 @@ function Contenido() {
             ))}
           </ul>
           <div className="mt-4">{resumenTotales}</div>
-          <p className="caption mt-3 text-ink-muted">La forma de pago se confirma por WhatsApp antes de que pagues. Más en <Link className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos: zonas, tarifas y plazos</Link> y en <Link className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones y retracto</Link>.</p>
-          {/* D5 (LEG-064): texto exacto de docs/legal/microcopy-legal.md §5.3. Solo aquí; no va en la ficha ni en el carrito. */}
-          <p className="caption mt-2 text-ink-muted" data-testid="aviso-retracto">El café es un alimento: no admite retracto. Si llega dañado o equivocado, te respondemos con la garantía.</p>
+          {/* Textos exactos de docs/legal/microcopy-legal.md §1.3 y §5.3 (paquete legal v1). El retracto solo se informa aquí. */}
+          <p className="caption mt-3 text-ink-muted" data-testid="nota-precio-total">
+            Los precios incluyen todos los impuestos y el envío se muestra por separado (art. 50 de la Ley 1480 de 2011). La forma de pago se confirma por WhatsApp antes de que pagues. Más en{" "}
+            <Link className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos: zonas, tarifas y plazos</Link> y en{" "}
+            <Link className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones, retracto y garantía</Link>.
+          </p>
+          <p className="caption mt-2 text-ink-muted" data-testid="aviso-retracto">Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega, salvo si el empaque está abierto. El transporte de la devolución corre por tu cuenta. Te devolvemos el dinero en máximo 15 días calendario, por el medio de pago que prefieras.</p>
 
           <div className="mt-6 rounded-lg border border-line p-5 text-sm">
             <div className="flex items-start justify-between gap-4">
@@ -263,20 +263,36 @@ function Contenido() {
             <label className="flex cursor-pointer items-start gap-3 text-sm">
               <input type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-describedby={erroresResumen?.errores.autorizacionDatos ? "e-aut" : undefined} />
               <span>
-                {/* Texto exacto de docs/legal/microcopy-legal.md §4.3 (v0.4). */}
-                Autorizo a {responsableDatos} a tratar mis datos personales para gestionar este pedido: confirmarlo, coordinar la entrega con la transportadora o el mensajero {FINALIDAD_EN_AUTORIZACION[DOCUMENTO_OBLIGATORIO || "opcional"]}. Entiendo que el pedido se envía por WhatsApp (Meta), que puede tratar mis datos fuera de Colombia. Más en la{" "}
-                <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">política de tratamiento de datos</Link>.
+                {/* Texto exacto de docs/legal/microcopy-legal.md §4.3 (paquete legal v1, P21 = a). «De Santander» es nombre_tienda en data/config.csv. */}
+                Autorizo a {tienda.nombre} a tratar mis datos personales para gestionar mi pedido, conforme a la{" "}
+                <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">
+                  Política de Tratamiento de Datos versión {legal.versionPoliticaDatos} del {fechaEnLetras(legal.fechaPoliticaDatos)}
+                </Link>
+                , que leí.
               </span>
             </label>
             {erroresResumen?.errores.autorizacionDatos && <p id="e-aut" className="text-sm font-semibold text-danger">{erroresResumen.errores.autorizacionDatos}</p>}
             <label className="flex cursor-pointer items-start gap-3 text-sm">
               <input type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-describedby={erroresResumen?.errores.aceptaTerminos ? "e-ter" : undefined} />
               <span>
-                Acepto los <Link className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">términos y condiciones</Link>.
+                {/* Texto exacto de microcopy §5.1. */}
+                Leí y acepto los{" "}
+                <Link className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">
+                  Términos y condiciones versión {legal.versionTerminos} del {fechaEnLetras(legal.fechaTerminos)}
+                </Link>
+                .
               </span>
             </label>
             {erroresResumen?.errores.aceptaTerminos && <p id="e-ter" className="text-sm font-semibold text-danger">{erroresResumen.errores.aceptaTerminos}</p>}
           </fieldset>
+
+          {/* Vendedor (Ley 1480, art. 50 lit. a; microcopy §5.4): solo los datos que existen en data/config.csv. */}
+          {vendedor && (
+            <p className="caption mt-4 text-ink-muted" data-testid="linea-vendedor">
+              {vendedor}{" "}
+              <Link className="underline underline-offset-4" href="/legal/vendedor/" target="_blank" rel="noopener noreferrer">Información del vendedor</Link>
+            </p>
+          )}
 
           {erroresResumen && (erroresResumen.errores.lineas || erroresResumen.lineas.length > 0) && (
             <div role="alert" className="mt-4 rounded-md border border-danger px-4 py-3 text-sm text-danger">
@@ -289,7 +305,8 @@ function Contenido() {
             <Boton variante="secundario" onClick={() => irA("envio")}>
               <IconoFlechaAtras className="ds-btn__icon" /> Volver
             </Boton>
-            <Boton tamano="lg" className="max-sm:w-full max-sm:!whitespace-normal" onClick={finalizar}>Preparar pedido para WhatsApp</Boton>
+            {/* Microcopy §4.3: deshabilitado mientras falte una de las dos casillas. prepararPedido vuelve a comprobarlas. */}
+            <Boton tamano="lg" className="max-sm:w-full max-sm:!whitespace-normal" onClick={finalizar} disabled={!autorizacion || !terminos}>Preparar pedido para WhatsApp</Boton>
           </div>
         </section>
       )}

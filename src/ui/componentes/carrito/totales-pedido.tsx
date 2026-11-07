@@ -4,14 +4,17 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { calcularEnvio, nombreDestino, totalConEnvio } from "@/domain/envio/envio";
+import { textoPlazoResumen } from "@/domain/envio/plazos";
 import type { DestinoEnvio } from "@/domain/envio/tipos";
+import { leyendaIva } from "@/domain/pedido/iva";
 import { etiquetaBolsas, type Totales } from "@/domain/pedido/totales";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 
 /**
- * Subtotal, envío y total del pedido. Con destino (departamento y municipio) calcula el envío por zona;
- * sin destino dice que se calcula al elegir la ciudad. Se recalcula solo cuando cambia el carrito o el destino.
- * Los `data-testid` son estables: linea-subtotal, linea-envio, linea-total.
+ * Subtotal, envío y total del pedido. Con destino (departamento y municipio) calcula el envío por zona y
+ * muestra el plazo de entrega de esa zona (microcopy §5.6); sin destino dice que se calcula al elegir la ciudad.
+ * Bajo el subtotal va la leyenda de IVA (§1.4). Se recalcula solo cuando cambia el carrito o el destino.
+ * Los `data-testid` son estables: linea-subtotal, leyenda-iva, linea-envio, linea-plazo, linea-total.
  */
 export function TotalesPedido({
   totales,
@@ -28,6 +31,7 @@ export function TotalesPedido({
   const { catalogo } = useCatalogo();
   const envio = useMemo(() => (destino && totales.lineas.length ? calcularEnvio(totales.lineas, destino, catalogo.envios) : null), [destino, totales.lineas, catalogo.envios]);
   const total = envio ? totalConEnvio(totales.subtotalCop, envio) : null;
+  const plazo = envio ? textoPlazoResumen(catalogo.envios.plazos, envio) : null;
 
   return (
     <div className={className}>
@@ -35,6 +39,7 @@ export function TotalesPedido({
         <div className="flex justify-between gap-4" data-testid="linea-subtotal">
           <dt>
             Subtotal <span className="text-ink-muted">· {etiquetaBolsas(totales.bolsas)}</span>
+            <span className="caption block text-ink-muted" data-testid="leyenda-iva">{leyendaIva(catalogo.tienda.ivaTarifa)}</span>
           </dt>
           <dd className="font-bold tabular-nums text-ink-title">{formatearCOP(totales.subtotalCop)}</dd>
         </div>
@@ -50,6 +55,7 @@ export function TotalesPedido({
           <div className="flex justify-between gap-4" data-testid="linea-envio">
             <dt>
               Envío a {nombreDestino(destino.municipio)} <span className="text-ink-muted">· zona {envio.zona}</span>
+              {plazo && <span className="caption block text-ink-muted" data-testid="linea-plazo">{plazo}</span>}
             </dt>
             <dd className="font-bold tabular-nums text-ink-title">{formatearCOP(envio.valorCop)}</dd>
           </div>
@@ -57,7 +63,10 @@ export function TotalesPedido({
 
         {envio?.tipo === "por_cotizar" && (
           <div className="flex justify-between gap-4" data-testid="linea-envio">
-            <dt>Envío</dt>
+            <dt>
+              Envío
+              {plazo && <span className="caption block max-w-[14rem] text-ink-muted" data-testid="linea-plazo">{plazo}</span>}
+            </dt>
             <dd className="max-w-[16rem] text-right font-semibold text-ink-title">Por cotizar · te confirmamos el valor por WhatsApp antes de que pagues</dd>
           </div>
         )}

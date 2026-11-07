@@ -28,6 +28,9 @@ const AYUDA_DOCUMENTO: Record<"opcional" | FinalidadDocumento, string> = {
   factura: "Lo necesitamos para la factura electrónica de tu compra.",
 };
 const VISOR_CODIGO_POSTAL = "https://visor.codigopostal.gov.co/472/visor/";
+/** Ayuda de «Efectivo contraentrega» (microcopy §1.7, LEG-092): la comisión de recaudo va dentro de la tarifa. */
+const AYUDA_CONTRAENTREGA = "Pagas al recibir. La tarifa de envío ya incluye la comisión de recaudo; no hay recargos.";
+const esContraentrega = (formaPago: string) => /contraentrega/i.test(formaPago);
 
 /** Lo que escribe la persona, sin validar (todo texto). */
 export interface ValoresEnvio {
@@ -227,7 +230,7 @@ export function FormularioEnvio({
         </Campo>
       </div>
 
-      <fieldset className="sm:col-span-2" aria-describedby={errores.formaPago ? "formaPago-error" : undefined}>
+      <fieldset className="sm:col-span-2" aria-describedby={errores.formaPago ? "formaPago-error" : esContraentrega(valores.formaPago) ? "formaPago-ayuda" : undefined}>
         <legend className="text-sm font-bold">Forma de pago</legend>
         <p className="caption text-ink-muted">Confirmamos el pago por WhatsApp. En esta página no se paga.</p>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -238,6 +241,9 @@ export function FormularioEnvio({
             </label>
           ))}
         </div>
+        {esContraentrega(valores.formaPago) && (
+          <p id="formaPago-ayuda" className="caption mt-2 text-ink-muted" data-testid="ayuda-contraentrega">{AYUDA_CONTRAENTREGA}</p>
+        )}
         {errores.formaPago && <p id="formaPago-error" className="mt-1 text-sm font-semibold text-danger">{errores.formaPago}</p>}
       </fieldset>
     </div>
