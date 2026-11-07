@@ -241,7 +241,7 @@ function Contenido() {
             <Link className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos: zonas, tarifas y plazos</Link> y en{" "}
             <Link className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones, retracto y garantía</Link>.
           </p>
-          <p className="caption mt-2 text-ink-muted" data-testid="aviso-retracto">Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega, salvo si el empaque está abierto. El transporte de la devolución corre por tu cuenta. Te devolvemos el dinero en máximo 15 días calendario, por el medio de pago que prefieras.</p>
+          <p className="small mt-3 text-ink" data-testid="aviso-retracto">Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega, salvo si el empaque está abierto. El transporte de la devolución corre por tu cuenta. Te devolvemos el dinero en máximo 15 días calendario, por el medio de pago que prefieras.</p>
 
           <div className="mt-6 rounded-lg border border-line p-5 text-sm">
             <div className="flex items-start justify-between gap-4">

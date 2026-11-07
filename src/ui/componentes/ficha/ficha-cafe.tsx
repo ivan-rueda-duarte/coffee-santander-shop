@@ -137,7 +137,7 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
               <h2 id="ficha-tecnica" className="h3 text-ink-title">Ficha técnica</h2>
               <dl className="mt-3 divide-y divide-line border-y border-line">
                 {datos.filter(([k, v]) => k && v).map(([k, v]) => (
-                  <div key={k} className="grid grid-cols-[9rem_1fr] gap-4 py-3 text-sm">
+                  <div key={k} className="grid gap-1 py-3 text-sm sm:grid-cols-[9rem_1fr] sm:gap-4">
                     <dt className="font-semibold text-ink-muted">{k}</dt>
                     <dd className="font-semibold [overflow-wrap:anywhere]">{v}</dd>
                   </div>

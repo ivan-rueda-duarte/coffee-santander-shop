@@ -86,7 +86,7 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
         </p>
       </div>
       {/* Microcopy §1.4: leyenda de IVA bajo el precio (la tarifa sale de data/config.csv). */}
-      <p className="caption mt-2 text-right text-ink-muted" data-testid="leyenda-iva">{leyendaIva(catalogo.tienda.ivaTarifa)}</p>
+      <p className="caption mt-1 text-right text-ink-muted" data-testid="leyenda-iva">{leyendaIva(catalogo.tienda.ivaTarifa)}</p>
 
       <div className="mt-5">
         {disponible && elegida?.disponible ? (

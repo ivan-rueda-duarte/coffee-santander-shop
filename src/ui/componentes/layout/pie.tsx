@@ -50,10 +50,10 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
 
           <div className="text-sm">
             <p className="overline text-eyebrow">Información legal</p>
-            <ul className="mt-2 space-y-2">
+            <ul className="mt-2 space-y-1">
               {LEGALES.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="underline-offset-4 hover:underline">
+                  <Link href={l.href} className="inline-block py-1 underline-offset-4 hover:underline">
                     {l.texto}
                   </Link>
                 </li>
@@ -61,7 +61,7 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
             </ul>
             {/* Vendedor (Ley 1480, art. 50 lit. a; microcopy §5.4): cada línea solo si el dato existe. Sin representante ni matrícula (LEG-085). */}
             {v.razonSocial && (
-              <address className="mt-4 space-y-1 text-ink-muted not-italic" data-testid="pie-vendedor">
+              <address className="mt-5 space-y-1 border-t border-line pt-4 text-ink-muted not-italic [overflow-wrap:anywhere]" data-testid="pie-vendedor">
                 <p>{v.nit ? `${v.razonSocial} · NIT ${v.nit}` : v.razonSocial}</p>
                 {v.domicilio && <p>Domicilio: {v.domicilio}</p>}
                 {v.direccionNotificacion && <p>Notificaciones judiciales: {v.direccionNotificacion}</p>}

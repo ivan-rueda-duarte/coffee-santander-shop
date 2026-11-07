@@ -36,7 +36,7 @@ export function TotalesPedido({
   return (
     <div className={className}>
       <dl className="space-y-2 text-sm">
-        <div className="flex justify-between gap-4" data-testid="linea-subtotal">
+        <div className="flex items-baseline justify-between gap-4" data-testid="linea-subtotal">
           <dt>
             Subtotal <span className="text-ink-muted">· {etiquetaBolsas(totales.bolsas)}</span>
             <span className="caption block text-ink-muted" data-testid="leyenda-iva">{leyendaIva(catalogo.tienda.ivaTarifa)}</span>
@@ -52,7 +52,7 @@ export function TotalesPedido({
         )}
 
         {envio?.tipo === "tarifa" && destino && (
-          <div className="flex justify-between gap-4" data-testid="linea-envio">
+          <div className="flex items-baseline justify-between gap-4" data-testid="linea-envio">
             <dt>
               Envío a {nombreDestino(destino.municipio)} <span className="text-ink-muted">· zona {envio.zona}</span>
               {plazo && <span className="caption block text-ink-muted" data-testid="linea-plazo">{plazo}</span>}
@@ -62,12 +62,12 @@ export function TotalesPedido({
         )}
 
         {envio?.tipo === "por_cotizar" && (
-          <div className="flex justify-between gap-4" data-testid="linea-envio">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4" data-testid="linea-envio">
             <dt>
               Envío
-              {plazo && <span className="caption block max-w-[14rem] text-ink-muted" data-testid="linea-plazo">{plazo}</span>}
+              {plazo && <span className="caption block text-ink-muted sm:max-w-[14rem]" data-testid="linea-plazo">{plazo}</span>}
             </dt>
-            <dd className="max-w-[16rem] text-right font-semibold text-ink-title">Por cotizar · te confirmamos el valor por WhatsApp antes de que pagues</dd>
+            <dd className="font-semibold text-ink-title sm:max-w-[16rem] sm:text-right">Por cotizar · te confirmamos el valor por WhatsApp antes de que pagues</dd>
           </div>
         )}
 
