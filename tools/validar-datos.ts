@@ -5,6 +5,7 @@ import { verificarContenido } from "../src/application/casos-uso/verificar-conte
 import { crearClienteSanity, RepositorioContenidoSanity } from "../src/infrastructure/sanity/contenido-sanity";
 import { ErrorDatos } from "../src/infrastructure/csv/lector";
 import { cargarCatalogoDesdeDisco } from "../src/infrastructure/csv/repositorio-catalogo-csv";
+import { DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, problemasDocsLegales } from "../src/infrastructure/legal/legal-md";
 
 // Next lee .env.local solo; este script corre fuera de Next.
 for (const archivo of [".env.local", ".env"]) {
@@ -24,6 +25,11 @@ async function main() {
     console.warn(`\n${advertencias.length} ${advertencias.length === 1 ? "aviso" : "avisos"} (no impiden publicar):`);
     advertencias.forEach((a) => console.warn(`  - ${a}`));
   }
+
+  // Páginas legales publicadas desde docs/legal/ (LEG-084): sin marcadores internos y con la versión de config.csv.
+  const problemasLegales = problemasDocsLegales(leerDocsLegalesDesdeDisco(), catalogo.tienda.legal);
+  if (problemasLegales.length) throw new ErrorDatos(problemasLegales);
+  console.log(`Documentos legales publicables: ${Object.keys(DOCUMENTOS_LEGALES).length} (versión ${catalogo.tienda.legal.versionTerminos}, vigentes desde ${catalogo.tienda.legal.fechaTerminos}).`);
 
   const cliente = crearClienteSanity();
   if (!cliente) {

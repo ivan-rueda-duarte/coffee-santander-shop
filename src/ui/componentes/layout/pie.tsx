@@ -7,7 +7,7 @@ import { Marca } from "./encabezado";
 const LEGALES = [
   { href: "/legal/terminos/", texto: "Términos y condiciones" },
   { href: "/legal/privacidad/", texto: "Tratamiento de datos" },
-  { href: "/legal/envios-devoluciones/", texto: "Envíos, devoluciones y retracto" },
+  { href: "/legal/envios-devoluciones/", texto: "Envíos, devoluciones, retracto y garantía" },
   { href: "/legal/vendedor/", texto: "Información del vendedor" },
 ];
 

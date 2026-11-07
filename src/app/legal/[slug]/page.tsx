@@ -24,7 +24,7 @@ function agruparLista(bloques: readonly { tipo: "parrafo" | "titulo" | "item"; t
 const SECCIONES: Record<string, string> = {
   terminos: "Términos y condiciones",
   privacidad: "Política de tratamiento de datos",
-  "envios-devoluciones": "Envíos, devoluciones y retracto",
+  "envios-devoluciones": "Envíos, devoluciones, retracto y garantía",
   vendedor: "Información del vendedor",
 };
 

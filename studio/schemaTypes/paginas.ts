@@ -59,7 +59,7 @@ export const paginaHistoria = defineType({
 export const SECCIONES_LEGALES = [
   { title: "Términos y condiciones", value: "terminos" },
   { title: "Política de tratamiento de datos", value: "privacidad" },
-  { title: "Envíos, devoluciones y retracto", value: "envios-devoluciones" },
+  { title: "Envíos, devoluciones, retracto y garantía", value: "envios-devoluciones" },
   { title: "Información del vendedor", value: "vendedor" },
 ] as const;
 
@@ -75,7 +75,7 @@ export const paginaLegal = defineType({
       options: { list: [...SECCIONES_LEGALES], layout: "radio" },
       validation: (r) => r.required(),
     }),
-    defineField({ name: "version", title: "Versión", type: "string", description: "Ejemplo: 2026-11-01. Cámbiala cada vez que cambie el texto.", validation: (r) => r.required() }),
+    defineField({ name: "version", title: "Versión", type: "string", description: "Ejemplo: 1. Debe coincidir con version_terminos o version_politica_datos de data/config.csv; cámbiala cada vez que cambie el texto.", validation: (r) => r.required() }),
     defineField({ name: "vigenteDesde", title: "Vigente desde", type: "date", validation: (r) => r.required() }),
     defineField({ name: "contenido", title: "Texto", type: "textoEnriquecido", description: "Lo redacta el cliente o su abogado; aquí solo se pega." }),
   ],
