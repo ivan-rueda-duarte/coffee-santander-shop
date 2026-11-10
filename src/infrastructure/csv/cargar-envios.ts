@@ -16,10 +16,10 @@ export const ARCHIVO_ZONAS = "zonas_envio.csv";
 export const ARCHIVO_PLAZOS = "plazos_envio.csv";
 export const ARCHIVO_COMUNAS = "comunas_envio_gratis.csv";
 
-/** Claves envio_gratis_desde y envio_gratis_hasta de data/config.csv, ya validadas como fechas (o null). */
+/** Claves envio_gratis_desde y envio_gratis_terminada de data/config.csv, ya validadas como fechas (o null). */
 export interface VigenciaEnvioGratis {
   desde: string | null;
-  hasta: string | null;
+  terminada: string | null;
 }
 
 const POR_COTIZAR = "por_cotizar";
@@ -58,9 +58,10 @@ function cargarPlazos(leer: LeerArchivo, errores: Errores): PlazoEnvio[] {
  * «siete comunas de Bucaramanga» (microcopy §8): por eso se exigen siete filas de ese municipio.
  */
 function cargarEnvioGratis(leer: LeerArchivo, errores: Errores, vigencia: VigenciaEnvioGratis, divipola: DatosDivipola, reglas: Pick<ReglasEnvio, "tarifas" | "zonas">): PromocionEnvioGratis | null {
-  const { desde, hasta } = vigencia;
-  if (hasta && !desde) errores.agregar("config.csv: envio_gratis_hasta tiene fecha pero envio_gratis_desde está vacía; sin fecha de inicio la promoción no se publica.");
-  if (desde && hasta && hasta < desde) errores.agregar(`config.csv: envio_gratis_hasta (${hasta}) es anterior a envio_gratis_desde (${desde}).`);
+  // P34 b (microcopy §8.6.1). Que no sea posterior al build lo revisa `npm run datos` (`erroresTerminacion`): depende del día.
+  const { desde, terminada } = vigencia;
+  if (terminada && !desde) errores.agregar("config.csv: envio_gratis_terminada tiene fecha pero envio_gratis_desde está vacía. Deja envio_gratis_desde con la fecha en que empezó la promoción: el aviso de terminación la necesita.");
+  if (desde && terminada && terminada < desde) errores.agregar(`config.csv: envio_gratis_terminada (${terminada}) es anterior a envio_gratis_desde (${desde}): la promoción no puede terminar antes de empezar.`);
 
   let existe = true;
   try {
@@ -119,7 +120,7 @@ function cargarEnvioGratis(leer: LeerArchivo, errores: Errores, vigencia: Vigenc
     municipio: lugar.municipio,
     comunas: comunas.sort((a, b) => a.orden - b.orden).map((c) => c.nombre),
     desde,
-    hasta,
+    terminada,
   };
 }
 
@@ -134,7 +135,7 @@ function leerEscalon(f: LectorFila, columna: string, valor: string): number | nu
  * Además de los tipos, comprueba que cada departamento y municipio exista en DIVIPOLA (sin importar tildes ni
  * mayúsculas), que haya tarifa para cada zona y para cada municipio de zona 1, y que exista la zona 4.
  */
-export function cargarEnvios(leer: LeerArchivo, errores: Errores, divipola: DatosDivipola, vigencia: VigenciaEnvioGratis = { desde: null, hasta: null }): ReglasEnvio {
+export function cargarEnvios(leer: LeerArchivo, errores: Errores, divipola: DatosDivipola, vigencia: VigenciaEnvioGratis = { desde: null, terminada: null }): ReglasEnvio {
   // ---------- tarifas ----------
   const tarifas: TarifaEnvio[] = [];
   const claves: { valor: string; linea: number }[] = [];

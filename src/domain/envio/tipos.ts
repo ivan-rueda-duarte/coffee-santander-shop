@@ -57,8 +57,8 @@ export interface PlazoEnvio {
 
 /**
  * Envío gratis en comunas de un municipio de zona 1 (data/comunas_envio_gratis.csv y las claves
- * envio_gratis_desde / envio_gratis_hasta de data/config.csv; microcopy-legal §8). Decisiones del dueño del
- * 2026-11-09: $0 con cualquier peso, sin pedido mínimo, sin fecha final.
+ * envio_gratis_desde / envio_gratis_terminada de data/config.csv; microcopy-legal §8). Decisiones del dueño del
+ * 2026-11-09: $0 con cualquier peso, sin pedido mínimo, sin fecha final; termina de inmediato (P34 b, §8.6.1).
  */
 export interface PromocionEnvioGratis {
   departamento: string;
@@ -67,8 +67,21 @@ export interface PromocionEnvioGratis {
   comunas: readonly string[];
   /** ISO yyyy-mm-dd: desde cuándo rige (D-21). */
   desde: string;
-  /** ISO yyyy-mm-dd, inclusive; null = sin fecha final (P25 = a). */
-  hasta: string | null;
+  /**
+   * ISO yyyy-mm-dd: día en que el dueño apagó la promoción y desplegó (P34 b, microcopy §8.6.1). Con fecha, la
+   * promoción no rige desde ese build (estado «terminada»); null = no ha terminado.
+   */
+  terminada: string | null;
+}
+
+/**
+ * Estado «terminada» que llega a las páginas (microcopy §8.6.1). Solo fechas: los nombres de las comunas ya no
+ * viajan al navegador. `avisoVisible`: hoy ≤ terminada + `DIAS_AVISO_TERMINACION` (portada y cajón).
+ */
+export interface FinEnvioGratis {
+  desde: string;
+  terminada: string;
+  avisoVisible: boolean;
 }
 
 export interface ReglasEnvio {
@@ -80,6 +93,8 @@ export interface ReglasEnvio {
    * (`promocionActiva` la filtra antes de llegar a las páginas).
    */
   envioGratis: PromocionEnvioGratis | null;
+  /** Estado «terminada» (§8.6.1); null o ausente = no hay promoción terminada. Lo calcula la capa app en el build. */
+  finEnvioGratis?: FinEnvioGratis | null;
 }
 
 /** Lo mínimo que hace falta de cada línea del pedido para pesarlo. */

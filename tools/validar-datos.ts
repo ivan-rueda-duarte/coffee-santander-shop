@@ -5,9 +5,9 @@ import { verificarContenido } from "../src/application/casos-uso/verificar-conte
 import { crearClienteSanity, RepositorioContenidoSanity } from "../src/infrastructure/sanity/contenido-sanity";
 import { ErrorDatos } from "../src/infrastructure/csv/lector";
 import { cargarCatalogoDesdeDisco } from "../src/infrastructure/csv/repositorio-catalogo-csv";
-import { DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, problemasDocsLegales, revisarEnvioGratisEnDocs } from "../src/infrastructure/legal/legal-md";
+import { DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, numeralEnvioGratisPublicado, problemasDocsLegales, revisarEnvioGratisEnDocs } from "../src/infrastructure/legal/legal-md";
 import { hoyEnColombia, modoPruebaEnvioGratis } from "../src/infrastructure/entorno";
-import { avisoFinPromocion, lineaPromocionNoVigente, promocionVigente } from "../src/domain/envio/envio-gratis";
+import { ANCLA_ENVIO_GRATIS, erroresTerminacion, estadoEnvioGratis, lineaPromocionNoVigente } from "../src/domain/envio/envio-gratis";
 
 // Next lee .env.local solo; este script corre fuera de Next.
 for (const archivo of [".env.local", ".env"]) {
@@ -36,23 +36,28 @@ async function main() {
   // Envío gratis por comunas (microcopy §8): no se enciende sin los documentos versión 2 publicados (LEG-106).
   const promo = catalogo.envios.envioGratis;
   const hoy = hoyEnColombia();
-  if (!promo) console.log("Envío gratis por comunas: apagado (envio_gratis_desde vacía en config.csv).");
-  else if (!promocionVigente(promo, hoy)) {
+  // P34 b (§8.6.1): envio_gratis_terminada no puede ser posterior al build.
+  const errTerminacion = erroresTerminacion(promo, hoy);
+  if (errTerminacion.length) throw new ErrorDatos(errTerminacion);
+  const estado = estadoEnvioGratis(promo, hoy);
+  if (estado.tipo === "apagada") console.log("Envío gratis por comunas: apagado (envio_gratis_desde vacía en config.csv).");
+  else if (estado.tipo !== "vigente") {
     console.log(lineaPromocionNoVigente(promo, hoy));
+    // Terminada: el aviso enlaza a /envios/#envio-gratis, que solo existe mientras el numeral esté publicado.
+    if (estado.tipo === "terminada" && !modoPruebaEnvioGratis() && !numeralEnvioGratisPublicado(leerDocsLegalesDesdeDisco())) {
+      console.warn(`  - Aviso, envío gratis: «Envíos, devoluciones, retracto y garantía» no publica el numeral del envío gratis; /envios/ no tendrá la sección #${ANCLA_ENVIO_GRATIS}${estado.fin.avisoVisible ? " y el enlace «Ver condiciones» del aviso de portada y cajón no llevará a las condiciones" : ""}.`);
+    }
   } else {
     const prueba = modoPruebaEnvioGratis();
-    const revision = revisarEnvioGratisEnDocs(leerDocsLegalesDesdeDisco(), promo, catalogo.tienda.legal);
+    const revision = revisarEnvioGratisEnDocs(leerDocsLegalesDesdeDisco(), estado.promo, catalogo.tienda.legal);
     revision.avisos.forEach((a) => console.warn(`  - Aviso, envío gratis: ${a}`));
-    if (revision.errores.length && !prueba) throw new ErrorDatos(revision.errores.map((e) => `Envío gratis (envio_gratis_desde ${promo.desde}): ${e}`));
+    if (revision.errores.length && !prueba) throw new ErrorDatos(revision.errores.map((e) => `Envío gratis (envio_gratis_desde ${estado.promo.desde}): ${e}`));
     if (prueba) {
       console.warn(`\nENVIO_GRATIS_PRUEBA=si: build de PRUEBA con el envío gratis encendido. No se despliega.${revision.errores.length ? " Sin este modo fallaría por:" : ""}`);
       revision.errores.forEach((e) => console.warn(`  - ${e}`));
     }
-    console.log(`Envío gratis por comunas: encendido desde ${promo.desde} en ${promo.comunas.length} comunas de ${promo.municipio}.`);
+    console.log(`Envío gratis por comunas: encendido desde ${estado.promo.desde} en ${estado.promo.comunas.length} comunas de ${estado.promo.municipio}.`);
   }
-  // LEG-125: la vigencia se evalúa al construir; avisa (no falla) si envio_gratis_hasta ya pasó o vence pronto.
-  const avisoFin = avisoFinPromocion(promo, hoy);
-  if (avisoFin) console.warn(`  - Aviso, envío gratis: ${avisoFin}`);
 
   const cliente = crearClienteSanity();
   if (!cliente) {

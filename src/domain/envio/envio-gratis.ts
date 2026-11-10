@@ -1,6 +1,7 @@
 import { formatearCOP } from "../comun/dinero";
+import { fechaEnLetras } from "../comun/fecha";
 import { normalizar } from "../comun/slug";
-import type { EnvioGratis, PromocionEnvioGratis, ResultadoEnvio } from "./tipos";
+import type { EnvioGratis, FinEnvioGratis, PromocionEnvioGratis, ResultadoEnvio } from "./tipos";
 
 // Envío gratis en siete comunas de Bucaramanga (decisiones del dueño del 2026-11-09; LEG-106 a LEG-119).
 // Los textos son los de docs/legal/microcopy-legal.md §8 (v1.4), letra por letra. Los nombres de las comunas
@@ -30,6 +31,8 @@ export const TEXTOS_ENVIO_GRATIS = {
   /** §8.6: portada y cajón, seguido del enlace «Ver condiciones». */
   anuncio: "Envío gratis en siete comunas de Bucaramanga.",
   enlaceAnuncio: "Ver condiciones",
+  /** §8.6.1: en /envios/, tras el aviso de terminación y antes del numeral. */
+  introCondicionesTerminada: "Estas fueron sus condiciones:",
   /** §8.5 */
   tituloSeccion: "Envío gratis en comunas de Bucaramanga",
   notaTabla: "Gratis en siete comunas, con cualquier peso (ver condiciones).",
@@ -55,8 +58,8 @@ export function partirEnlace(texto: string, enlace: string): [string, string, st
   return i < 0 ? null : [texto.slice(0, i), enlace, texto.slice(i + enlace.length)];
 }
 
-/** Días que avisa `npm run datos` antes de que venza `envio_gratis_hasta` (LEG-125). */
-export const DIAS_AVISO_FIN_PROMOCION = 7;
+/** Días calendario que el aviso de terminación sigue en portada y cajón desde `envio_gratis_terminada` (§8.6.1, LEG-127). */
+export const DIAS_AVISO_TERMINACION = 30;
 
 /** Días de calendario de `desde` a `hasta` (ISO yyyy-mm-dd); negativo si `hasta` es anterior. */
 function diasEntre(desde: string, hasta: string): number {
@@ -68,49 +71,78 @@ function diasEntre(desde: string, hasta: string): number {
 }
 
 /**
- * Aviso (no error) de `npm run datos` sobre el fin de la promoción (LEG-125, LEG-127): la vigencia se evalúa al
- * construir, así que el sitio sigue mostrando el envío gratis hasta que se reconstruye y despliega. Avisa si
- * `envio_gratis_hasta` ya pasó o vence en los próximos `DIAS_AVISO_FIN_PROMOCION` días; null si no hay fecha final.
+ * Estado de la promoción el día del build (`hoy`, ISO yyyy-mm-dd):
+ * - apagada: sin `envio_gratis_desde`;
+ * - programada: `desde` en el futuro;
+ * - vigente: ya empezó y no tiene `envio_gratis_terminada`;
+ * - terminada: con `envio_gratis_terminada` (P34 b), rija o no; `avisoVisible` mientras hoy ≤ terminada + 30 días.
  */
-export function avisoFinPromocion(p: PromocionEnvioGratis | null, hoy: string): string | null {
-  if (!p?.hasta) return null;
-  const dias = diasEntre(hoy, p.hasta);
-  const falta = "El estado «terminada» (microcopy §8.6.1, LEG-127) aún no está construido: antes de esa fecha hay que implementarlo y publicar el aviso de terminación con la misma visibilidad.";
-  if (dias < 0) {
-    return `envio_gratis_hasta (${p.hasta}) ya pasó: si el sitio desplegado se construyó antes, sigue mostrando el envío gratis hasta que se reconstruya y despliegue. ${falta}`;
+export type EstadoEnvioGratis =
+  | { tipo: "apagada" }
+  | { tipo: "programada"; promo: PromocionEnvioGratis }
+  | { tipo: "vigente"; promo: PromocionEnvioGratis }
+  | { tipo: "terminada"; promo: PromocionEnvioGratis; fin: FinEnvioGratis };
+
+export function estadoEnvioGratis(p: PromocionEnvioGratis | null, hoy: string): EstadoEnvioGratis {
+  if (!p) return { tipo: "apagada" };
+  if (p.terminada !== null) {
+    return { tipo: "terminada", promo: p, fin: { desde: p.desde, terminada: p.terminada, avisoVisible: diasEntre(p.terminada, hoy) <= DIAS_AVISO_TERMINACION } };
   }
-  if (dias > DIAS_AVISO_FIN_PROMOCION) return null;
-  const cuando = dias === 0 ? "vence hoy" : `vence en ${dias} ${dias === 1 ? "día" : "días"}`;
-  return `envio_gratis_hasta (${p.hasta}) ${cuando}: hay que reconstruir y desplegar el ${diaSiguiente(p.hasta)} para que el sitio deje de mostrar el envío gratis. ${falta}`;
+  return hoy < p.desde ? { tipo: "programada", promo: p } : { tipo: "vigente", promo: p };
 }
 
-/** Día siguiente a `fecha` (ISO yyyy-mm-dd). */
-function diaSiguiente(fecha: string): string {
-  const [a, m, d] = fecha.split("-").map(Number);
-  return new Date(Date.UTC(a, m - 1, d + 1)).toISOString().slice(0, 10);
-}
-
-/** La promoción rige si existe, ya empezó y no ha vencido (`hasta` es inclusive). `hoy` en ISO yyyy-mm-dd. */
+/** La promoción rige si existe, ya empezó y no terminó. `hoy` en ISO yyyy-mm-dd. */
 export function promocionVigente(p: PromocionEnvioGratis | null, hoy: string): boolean {
-  return p !== null && p.desde <= hoy && (p.hasta === null || hoy <= p.hasta);
+  return estadoEnvioGratis(p, hoy).tipo === "vigente";
+}
+
+/** La promoción si rige `hoy`; null si no (apagada, programada o terminada). */
+export function promocionActiva(p: PromocionEnvioGratis | null, hoy: string): PromocionEnvioGratis | null {
+  return promocionVigente(p, hoy) ? p : null;
+}
+
+/** El estado «terminada» que llega a las páginas; null en cualquier otro estado. */
+export function finEnvioGratis(p: PromocionEnvioGratis | null, hoy: string): FinEnvioGratis | null {
+  const e = estadoEnvioGratis(p, hoy);
+  return e.tipo === "terminada" ? e.fin : null;
 }
 
 /**
- * Línea de `npm run datos` cuando la promoción existe pero no rige `hoy` (QA-010): distingue
- * «programada» (`desde` en el futuro) de «vencida» (`hasta` ya pasó). null si rige o no existe.
+ * Errores de `npm run datos` que dependen del día del build (P34 b, §8.6.1): `envio_gratis_terminada` no puede ser
+ * posterior al build, porque no hay aviso previo con fecha. Los que no dependen del día (anterior a `desde`, sin
+ * `desde`, `envio_gratis_hasta` llena) los da el lector de config.csv.
  */
-export function lineaPromocionNoVigente(p: PromocionEnvioGratis | null, hoy: string): string | null {
-  if (!p || promocionVigente(p, hoy)) return null;
-  const vigencia = `vigencia ${p.desde} a ${p.hasta ?? "sin fecha final"}`;
-  if (hoy < p.desde) {
-    return `Envío gratis por comunas: programada, no rige hoy (${hoy}); ${vigencia}. No aparece en el sitio; hay que reconstruir y desplegar el ${p.desde} para que aparezca.`;
-  }
-  return `Envío gratis por comunas: vencida, no rige hoy (${hoy}); ${vigencia}. No aparece en el sitio construido hoy.`;
+export function erroresTerminacion(p: PromocionEnvioGratis | null, hoy: string): string[] {
+  if (!p?.terminada || p.terminada <= hoy) return [];
+  return [
+    `config.csv: envio_gratis_terminada (${p.terminada}) es posterior a hoy (${hoy}). La promoción termina de inmediato (P34 b, microcopy §8.6.1): pon la fecha del día en que la apagas y despliegas, no una fecha futura.`,
+  ];
 }
 
-/** La promoción si rige `hoy`; null si no (apagada, programada o vencida). */
-export function promocionActiva(p: PromocionEnvioGratis | null, hoy: string): PromocionEnvioGratis | null {
-  return promocionVigente(p, hoy) ? p : null;
+/**
+ * Línea de `npm run datos` cuando la promoción existe pero no rige `hoy` (QA-010): distingue «programada»
+ * (`desde` en el futuro) de «terminada» (`envio_gratis_terminada`). null si rige o no existe.
+ */
+export function lineaPromocionNoVigente(p: PromocionEnvioGratis | null, hoy: string): string | null {
+  const e = estadoEnvioGratis(p, hoy);
+  if (e.tipo === "programada") {
+    return `Envío gratis por comunas: programada, no rige hoy (${hoy}); empieza el ${e.promo.desde}. No aparece en el sitio; hay que reconstruir y desplegar el ${e.promo.desde} para que aparezca.`;
+  }
+  if (e.tipo !== "terminada") return null;
+  const base = `Envío gratis por comunas: terminada el ${e.fin.terminada}, no rige hoy (${hoy}); sin campo «Comuna» ni $0.`;
+  if (e.fin.avisoVisible) {
+    const quedan = DIAS_AVISO_TERMINACION - diasEntre(e.fin.terminada, hoy);
+    return `${base} El sitio construido hoy muestra el aviso de terminación en portada, cajón y /envios/#${ANCLA_ENVIO_GRATIS} (${quedan === 0 ? "último día" : `${quedan} ${quedan === 1 ? "día más" : "días más"}`} de los ${DIAS_AVISO_TERMINACION}).`;
+  }
+  return `${base} Pasaron los ${DIAS_AVISO_TERMINACION} días del aviso: no sale en portada ni cajón; la sección /envios/#${ANCLA_ENVIO_GRATIS} sigue mientras el numeral esté publicado.`;
+}
+
+/**
+ * Aviso de terminación (microcopy §8.6.1), en portada y cajón (seguido del enlace « Ver condiciones») y como
+ * primer párrafo de la sección de /envios/.
+ */
+export function avisoTerminacion(fin: Pick<FinEnvioGratis, "terminada">): string {
+  return `El envío gratis en siete comunas de Bucaramanga terminó el ${fechaEnLetras(fin.terminada)}. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.`;
 }
 
 /** Comunas en orden alfabético, para el selector (diseño §1). */
@@ -120,7 +152,8 @@ export function comunasAlfabeticas(p: PromocionEnvioGratis): string[] {
 
 /** ¿El campo «Comuna» aplica a este destino? Solo con el municipio de la promoción (sin importar tildes ni mayúsculas). */
 export function aplicaAlMunicipio(p: PromocionEnvioGratis | null, departamento: string, municipio: string): p is PromocionEnvioGratis {
-  return p !== null && normalizar(p.departamento) === normalizar(departamento) && normalizar(p.municipio) === normalizar(municipio);
+  // Terminada (§8.6.1), no aplica aunque llegue aquí: sin campo, sin $0 y cálculo normal.
+  return p !== null && p.terminada === null && normalizar(p.departamento) === normalizar(departamento) && normalizar(p.municipio) === normalizar(municipio);
 }
 
 /**

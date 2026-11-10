@@ -169,7 +169,7 @@ export const PROMOCION_PRUEBA: PromocionEnvioGratis = {
   municipio: "Bucaramanga",
   comunas: ["San Francisco", "Oriental", "Centro", "Cabecera del Llano", "La Concordia", "Ciudadela Real de Minas", "Mutis"],
   desde: "2026-01-01",
-  hasta: null,
+  terminada: null,
 };
 
 /** Reglas de prueba con la promoción encendida. */

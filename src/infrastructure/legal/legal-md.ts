@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { ContenidoLegal, ContenidoRepositorio } from "@/application/puertos";
 import { numeralEnvioGratis, numeralEnvioGratisBorrador, revisarPublicacionEnvioGratis, type RevisionPublicacion } from "@/domain/legal/envio-gratis";
 import { parsearTextoLegal, problemasTextoLegal, type RotuloLegal } from "@/domain/legal/texto-legal";
-import type { PromocionEnvioGratis } from "@/domain/envio/tipos";
+import type { FinEnvioGratis, PromocionEnvioGratis } from "@/domain/envio/tipos";
 import type { BloqueEstructurado } from "@/domain/marca/reglas-texto";
 import type { VersionesLegales } from "@/domain/pedido/tienda";
 import { ErrorDatos } from "../csv/lector";
@@ -89,6 +89,19 @@ export function revisarEnvioGratisEnDocs(leer: LeerDocumento, promo: PromocionEn
     terminos: bloquesPublicados(leer, "terminos"),
     politica: bloquesPublicados(leer, "privacidad"),
   });
+}
+
+/**
+ * Condiciones de la promoción terminada (microcopy §8.6.1): el numeral publicado, letra por letra; en un build de
+ * prueba, el del borrador. null si ya no está publicado: legal lo retira en una versión nueva y la sección se quita.
+ */
+export function condicionesEnvioGratisTerminada(publicado: readonly BloqueEstructurado[], leer: LeerDocumento, fin: Pick<FinEnvioGratis, "desde">, borrador: boolean): BloqueEstructurado[] | null {
+  return numeralEnvioGratis(publicado) ?? (borrador ? numeralEnvioGratisBorrador(leer(DOCUMENTOS_LEGALES["envios-devoluciones"].archivo), fin.desde) : null);
+}
+
+/** ¿«Envíos, devoluciones, retracto y garantía» publicado (en docs/legal/) tiene el numeral del envío gratis? */
+export function numeralEnvioGratisPublicado(leer: LeerDocumento): boolean {
+  return numeralEnvioGratis(bloquesPublicados(leer, "envios-devoluciones")) !== null;
 }
 
 /**

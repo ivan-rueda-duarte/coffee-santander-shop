@@ -131,8 +131,8 @@ function conComunas(comunas: string | null, vigencia: VigenciaEnvioGratis) {
   const reglas = cargarEnvios(leer, e, DIVIPOLA, vigencia);
   return { errores: e.lista, promo: reglas.envioGratis };
 }
-const APAGADA = { desde: null, hasta: null };
-const DESDE = { desde: "2026-12-01", hasta: null };
+const APAGADA = { desde: null, terminada: null };
+const DESDE = { desde: "2026-12-01", terminada: null };
 
 describe("comunas_envio_gratis.csv", () => {
   it("sin envio_gratis_desde la promoción queda apagada aunque haya comunas", () => {
@@ -142,7 +142,7 @@ describe("comunas_envio_gratis.csv", () => {
   it("con fecha arma la promoción con las comunas en el orden del dato", () => {
     expect(conComunas(COMUNAS, DESDE)).toEqual({
       errores: [],
-      promo: { departamento: "Santander", municipio: "Bucaramanga", comunas: ["San Francisco", "Oriental", "Centro", "Cabecera del Llano", "La Concordia", "Ciudadela Real de Minas", "Mutis"], desde: "2026-12-01", hasta: null },
+      promo: { departamento: "Santander", municipio: "Bucaramanga", comunas: ["San Francisco", "Oriental", "Centro", "Cabecera del Llano", "La Concordia", "Ciudadela Real de Minas", "Mutis"], desde: "2026-12-01", terminada: null },
     });
     expect(conComunas(COMUNAS.replace("San Francisco,1", "San Francisco,8"), DESDE).promo?.comunas).toEqual(["Oriental", "Centro", "Cabecera del Llano", "La Concordia", "Ciudadela Real de Minas", "Mutis", "San Francisco"]);
   });
@@ -160,8 +160,9 @@ describe("comunas_envio_gratis.csv", () => {
     expect(conComunas(COMUNAS.replace("Santander,Bucaramanga,Mutis", "Santander,Rionegro,Mutis"), DESDE).errores.some((m) => m.includes('"Rionegro" no existe en Santander'))).toBe(true);
     expect(conComunas(COMUNAS.replace("Mutis,7", '"Mutis|Centro",7'), DESDE).errores).toEqual([expect.stringContaining("una comuna por fila")]);
   });
-  it("valida las fechas entre sí", () => {
-    expect(conComunas(COMUNAS, { desde: null, hasta: "2026-12-31" }).errores).toEqual([expect.stringContaining("envio_gratis_desde está vacía")]);
-    expect(conComunas(COMUNAS, { desde: "2026-12-01", hasta: "2026-11-30" }).errores).toEqual([expect.stringContaining("es anterior a envio_gratis_desde")]);
+  it("valida envio_gratis_terminada frente a envio_gratis_desde (P34 b)", () => {
+    expect(conComunas(COMUNAS, { desde: null, terminada: "2026-12-31" }).errores).toEqual([expect.stringContaining("envio_gratis_terminada tiene fecha pero envio_gratis_desde está vacía")]);
+    expect(conComunas(COMUNAS, { desde: "2026-12-01", terminada: "2026-11-30" }).errores).toEqual([expect.stringContaining("envio_gratis_terminada (2026-11-30) es anterior a envio_gratis_desde (2026-12-01)")]);
+    expect(conComunas(COMUNAS, { desde: "2026-12-01", terminada: "2026-12-01" })).toMatchObject({ errores: [], promo: { desde: "2026-12-01", terminada: "2026-12-01" } });
   });
 });

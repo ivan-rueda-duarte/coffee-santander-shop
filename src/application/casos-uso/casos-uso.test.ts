@@ -180,6 +180,16 @@ describe("prepararPedido", () => {
       expect(r.ok && r.pedido.texto).not.toContain("Comuna:");
     }
   });
+  it("con la promoción terminada (P34 b, §8.6.1) el cálculo y el mensaje son los normales, aunque llegue una comuna", () => {
+    const terminada = { ...catalogo, envios: { ...REGLAS_CON_PROMOCION, envioGratis: { ...REGLAS_CON_PROMOCION.envioGratis!, terminada: "2026-11-09" } } };
+    const normal = preparar(catalogo, entrada());
+    for (const comuna of ["Centro", undefined]) {
+      const r = preparar(terminada, entrada({ envio: { ...envioValido, comuna } }));
+      expect(r.ok && r.pedido.envio).toMatchObject({ tipo: "tarifa", valorCop: 11600 });
+      expect(r.ok && r.pedido.texto).toBe(normal.ok && normal.pedido.texto);
+      expect(r.ok && r.pedido.texto).not.toMatch(/gratis|Comuna:/i);
+    }
+  });
   it("rechaza un pedido vacío", () => {
     const r = preparar(catalogo, entrada({ lineas: [] }));
     expect(r).toMatchObject({ ok: false, errores: { lineas: "Tu pedido está vacío." } });

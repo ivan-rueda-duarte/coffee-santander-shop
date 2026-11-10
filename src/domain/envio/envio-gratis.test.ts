@@ -4,14 +4,17 @@ import { calcularEnvio, totalConEnvio } from "./envio";
 import {
   anuncioEnvio,
   aplicaAlMunicipio,
-  avisoFinPromocion,
+  avisoTerminacion,
   ayudaCampoComuna,
   ayudaComunaElegida,
   COMUNAS_EN_TEXTOS,
   comunaCubierta,
   comunasAlfabeticas,
-  DIAS_AVISO_FIN_PROMOCION,
+  DIAS_AVISO_TERMINACION,
   ENLACE_PLAZO_ZONA1,
+  erroresTerminacion,
+  estadoEnvioGratis,
+  finEnvioGratis,
   lineaPromocionNoVigente,
   lineaVerificacionMensaje,
   notaVerificacionResumen,
@@ -39,10 +42,11 @@ describe("vigencia de la promoción", () => {
     expect(promocionVigente(PROMO, "2026-01-01")).toBe(true);
     expect(promocionVigente(PROMO, "2030-06-15")).toBe(true);
   });
-  it("con envio_gratis_hasta, rige hasta ese día inclusive", () => {
-    const conFin = { ...PROMO, hasta: "2026-12-31" };
-    expect(promocionVigente(conFin, "2026-12-31")).toBe(true);
-    expect(promocionVigente(conFin, "2027-01-01")).toBe(false);
+  it("con envio_gratis_terminada no rige desde ese build, aunque envio_gratis_desde siga llena (P34 b)", () => {
+    const terminada = { ...PROMO, terminada: "2026-11-09" };
+    expect(promocionVigente(terminada, "2026-11-09")).toBe(false);
+    expect(promocionVigente(terminada, "2026-12-31")).toBe(false);
+    expect(promocionActiva(terminada, "2026-11-09")).toBeNull();
   });
   it("sin promoción no rige nada", () => {
     expect(promocionVigente(null, "2026-11-09")).toBe(false);
@@ -175,45 +179,77 @@ describe("textos de /envios/ con la promoción (microcopy §8.5 v1.4)", () => {
   });
 });
 
-describe("aviso de fin de la promoción en npm run datos (LEG-125)", () => {
-  const conFin = (hasta: string | null) => ({ ...PROMO, hasta });
-  it("sin promoción o sin fecha final no avisa", () => {
-    expect(avisoFinPromocion(null, "2026-11-09")).toBeNull();
-    expect(avisoFinPromocion(conFin(null), "2026-11-09")).toBeNull();
+describe("estado «terminada» (P34 b; microcopy §8.6.1; LEG-125 y LEG-127)", () => {
+  const HOY = "2026-11-09";
+  const terminadaEl = (fecha: string) => ({ ...PROMO, desde: "2026-10-01", terminada: fecha });
+  it("terminada = hoy: no rige y el aviso se muestra", () => {
+    expect(estadoEnvioGratis(terminadaEl(HOY), HOY)).toEqual({ tipo: "terminada", promo: terminadaEl(HOY), fin: { desde: "2026-10-01", terminada: HOY, avisoVisible: true } });
+    expect(finEnvioGratis(terminadaEl(HOY), HOY)).toEqual({ desde: "2026-10-01", terminada: HOY, avisoVisible: true });
   });
-  it(`no avisa si faltan más de ${DIAS_AVISO_FIN_PROMOCION} días`, () => {
-    expect(avisoFinPromocion(conFin("2026-11-17"), "2026-11-09")).toBeNull();
+  it(`terminada = hoy − ${DIAS_AVISO_TERMINACION}: último día con aviso`, () => {
+    expect(finEnvioGratis(terminadaEl("2026-10-10"), HOY)?.avisoVisible).toBe(true);
   });
-  it("avisa si vence en 7 días o menos, con el día en que hay que reconstruir", () => {
-    expect(avisoFinPromocion(conFin("2026-11-16"), "2026-11-09")).toMatch(/^envio_gratis_hasta \(2026-11-16\) vence en 7 días: hay que reconstruir y desplegar el 2026-11-17 /);
-    expect(avisoFinPromocion(conFin("2026-11-10"), "2026-11-09")).toContain("vence en 1 día:");
-    expect(avisoFinPromocion(conFin("2026-11-09"), "2026-11-09")).toContain("vence hoy:");
-    expect(avisoFinPromocion(conFin("2026-12-31"), "2026-12-28")).toContain("desplegar el 2027-01-01");
+  it(`terminada = hoy − ${DIAS_AVISO_TERMINACION + 1}: sin aviso en portada ni cajón, pero sigue terminada (sección de /envios/)`, () => {
+    expect(finEnvioGratis(terminadaEl("2026-10-09"), HOY)).toEqual({ desde: "2026-10-01", terminada: "2026-10-09", avisoVisible: false });
+    expect(promocionActiva(terminadaEl("2026-10-09"), HOY)).toBeNull();
   });
-  it("avisa si ya pasó", () => {
-    expect(avisoFinPromocion(conFin("2026-11-08"), "2026-11-09")).toMatch(/^envio_gratis_hasta \(2026-11-08\) ya pasó/);
+  it("los demás estados", () => {
+    expect(estadoEnvioGratis(null, HOY)).toEqual({ tipo: "apagada" });
+    expect(estadoEnvioGratis({ ...PROMO, desde: "2026-11-10" }, HOY).tipo).toBe("programada");
+    expect(estadoEnvioGratis(PROMO, HOY).tipo).toBe("vigente");
+    expect(finEnvioGratis(PROMO, HOY)).toBeNull();
+    expect(finEnvioGratis(null, HOY)).toBeNull();
   });
-  it("recuerda que falta el estado «terminada» (LEG-127)", () => {
-    expect(avisoFinPromocion(conFin("2026-11-08"), "2026-11-09")).toContain("«terminada»");
-    expect(avisoFinPromocion(conFin("2026-11-12"), "2026-11-09")).toContain("«terminada»");
+  it("aviso de terminación, letra por letra (§8.6.1), con la fecha en letras", () => {
+    expect(avisoTerminacion({ terminada: "2026-11-09" })).toBe("El envío gratis en siete comunas de Bucaramanga terminó el 9 de noviembre de 2026. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.");
+    expect(TEXTOS_ENVIO_GRATIS.introCondicionesTerminada).toBe("Estas fueron sus condiciones:");
+  });
+  it("cálculo normal en estado terminada: la comuna se ignora, tarifa de zona 1 y por cotizar con más de 5 kg", () => {
+    const reglas = { ...REGLAS, envioGratis: terminadaEl(HOY) };
+    expect(aplicaAlMunicipio(reglas.envioGratis, "Santander", "Bucaramanga")).toBe(false);
+    expect(comunaCubierta(enComuna("Centro"), reglas.envioGratis)).toBeNull();
+    expect(calcularEnvio(kilos(1), enComuna("Centro"), reglas)).toEqual(calcularEnvio(kilos(1), BGA, REGLAS_ENVIO_PRUEBA));
+    expect(calcularEnvio(kilos(1), enComuna("Centro"), reglas).tipo).toBe("tarifa");
+    expect(calcularEnvio(kilos(6), enComuna("Centro"), reglas)).toEqual(calcularEnvio(kilos(6), BGA, REGLAS_ENVIO_PRUEBA));
+    expect(calcularEnvio(kilos(6), enComuna("Centro"), reglas).tipo).toBe("por_cotizar");
   });
 });
 
-describe("línea de npm run datos con la promoción fuera de vigencia (QA-010)", () => {
-  const promo = (desde: string, hasta: string | null) => ({ ...PROMO, desde, hasta });
+describe("errores de npm run datos que dependen del día del build (P34 b)", () => {
+  it("terminada posterior al build: falla", () => {
+    expect(erroresTerminacion({ ...PROMO, terminada: "2026-11-10" }, "2026-11-09")).toEqual([expect.stringContaining("envio_gratis_terminada (2026-11-10) es posterior a hoy (2026-11-09)")]);
+  });
+  it("terminada hoy o antes, sin terminada o sin promoción: no falla", () => {
+    expect(erroresTerminacion({ ...PROMO, terminada: "2026-11-09" }, "2026-11-09")).toEqual([]);
+    expect(erroresTerminacion({ ...PROMO, terminada: "2026-10-01" }, "2026-11-09")).toEqual([]);
+    expect(erroresTerminacion(PROMO, "2026-11-09")).toEqual([]);
+    expect(erroresTerminacion(null, "2026-11-09")).toEqual([]);
+  });
+});
+
+describe("línea de npm run datos con la promoción fuera de vigencia (QA-010: programada frente a terminada)", () => {
+  const promo = (desde: string, terminada: string | null) => ({ ...PROMO, desde, terminada });
   it("sin promoción o vigente: null", () => {
     expect(lineaPromocionNoVigente(null, "2026-11-09")).toBeNull();
-    expect(lineaPromocionNoVigente(promo("2026-11-06", "2026-11-09"), "2026-11-09")).toBeNull();
     expect(lineaPromocionNoVigente(promo("2026-11-09", null), "2026-11-09")).toBeNull();
   });
   it("programada (inicio futuro): pide reconstruir el día de inicio", () => {
-    const linea = lineaPromocionNoVigente(promo("2026-11-12", "2026-11-30"), "2026-11-09");
-    expect(linea).toBe("Envío gratis por comunas: programada, no rige hoy (2026-11-09); vigencia 2026-11-12 a 2026-11-30. No aparece en el sitio; hay que reconstruir y desplegar el 2026-11-12 para que aparezca.");
-    expect(lineaPromocionNoVigente(promo("2026-11-12", null), "2026-11-09")).toContain("vigencia 2026-11-12 a sin fecha final");
+    expect(lineaPromocionNoVigente(promo("2026-11-12", null), "2026-11-09")).toBe(
+      "Envío gratis por comunas: programada, no rige hoy (2026-11-09); empieza el 2026-11-12. No aparece en el sitio; hay que reconstruir y desplegar el 2026-11-12 para que aparezca.",
+    );
   });
-  it("vencida (fecha final pasada): dice que terminó y no habla de empezar", () => {
-    const linea = lineaPromocionNoVigente(promo("2026-11-06", "2026-11-08"), "2026-11-09");
-    expect(linea).toBe("Envío gratis por comunas: vencida, no rige hoy (2026-11-09); vigencia 2026-11-06 a 2026-11-08. No aparece en el sitio construido hoy.");
+  it("terminada con aviso: dice que terminó, cuántos días de aviso quedan, y no habla de empezar", () => {
+    const linea = lineaPromocionNoVigente(promo("2026-11-01", "2026-11-09"), "2026-11-09");
+    expect(linea).toBe(
+      "Envío gratis por comunas: terminada el 2026-11-09, no rige hoy (2026-11-09); sin campo «Comuna» ni $0. El sitio construido hoy muestra el aviso de terminación en portada, cajón y /envios/#envio-gratis (30 días más de los 30).",
+    );
     expect(linea).not.toMatch(/empieza|programada/);
+    expect(lineaPromocionNoVigente(promo("2026-10-01", "2026-10-10"), "2026-11-09")).toContain("(último día de los 30)");
+    expect(lineaPromocionNoVigente(promo("2026-10-01", "2026-10-11"), "2026-11-09")).toContain("(1 día más de los 30)");
+  });
+  it("terminada hace más de 30 días: sin aviso en portada ni cajón", () => {
+    expect(lineaPromocionNoVigente(promo("2026-10-01", "2026-10-09"), "2026-11-09")).toBe(
+      "Envío gratis por comunas: terminada el 2026-10-09, no rige hoy (2026-11-09); sin campo «Comuna» ni $0. Pasaron los 30 días del aviso: no sale en portada ni cajón; la sección /envios/#envio-gratis sigue mientras el numeral esté publicado.",
+    );
   });
 });

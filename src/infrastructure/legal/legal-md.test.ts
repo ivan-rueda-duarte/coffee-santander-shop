@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LEGAL_PRUEBA, PROMOCION_PRUEBA } from "@/domain/pruebas/fixtures";
 import { ErrorDatos } from "../csv/lector";
 import { RepositorioContenidoVacio } from "../sanity/contenido-sanity";
-import { cargarLegalDesdeDocs, condicionesEnvioGratis, conRespaldoLegal, DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, problemasDocsLegales, revisarEnvioGratisEnDocs } from "./legal-md";
+import { cargarLegalDesdeDocs, condicionesEnvioGratis, condicionesEnvioGratisTerminada, conRespaldoLegal, DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, numeralEnvioGratisPublicado, problemasDocsLegales, revisarEnvioGratisEnDocs } from "./legal-md";
 import { cargarCatalogoDesdeDisco } from "../csv/repositorio-catalogo-csv";
 
 // Estas pruebas leen los documentos reales de docs/legal/ y data/config.csv: si legal deja un marcador
@@ -101,5 +101,13 @@ describe("envío gratis con los documentos de docs/legal/", () => {
     expect(texto).toContain("Vigencia: rige desde el 1 de enero de 2026.");
     expect(texto).toContain("Peso: aplica con cualquier peso.");
     expect(texto).not.toMatch(/[{}[\]]|TODO\(|VERIFICAR|```/);
+  });
+  it("terminada: toma el numeral publicado; sin él no hay sección (no falla); en prueba, el borrador", () => {
+    const fin = { desde: PROMOCION_PRUEBA.desde };
+    expect(condicionesEnvioGratisTerminada(publicado, leer, fin, false)).toBeNull();
+    expect(condicionesEnvioGratisTerminada(publicado, leer, fin, true)).toEqual(condicionesEnvioGratis(publicado, leer, PROMOCION_PRUEBA, true));
+    const conNumeral = [{ tipo: "titulo" as const, texto: "13. Envío gratis en comunas de Bucaramanga" }, { tipo: "parrafo" as const, texto: "Condiciones." }];
+    expect(condicionesEnvioGratisTerminada(conNumeral, leer, fin, false)).toEqual([{ tipo: "parrafo", texto: "Condiciones." }]);
+    expect(numeralEnvioGratisPublicado(leer)).toBe(false);
   });
 });

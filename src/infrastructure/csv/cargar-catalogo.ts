@@ -235,8 +235,11 @@ const CLAVES_REQUERIDAS = [
   "version_terminos", "fecha_terminos", "version_politica_datos", "fecha_politica_datos",
 ] as const;
 const CLAVES_VENDEDOR = ["razon_social", "nit", "domicilio", "direccion_notificacion", "correo_contacto", "correo_notificacion", "matricula_mercantil", "representante_legal", "area_datos"] as const;
-/** Vacías = envío gratis por comunas apagado (decisión de legal: no se activa antes de publicar los documentos v2). */
-const CLAVES_ENVIO_GRATIS = ["envio_gratis_desde", "envio_gratis_hasta"] as const;
+/**
+ * Vacías = envío gratis por comunas apagado (decisión de legal: no se activa antes de publicar los documentos v2).
+ * `envio_gratis_hasta` está retirada (P34 b): se reconoce solo para fallar con un mensaje que remite a `envio_gratis_terminada`.
+ */
+const CLAVES_ENVIO_GRATIS = ["envio_gratis_desde", "envio_gratis_terminada", "envio_gratis_hasta"] as const;
 const CLAVES_OPCIONALES = ["iva_tarifa", ...CLAVES_VENDEDOR, ...CLAVES_ENVIO_GRATIS] as const;
 
 function leerConfig(leer: LeerArchivo, errores: Errores): { tienda: ConfigTienda | null; vigenciaEnvioGratis: VigenciaEnvioGratis } {
@@ -286,8 +289,13 @@ function leerConfig(leer: LeerArchivo, errores: Errores): { tienda: ConfigTienda
   const ivaTarifa = iva ? iva.f.entero("valor", { min: 0, max: 100 }) : null;
   const vigenciaEnvioGratis: VigenciaEnvioGratis = {
     desde: obtener("envio_gratis_desde")?.f.fecha("valor") ?? null,
-    hasta: obtener("envio_gratis_hasta")?.f.fecha("valor") ?? null,
+    terminada: obtener("envio_gratis_terminada")?.f.fecha("valor") ?? null,
   };
+  if (opcional("envio_gratis_hasta")) {
+    errores.agregar(
+      "config.csv: envio_gratis_hasta ya no se usa (P34 b: la promoción termina de inmediato, sin fecha final anunciada). Déjala vacía y, para terminar la promoción, escribe en envio_gratis_terminada la fecha del día en que la apagas y despliegas (data/LEEME.md; microcopy §8.6.1).",
+    );
+  }
 
   if (!nombre || !whatsapp || !ciudad || !nota || !pagos || maxCantidad === null || !versionTerminos || !versionPolitica || !fechaTerminos || !fechaPolitica) return { tienda: null, vigenciaEnvioGratis };
   const vendedor: DatosVendedor = {

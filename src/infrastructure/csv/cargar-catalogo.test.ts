@@ -306,12 +306,19 @@ describe("errores con archivo, línea y columna", () => {
     const iva = errores({ "config.csv": `${BASE["config.csv"]}iva_tarifa,cinco\n` });
     expect(iva.some((m) => m.includes('"cinco" no es un número entero'))).toBe(true);
   });
-  it("envio_gratis_desde y envio_gratis_hasta son opcionales; vacías, la promoción queda apagada (LEG-106)", () => {
-    expect(cargarCatalogo(con({ "config.csv": `${BASE["config.csv"]}envio_gratis_desde,\nenvio_gratis_hasta,\n` })).catalogo.envios.envioGratis).toBeNull();
+  it("envio_gratis_desde y envio_gratis_terminada son opcionales; vacías, la promoción queda apagada (LEG-106)", () => {
+    expect(cargarCatalogo(con({ "config.csv": `${BASE["config.csv"]}envio_gratis_desde,\nenvio_gratis_terminada,\n` })).catalogo.envios.envioGratis).toBeNull();
+    const terminada = errores({ "config.csv": `${BASE["config.csv"]}envio_gratis_terminada,ayer\n` });
+    expect(terminada.some((m) => m.includes('"ayer" no es una fecha válida'))).toBe(true);
     const mala = errores({ "config.csv": `${BASE["config.csv"]}envio_gratis_desde,mañana\n` });
     expect(mala.some((m) => m.includes('"mañana" no es una fecha válida'))).toBe(true);
     // Con fecha y sin data/comunas_envio_gratis.csv no hay promoción posible.
     expect(errores({ "config.csv": `${BASE["config.csv"]}envio_gratis_desde,2026-12-01\n` }).some((m) => m.includes("comunas_envio_gratis.csv: no se encontró"))).toBe(true);
+  });
+  it("envio_gratis_hasta está retirada (P34 b): vacía no molesta; llena falla y remite a envio_gratis_terminada", () => {
+    expect(cargarCatalogo(con({ "config.csv": `${BASE["config.csv"]}envio_gratis_hasta,\n` })).catalogo.envios.envioGratis).toBeNull();
+    const llena = errores({ "config.csv": `${BASE["config.csv"]}envio_gratis_hasta,2026-12-31\n` });
+    expect(llena).toEqual([expect.stringMatching(/^config\.csv: envio_gratis_hasta ya no se usa \(P34 b.*envio_gratis_terminada/)]);
   });
   it("fabricante exige la expresión del rótulo, y la expresión o el titular exigen su dato", () => {
     const e = errores({

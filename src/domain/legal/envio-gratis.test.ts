@@ -51,4 +51,8 @@ describe("control de publicación (LEG-106)", () => {
     const conMarcador = [titulo("3. Valor del envío"), item(`${SALVEDAD_V2}: …`), ...NUMERAL, item(`Desde ${MARCA_FECHA_INICIO}.`)];
     expect(revisarPublicacionEnvioGratis(PROMO, LEGAL_V2, { envios: conMarcador, terminos: TERMINOS_V2, politica: POLITICA_V2 }).errores).toEqual([expect.stringContaining("marcador entre llaves")]);
   });
+  it("rechaza cualquier marcador entre llaves, como {horario de atención} (LEG-106, LEG-118, D-24)", () => {
+    const conHorario = [...ENVIOS_V2.slice(0, -2), item("Plazo de entrega: … dentro de nuestro horario de atención ({horario de atención}) …"), ...ENVIOS_V2.slice(-2)];
+    expect(revisarPublicacionEnvioGratis(PROMO, LEGAL_V2, { envios: conHorario, terminos: TERMINOS_V2, politica: POLITICA_V2 }).errores).toEqual([expect.stringContaining("marcador entre llaves")]);
+  });
 });

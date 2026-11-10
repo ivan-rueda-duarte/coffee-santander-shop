@@ -39,7 +39,7 @@ describe("datos reales: la promoción se lee de data/", () => {
     expect(apagada.envios.envioGratis).toBeNull();
   });
   it("encendida en memoria: siete comunas de Bucaramanga, sin fecha final", () => {
-    expect(REGLAS.envioGratis).toMatchObject({ departamento: "Santander", municipio: "Bucaramanga", desde: "2026-11-06", hasta: null });
+    expect(REGLAS.envioGratis).toMatchObject({ departamento: "Santander", municipio: "Bucaramanga", desde: "2026-11-06", terminada: null });
     expect(REGLAS.envioGratis?.comunas).toEqual(COMUNAS);
     expect(COMUNAS).toHaveLength(7);
   });
