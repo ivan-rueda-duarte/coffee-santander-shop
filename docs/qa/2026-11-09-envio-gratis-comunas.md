@@ -66,13 +66,13 @@ Veredicto: **APTO CON OBSERVACIONES** (con la promoción apagada, que es como qu
 
 ## Defectos
 
-| ID | Severidad | Área | Título | Responsable |
-|---|---|---|---|---|
-| QA-010 | Baja | Datos (`tools/validar-datos.ts`) | Con la promoción vencida, `npm run datos` dice «si empieza después, hay que reconstruir ese día» | desarrollador-fullstack |
+| ID | Severidad | Área | Título | Responsable | Estado |
+|---|---|---|---|---|---|
+| QA-010 | Baja | Datos (`tools/validar-datos.ts`) | Con la promoción vencida, `npm run datos` dice «si empieza después, hay que reconstruir ese día» | desarrollador-fullstack | **Cerrado** (ronda 2) |
 
 ### QA-010 — Mensaje de `npm run datos` engañoso con la promoción vencida
 - Severidad: Baja
-- Estado: Corregido — pendiente verificación (commit: ver `git log --grep QA-010`, `fix(datos)`). Causa raíz: `tools/validar-datos.ts` usaba una sola frase para todo caso «no rige hoy» sin distinguir inicio futuro de fecha final pasada; ahora la línea sale de `lineaPromocionNoVigente` (`src/domain/envio/envio-gratis.ts`, con pruebas) y dice «programada… hay que reconstruir y desplegar el {desde}» o «vencida… No aparece en el sitio construido hoy». Sigue avisando con código 0. *Actualización (`3df9d80`, P34 b):* `envio_gratis_hasta` se retiró (llenarla hace fallar `npm run datos`), así que los pasos de abajo ya no aplican tal cual: «vencida» pasa a ser «terminada» con `envio_gratis_terminada`. Para verificar: `envio_gratis_desde,2026-11-06` y `envio_gratis_terminada,2026-11-09` → «terminada el 2026-11-09…» sin hablar de empezar; `envio_gratis_desde,2026-11-12` vacía la otra → «programada… reconstruir y desplegar el 2026-11-12».
+- Estado: **Cerrado** (ronda 2, 2026-11-09, HEAD `dc10290`; ver abajo). Antes: Corregido — pendiente verificación (commit: ver `git log --grep QA-010`, `fix(datos)`). Causa raíz: `tools/validar-datos.ts` usaba una sola frase para todo caso «no rige hoy» sin distinguir inicio futuro de fecha final pasada; ahora la línea sale de `lineaPromocionNoVigente` (`src/domain/envio/envio-gratis.ts`, con pruebas) y dice «programada… hay que reconstruir y desplegar el {desde}» o «vencida… No aparece en el sitio construido hoy». Sigue avisando con código 0. *Actualización (`3df9d80`, P34 b):* `envio_gratis_hasta` se retiró (llenarla hace fallar `npm run datos`), así que los pasos de abajo ya no aplican tal cual: «vencida» pasa a ser «terminada» con `envio_gratis_terminada`. Para verificar: `envio_gratis_desde,2026-11-06` y `envio_gratis_terminada,2026-11-09` → «terminada el 2026-11-09…» sin hablar de empezar; `envio_gratis_desde,2026-11-12` vacía la otra → «programada… reconstruir y desplegar el 2026-11-12».
 - Entorno: Node 22, rama `feat/envio-gratis-comunas`, commit `7079157`, fecha del sistema 2026-11-09.
 - Pasos para reproducir: 1. En `data/config.csv`, `envio_gratis_desde,2026-11-06` y `envio_gratis_hasta,2026-11-08`. 2. `npm run datos`. 3. Restaurar `config.csv`.
 - Resultado esperado: con `hasta` ya pasada, una línea que diga que la promoción terminó (y el aviso de LEG-125 que ya sale).
@@ -93,3 +93,93 @@ Sin cambios: la v1 no tenía envío gratis ni campo de comuna (función nueva de
 - e2e nuevo: `e2e/envio-gratis-comunas.spec.ts` (34 pruebas con la promoción encendida, 2 con la apagada; cada bloque se omite solo según `envio_gratis_desde` y `ENVIO_GRATIS_PRUEBA`).
 - e2e ajustado: `e2e/paquete-legal-v1.spec.ts:394` admite la salvedad de §8.5 en el build de prueba.
 - Para repetir la ronda encendida: `envio_gratis_desde` con fecha, `ENVIO_GRATIS_PRUEBA=si npm run build`, `npx serve out -l 4173 -n` y `ENVIO_GRATIS_PRUEBA=si npx playwright test`. Después, restaurar `config.csv` y reconstruir.
+
+---
+
+# Ronda QA 2 (verificación): estado «terminada», QA-010 y LEG-120 a LEG-123 (2026-11-09)
+
+Rama `feat/envio-gratis-comunas`, HEAD `dc10290` (sin push). Chromium (Playwright 1.64), `serve` propio en 4173, detenido al terminar. Fuentes: `docs/legal/microcopy-legal.md` v1.5 §8.6.1, `docs/legal/revisiones/2026-11-09-verificacion-envio-gratis.md` v0.3 (entrega v0.2, puntos 1 a 5, y «Para `qa-pruebas`»), commits `3df9d80`, `445d730`, `c8afa95`.
+
+Los estados se prepararon con un `data/config.csv` temporal y **nunca** con `GITHUB_PAGES=true`. Como `envio_gratis_terminada` no puede ser anterior a `envio_gratis_desde`, los casos hoy − 30 y hoy − 31 usan `envio_gratis_desde,2026-10-01` (con `2026-11-06` fallarían por «anterior a desde», que es lo correcto). Al terminar: `git checkout data/config.csv` (las dos claves vacías, `git diff data/` vacío), `out/` reconstruido apagado y capturas regeneradas por la suite restauradas.
+
+## Comandos ejecutados y resultado
+
+| Comando | Resultado |
+|---|---|
+| `npm run datos` con `desde,2026-11-06` + `terminada,2026-11-09` | exit 0. «Envío gratis por comunas: terminada el 2026-11-09, no rige hoy (2026-11-09); sin campo «Comuna» ni $0. El sitio construido hoy muestra el aviso de terminación en portada, cajón y /envios/#envio-gratis (30 días más de los 30).» Sin «empieza» ni «programada». Más el aviso de numeral no publicado (ver QA-012) |
+| `npm run datos` con `desde,2026-11-12`, terminada vacía | exit 0. «… programada, no rige hoy (2026-11-09); empieza el 2026-11-12. No aparece en el sitio; hay que reconstruir y desplegar el 2026-11-12 para que aparezca.» |
+| `npm run datos`, terminada futura (`2026-11-10`) | **exit 1**: «envio_gratis_terminada (2026-11-10) es posterior a hoy (2026-11-09)… pon la fecha del día en que la apagas y despliegas» |
+| Idem, terminada anterior a desde (`11-05` < `11-06`) | **exit 1**: «… es anterior a envio_gratis_desde (2026-11-06): la promoción no puede terminar antes de empezar» |
+| Idem, terminada sin desde | **exit 1**: «… tiene fecha pero envio_gratis_desde está vacía…» |
+| Idem, `envio_gratis_hasta` llena (con y sin `desde`) | **exit 1**: «envio_gratis_hasta ya no se usa (P34 b…). Déjala vacía y… escribe en envio_gratis_terminada…» |
+| `ENVIO_GRATIS_PRUEBA=si npm run build`, terminada = hoy (`2026-11-09`) | pasa |
+| `npx playwright test` completo contra ese build | **169 pasan**, 40 omitidas (36 «encendida» + 4 basePath). Ninguna otra suite se rompe en estado «terminada» |
+| Bloque «TERMINADA» (nuevo) con `--repeat-each=5` | 45/45 |
+| Build y bloque «TERMINADA» + `paquete-legal-v1` con terminada = hoy − 30 (`2026-10-10`) | build pasa («último día de los 30»); 38 pasan |
+| Idem con terminada = hoy − 31 (`2026-10-09`) | build pasa («Pasaron los 30 días del aviso…»); 37 pasan; sin aviso en portada ni cajón; sección de `/envios/` presente |
+| Build terminada = hoy **sin** `ENVIO_GRATIS_PRUEBA` | build pasa con aviso; `/envios/` sin `#envio-gratis`; la prueba «el enlace “Ver condiciones” lleva a una sección que existe» **falla** (QA-012) |
+| Texto visible de `out/` (terminada = hoy) buscando `gratis\|comuna\|Cabecera del Llano` | solo en el aviso de inicio y la sección de `/envios/`; además «consultar gratis tus datos» de la política (texto previo, ajeno a la promoción). En los `.txt`/RSC solo aparecen las claves `envioGratis`/`finEnvioGratis` (fechas), no texto |
+| `/envios/` fuera de la sección: terminada (hoy, hoy − 30, hoy − 31) contra apagada | **idéntico** en los tres |
+| `ENVIO_GRATIS_PRUEBA=si npm run build` vigente (`desde,2026-11-06`) + `envio-gratis-comunas` y `paquete-legal-v1` | 63 pasan; LEG-120 (región `role="status"`) y LEG-121 a LEG-123 (`/envios/`) pasan letra por letra |
+| **Apagada (repositorio):** `npm run lint` / `npm run typecheck` | exit 0 / exit 0 |
+| `npx vitest run --coverage` | 28 archivos, **499 pruebas** pasan; cobertura global 99,76 % sentencias, 96,77 % ramas, 99,61 % funciones, 100 % líneas |
+| `npm run datos` / `npm run build` | exit 0 («apagado»; 3 avisos de siempre) / exit 0 |
+| `rg -il "Envío gratis\|Cabecera del Llano\|comuna" out --glob '*.html' --glob '*.txt'` | **0 archivos** |
+| Texto visible + `href`/`id`/`content`/`alt`/`aria-label` + JSON-LD de las 15 páginas: build apagado de HEAD contra build de `7079157` | **idéntico en las 15** (solo cambia el hash de `/icon.svg`, del empaquetador). `/envios/` es el de antes |
+| `npx playwright test` completo, apagada | **162 pasan**, 47 omitidas (4 basePath + 34 encendida + 9 terminada), 0 fallan |
+
+Veredicto: **APTO CON OBSERVACIONES** con la promoción apagada (como queda la rama). QA-010 cerrado. Dos defectos nuevos de severidad Baja y Media, que no bloquean el merge con la promoción apagada; QA-012 debe corregirse antes de usar el estado «terminada» en un despliegue real.
+
+## Verificación por punto
+
+**QA-010 (cerrado).** Con los pasos nuevos, la línea distingue «terminada» de «programada» y no habla de «empezar» en la terminada. Exit 0 en ambos. Observación menor (no defecto): el día de la terminación dice «30 días más de los 30» (el aviso se ve 31 días: el de la terminación y 30 más; el último día dice «último día de los 30»). Es coherente con `hoy ≤ terminada + 30`.
+
+**Estado «terminada» (terminada = hoy y hoy − 30, build de prueba):**
+- Portada, bajo «Cómo pedir»: `El envío gratis en siete comunas de Bucaramanga terminó el 9 de noviembre de 2026. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones. Ver condiciones` (con hoy − 30, «10 de octubre de 2026»), enlace a `/envios/#envio-gratis`, mismo elemento y estilo del anuncio, sin clases de color prohibidas. Pasa. Captura: `docs/qa/capturas/envio-gratis-terminada-inicio-360.png`.
+- Cajón: el mismo aviso bajo «Se calcula al elegir tu ciudad · desde Bucaramanga»; «Ver condiciones» lleva a `/envios/#envio-gratis` y cierra el cajón. Pasa. Captura: `envio-gratis-terminada-cajon-360.png`.
+- Con hoy − 31: sin aviso en portada ni cajón, sin «gratis» en ellos. Pasa.
+- `/envios/#envio-gratis`: título «Envío gratis en comunas de Bucaramanga», el aviso como primer párrafo, «Estas fueron sus condiciones:» y el numeral (borrador de la nota E en el build de prueba); sin `lista-comunas`, sin `nota-envio-gratis-tabla`, leyenda sin la salvedad, párrafo inicial, `dd` de zonas 1 y 5 y caja de cotizar como con la promoción apagada (fuera de la sección, idéntico al apagado). Sin «gratis» en `meta` ni JSON-LD. Pasa. Captura: `envio-gratis-terminada-envios-360.png` (encabezado y barra «Ver pedido» fijos superpuestos en la captura de elemento; no ocurre en la vista real). Ver QA-011.
+- Checkout con Bucaramanga: sin campo «Comuna»; 1 kg (2 × 500 g) → «$8.800», «Total $102.800»; resumen sin «gratis» ni «comuna»; mensaje con `Envío (Bucaramanga · zona 1): $8.800` y `Total: $102.800`, sin «gratis» ni «Comuna». 6 kg → «Por cotizar», «Total sin envío», mensaje con «Quedo atento al valor del envío…», sin «gratis». Pasa.
+- «gratis» solo en el aviso y la sección: catálogo, ficha, provincia, pedido y vendedor sin «gratis» ni «comuna» (e2e), y búsqueda en el texto visible de todo `out/` (tabla). Pasa.
+- Axe (wcag2a/aa, 21a/aa) a 360 y 1280 px en inicio, cajón y `/envios/#envio-gratis`: 0 violaciones serias o críticas, sin desborde. Pasa.
+
+**LEG-120 a LEG-123 (`ead557d`), build vigente de prueba:** región `role="status"` con «Envío gratis en {comuna}, sujeto a verificar tu dirección: $0. Total: $94.000.» para las siete comunas (LEG-120); párrafo inicial con «Ver condiciones» (LEG-121); caja de cotizar (LEG-122); `dd` de zona 1 con «contado desde que validamos tu pedido y te damos el aprobado por el chat (ver condiciones)» enlazado (LEG-123). Pasan letra por letra. Apagada: `/envios/` idéntico al build de `7079157` y sin esos textos.
+
+**Suite e2e (pedido del desarrollador).** `ENCENDIDA` miraba solo `envio_gratis_desde` y la variable: con `envio_gratis_terminada` llena habría corrido las pruebas «encendida» (y `paquete-legal-v1.spec.ts:394` habría exigido la salvedad). Ahora el estado sale de `estadoEnvioGratisE2E()` (`e2e/ayudas.ts`), con la misma regla del build (`apagada`/`programada`/`vigente`/`terminada`, aviso 30 días), y hay un bloque permanente «TERMINADA» de 9 pruebas.
+
+## Defectos (ronda 2)
+
+| ID | Severidad | Área | Título | Responsable | Estado |
+|---|---|---|---|---|---|
+| QA-011 | Baja | Legal / `/envios/` | Tras «Estas fueron sus condiciones:» el numeral sigue en presente («Estas son las condiciones:», «No tiene fecha de terminación…») | legal-cumplimiento (texto); luego desarrollador-fullstack | Abierto |
+| QA-012 | Media | Datos / estado «terminada» | Con la promoción terminada y el numeral no publicado, «Ver condiciones» del aviso lleva a un ancla que no existe; `npm run datos` solo avisa | desarrollador-fullstack (con decisión de legal-cumplimiento) | Abierto |
+
+### QA-011 — Condiciones de la promoción terminada en presente y con dos introducciones seguidas
+- Severidad: Baja
+- Estado: Abierto
+- Entorno: Chromium, 360 × 740, rama `feat/envio-gratis-comunas`, `dc10290`; `envio_gratis_desde,2026-11-06`, `envio_gratis_terminada,2026-11-09`, `ENVIO_GRATIS_PRUEBA=si npm run build`.
+- Pasos para reproducir: 1. Preparar el build anterior. 2. Abrir `/envios/#envio-gratis`.
+- Resultado esperado: tras el aviso «… terminó el 9 de noviembre de 2026…», unas condiciones que se lean como las que rigieron, sin contradecir el aviso.
+- Resultado obtenido: «Estas fueron sus condiciones:» y, enseguida, «El envío es gratis para los pedidos que entregamos en una dirección de estas comunas… Estas son las condiciones:» (dos introducciones seguidas, pasado y presente), y al final «Vigencia: rige desde el 6 de noviembre de 2026. No tiene fecha de terminación: sigue vigente hasta que publiquemos…» justo debajo de un aviso que dice que terminó. Es lo que pide §8.6.1 (el numeral «letra por letra»), así que no es un error de implementación sino del texto especificado; para el cliente es contradictorio (Ley 1480, art. 23, claridad; lo decide legal).
+- Evidencia: `docs/qa/capturas/envio-gratis-terminada-envios-360.png`; prueba `e2e/envio-gratis-comunas.spec.ts` «/envios/: título, aviso, «Estas fueron sus condiciones:» y el numeral…» (hoy fija el texto de §8.6.1; se ajusta cuando legal decida).
+- Responsable sugerido: legal-cumplimiento (decidir: quitar «Estas fueron sus condiciones:», o una versión en pasado del numeral para el estado «terminada», o una nota que diga que la vigencia ya terminó); después desarrollador-fullstack.
+
+### QA-012 — «Ver condiciones» del aviso de terminación sin destino si el numeral no está publicado
+- Severidad: Media
+- Estado: Abierto
+- Entorno: Chromium, rama `feat/envio-gratis-comunas`, `dc10290`; `envio_gratis_desde,2026-11-06`, `envio_gratis_terminada,2026-11-09`, `npm run build` **sin** `ENVIO_GRATIS_PRUEBA` (como sería en el despliegue mientras el numeral 13 no esté en el texto publicado de «Envíos, devoluciones, retracto y garantía»).
+- Pasos para reproducir: 1. Preparar ese `config.csv`. 2. `npm run datos` → exit 0 con «Aviso, envío gratis: … /envios/ no tendrá la sección #envio-gratis y el enlace «Ver condiciones» del aviso de portada y cajón no llevará a las condiciones». 3. `npm run build` (pasa). 4. En inicio o en el cajón, «Ver condiciones».
+- Resultado esperado: el aviso de terminación promete respetar los pedidos «con las mismas condiciones» y enlaza a ellas: si las condiciones no están publicadas, el build no debe salir así (o el aviso no debe enlazar a la nada). Puede ocurrir en la práctica si legal retira el numeral en una versión nueva antes de cumplirse los 30 días del aviso, o si el dueño llena `envio_gratis_terminada` por error.
+- Resultado obtenido: `/envios/` sin `id="envio-gratis"` (0 coincidencias en `out/envios/index.html`); el enlace lleva al inicio de `/envios/`, sin condiciones; el aviso sigue en portada y cajón.
+- Evidencia: `npx playwright test e2e/envio-gratis-comunas.spec.ts -g TERMINADA` contra ese build: «el enlace «Ver condiciones» del aviso lleva a una sección que existe (QA-012)» falla con `expect(locator("#envio-gratis")).toHaveCount(1)`, recibido 0. Traza: `test-results/…QA-012…/trace.zip` (regenerable con los pasos).
+- Criterio de cierre: con esa configuración, o `npm run datos` sale con exit 1 y un mensaje claro, o la prueba anterior pasa.
+- Responsable sugerido: desarrollador-fullstack (convertir el aviso de `tools/validar-datos.ts` en error mientras `avisoVisible`, o no enlazar), con la decisión de legal-cumplimiento sobre qué se publica si el numeral ya se retiró.
+
+## Paridad v1
+Sin cambios: la v1 no tenía envío gratis.
+
+## Cobertura (ronda 2)
+- `e2e/ayudas.ts`: `hoyEnColombia()` y `estadoEnvioGratisE2E()` (misma regla que el build).
+- `e2e/envio-gratis-comunas.spec.ts`: modos por estado; bloque nuevo «TERMINADA» (9 pruebas: checkout 1 kg y 6 kg con mensaje, inicio, cajón, enlace a la sección (QA-012), `/envios/`, «gratis» fuera del aviso, axe a 360 y 1280). «APAGADA» corre también con la promoción programada.
+- `e2e/paquete-legal-v1.spec.ts:394`: la salvedad solo con la promoción vigente.
+- Para repetir el estado terminada: `envio_gratis_desde` y `envio_gratis_terminada` con fecha, `ENVIO_GRATIS_PRUEBA=si npm run build`, `npx serve out -l 4173 -n`, `ENVIO_GRATIS_PRUEBA=si npx playwright test`. Después, restaurar `config.csv` y reconstruir.
