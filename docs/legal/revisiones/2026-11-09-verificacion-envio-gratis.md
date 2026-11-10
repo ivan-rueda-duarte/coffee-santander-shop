@@ -1,8 +1,17 @@
 # Revisión LEG-120 a LEG-128: Verificación del envío gratis por comunas implementado (2026-11-09)
 
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.1 — 2026-11-09.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.2 — 2026-11-09.
 
 Sigue a `2026-11-09-envio-gratis-comunas.md` (LEG-106 a LEG-119, v0.2).
+
+**Versión 0.2 (2026-11-09, respuestas del dueño comunicadas por el coordinador).**
+- **P33:** el dueño valida a mano los pagos Bre-B.
+- **P33 bis, aceptada:** la validación se hace el mismo día hábil si el pago llega dentro del horario de atención, y el día hábil siguiente si llega fuera de él. Falta el horario (D-24).
+- **P34 = b, aceptada:** la promoción termina de inmediato cuando el dueño da la orden, sin fecha final previa.
+- **P35:** el dueño mismo reconstruye y despliega el sitio.
+- Se cierran P33, P33 bis, P34 y P35.
+- Se actualizan LEG-118, LEG-125 y LEG-127, y se agrega LEG-129.
+- La entrega de la v0.1 ya fue implementada (`ead557d`, según `docs/PENDIENTES.md`); QA la verifica. La entrega final de la v0.2 está al final de este documento.
 
 **Qué se revisó.** Rama `feat/envio-gratis-comunas`, commits `5c11cee`, `e775b0d` y `b5882ae`, con la promoción apagada (`envio_gratis_desde` vacía en `data/config.csv`). Lectura del código, no de `out/`: con la promoción apagada, `out/` no contiene ninguno de estos textos. Archivos: `src/domain/envio/envio-gratis.ts`, `src/domain/legal/envio-gratis.ts`, `src/domain/pedido/mensaje-whatsapp.ts`, `src/domain/pedido/envio.ts`, `src/domain/pedido/iva.ts`, `src/domain/envio/plazos.ts`, `src/ui/componentes/checkout/formulario-envio.tsx`, `src/ui/componentes/checkout/flujo-pedido.tsx` (región `role="status"`), `src/ui/componentes/carrito/totales-pedido.tsx`, `src/ui/componentes/layout/secciones-inicio.tsx`, `src/app/envios/page.tsx`, `data/comunas_envio_gratis.csv`. Se compararon con `microcopy-legal.md` v1.3 §8 y con la nota E de envíos (numeral 13).
 
@@ -41,6 +50,7 @@ Sigue a `2026-11-09-envio-gratis-comunas.md` (LEG-106 a LEG-119, v0.2).
 | LEG-125 | **Alta** | Vigencia en un sitio estático (`src/app/_datos/catalogo.ts`, `promocionActiva(…, hoyEnColombia())`) | La vigencia se evalúa **al construir el sitio**, no cuando el cliente lo visita. Si `envio_gratis_hasta` vence y no se reconstruye ni despliega, el sitio sigue mostrando el campo, el $0 y los anuncios. | Lo publicado obliga mientras se muestre. Sin fecha final, la promoción rige hasta que se revoque con la misma visibilidad (arts. 29 y 33 inc. 3). Lo mismo al inicio: con `envio_gratis_desde` en el futuro, la promoción no aparece hasta el siguiente despliegue. No es un defecto de la regla, sino del momento en que se evalúa. Hoy no tiene efecto (P25 a, sin fecha final). | (i) Operación: reconstruir y desplegar el primer día después de `envio_gratis_hasta`, y el mismo día de `envio_gratis_desde`. Cada despliegue necesita confirmación del dueño (`CLAUDE.md`). (ii) Texto: el aviso de terminación respeta todo pedido cuyo mensaje diga «envío gratis» (microcopy v1.4 §8.6.1). (iii) Recomendado: un aviso de `npm run datos` o del build si `envio_gratis_hasta` cae en los próximos 7 días o ya pasó sin estado «terminada». |
 | LEG-126 | Informativa | Desviaciones resueltas por el desarrollador y el diseño | Ver la tabla de abajo. | — | Se confirman todas. Microcopy §8.2 se ajusta a la posición del campo. |
 | LEG-127 | Media | Fin de la promoción: no hay estado «terminada» ni textos completos | §8.6 v1.3 tenía un aviso («antes de esa fecha») que no coincidía con el numeral 13 («antes del aviso»). El código, al vencer, oculta todo, también el anuncio. No hay aviso en los mismos lugares. | Art. 33 inc. 3: revocar con los mismos medios e intensidad. Si el anuncio desaparece sin aviso, no hay revocación con igual visibilidad, y el cliente que vio el anuncio en otro lado (redes) puede exigirlo. | Textos de microcopy v1.4 §8.6.1: aviso previo con fecha final (A, recomendado) o fin inmediato (B), estado «terminada» con el aviso en los mismos lugares durante al menos 30 días calendario, viñeta de vigencia nueva para el numeral 13 (nota E de envíos) y aviso para redes. **No se implementa ahora:** basta con dejarlo previsto. Es obligatorio antes de poner fecha en `envio_gratis_hasta`. P34. |
+| LEG-129 (v0.2) | Media | Plazos generales con Bre-B (envíos §6, términos §8, `/envios/`) frente a la validación manual (P33) | Para todas las zonas, los plazos generales corren «desde que recibimos tu pago». El dueño valida a mano y, fuera del horario, al día hábil siguiente. | El texto general es más estricto con la tienda que la práctica: el plazo empieza a correr con la recepción, no con la validación. Lo publicado obliga (arts. 29 y 50 lit. h). En la zona 1 (máximo 1 día hábil), un pago que llega fuera del horario y se valida al día siguiente puede dejar sin margen el despacho. No es ilegal: es favorable al cliente. | **No se cambia el texto** (cambiarlo exigiría una versión nueva y sería menos favorable). Se informa al dueño: con pagos Bre-B fuera del horario, el plazo de las zonas ya corre desde la recepción. Si quiere alinearlo con la validación manual, legal redacta la versión siguiente de términos y envíos, con el mismo tope de P33 bis. |
 | LEG-128 | Informativa | Textos publicados del envío gratis | Ver «Verificación letra por letra». | — | **Conforme**, salvo LEG-120 a LEG-123. |
 
 ### Desviaciones confirmadas (LEG-126)
@@ -105,7 +115,65 @@ Solo textos. La lógica no cambia.
 - El mensaje con comuna y todos los campos llenos no pasa de 2.000 caracteres.
 - `rg -n "Envío gratis en Bucaramanga|Domicilio gratis|envío gratis a todo|Entrega el mismo día" src out` sin resultados.
 
+## Estado v0.2 (2026-11-09)
+
+| # | Estado |
+|---|---|
+| LEG-118 | **Resuelto en el texto.** El numeral 13 (nota E de envíos) cuenta el plazo, con Bre-B, desde la validación manual: el mismo día hábil si el pago llega en horario de atención, el día hábil siguiente si no (P33 bis, aceptada). El inicio del plazo ya no queda a voluntad de la tienda (Ley 1480, arts. 42 y 43: VERIFICAR). **Condición:** falta el horario de atención (D-24). El borrador lleva el marcador `{horario de atención}` y el control de publicación rechaza marcadores entre llaves, así que la promoción no puede encenderse sin el dato. |
+| LEG-125 | **Baja de Alta a Media.** P35: el dueño reconstruye y despliega. Riesgo residual: entre la orden de apagar y el despliegue, el sitio sigue mostrando la promoción. Lo cubre el criterio «si tu pedido ya decía envío gratis» (numeral 13 y aviso). Se cierra cuando esté construido el estado «terminada» (entrega v0.2, punto 1) y QA lo verifique. |
+| LEG-127 | **Textos cerrados** para P34 b (microcopy v1.5 §8.6.1): clave `envio_gratis_terminada`, estado «terminada», aviso en los mismos lugares durante al menos 30 días y aviso en redes. La viñeta «Vigencia» del numeral 13 ya prevé la terminación y no cambia el día del fin. **Falta el código** (entrega v0.2). |
+| LEG-129 | Nuevo. Informativo para el dueño; sin cambio de texto. |
+| LEG-120 a LEG-123 | Implementados por el desarrollador (`ead557d`); pendientes de verificación de QA. |
+
+**Dictamen v0.2.**
+- **Implementación:** Conforme con observaciones.
+- **Encender la promoción: No conforme** mientras falte alguna de estas condiciones:
+  - los documentos versión 2 publicados el mismo día (LEG-106);
+  - el horario de atención (D-24), escrito en el numeral 13;
+  - D-19 (mensajero: 1 día hábil con cualquier peso);
+  - D-21 (fecha de inicio);
+  - el estado «terminada» construido y verificado (LEG-125 y LEG-127).
+- Con todo eso: **Conforme con observaciones**.
+- **Lanzamiento:** No conforme, sin cambio (LEG-024/066).
+
+**Decisiones del cliente.** No queda ninguna abierta sobre el envío gratis: P33, P33 bis, P34 y P35 están cerradas. Solo faltan datos: D-24 (horario de atención), D-19, D-21, D-22 y D-23.
+
+## Entrega para desarrollador-fullstack (v0.2, final)
+
+Sustituye el punto 6 de la entrega v0.1. Los puntos 1 a 5 de la v0.1 ya están implementados (`ead557d`).
+
+1. **Terminación inmediata (P34 b; microcopy v1.5 §8.6.1).**
+   - Clave nueva y opcional en `data/config.csv`: `envio_gratis_terminada` (fecha ISO). Es el día en que el dueño apaga la promoción y despliega.
+   - Con esa clave, la promoción **no rige** desde ese build, aunque `envio_gratis_desde` siga llena. Se recomienda dejar `envio_gratis_desde` llena: la usa el aviso.
+   - `npm run datos` **falla** en tres casos:
+     - si `envio_gratis_terminada` es posterior a la fecha del build (no hay aviso previo en P34 b);
+     - si es anterior a `envio_gratis_desde`;
+     - si está llena y `envio_gratis_desde` está vacía.
+2. **Retirar `envio_gratis_hasta`** del uso:
+   - Si el dueño la llena, `npm run datos` falla con un mensaje que remita a `envio_gratis_terminada` (P34 b).
+   - El aviso de «vence en 7 días» (QA-010) queda sin objeto y se retira.
+   - Actualizar `data/LEEME.md` y `docs/ENVIOS.md`: solo la redacción de la clave; los documentos de producto los edita quien tenga autorización.
+3. **Estado «terminada»**, mientras `hoy ≤ envio_gratis_terminada + 30 días` (se evalúa en el build):
+   - Sin campo «Comuna», sin $0 y sin los textos de §8.5 con la promoción: vuelven los de hoy. Es decir, el cálculo y el mensaje son los normales.
+   - **Portada** (bajo «Cómo pedir») **y cajón**, en el lugar del anuncio y con el mismo tamaño de letra: `El envío gratis en siete comunas de Bucaramanga terminó el {fechaEnLetras(envio_gratis_terminada)}. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.` + ` ` + enlace `Ver condiciones` a `/envios/#envio-gratis`.
+   - **`/envios/`, sección `id="envio-gratis"`**: título `Envío gratis en comunas de Bucaramanga`; primer párrafo, el mismo texto del aviso; luego `Estas fueron sus condiciones:` y el numeral 13 publicado, letra por letra. Sin la lista visual de comunas y sin la nota de la fila Bucaramanga.
+   - Pasados los 30 días: sin aviso en portada ni cajón. La sección de `/envios/` se mantiene mientras el numeral 13 siga publicado.
+4. **Control de publicación.** El numeral 13 ya trae el marcador `{horario de atención}`. Cuando legal publique la versión 2 con el horario real, `revisarPublicacionEnvioGratis` debe seguir rechazando cualquier llave (ya lo hace): no hace falta cambiar código.
+5. **Pruebas.**
+   - Estado «terminada» con `terminada` = hoy, hoy − 30 y hoy − 31.
+   - Fallos de `npm run datos` de los puntos 1 y 2.
+   - El mensaje y el cálculo sin envío gratis en estado «terminada».
+6. **Sin cambios** en los textos del resumen, el mensaje ni el campo. El tope de P33 bis vive solo en el numeral 13 (documento).
+
+**Para `disenador-marca`:** el aviso de terminación ocupa el lugar y el estilo del anuncio (§8.6), sin caja nueva ni color de alerta.
+
+**Para `qa-pruebas`:**
+- Los puntos 1 a 5 de esta entrega.
+- Confirmar que con `envio_gratis_terminada` la palabra «gratis» solo aparece en el aviso y en la sección de `/envios/`.
+- Verificar LEG-120 a LEG-123 (`ead557d`).
+
 ## Normas marcadas VERIFICAR
 
+- Ley 1480 de 2011, arts. 42 y 43 (plazo cuyo inicio depende del proveedor; LEG-118).
 - Ley 1480 de 2011, arts. 23, 29, 33 (inc. 2 y 3) y 34 (leídos en compilación no oficial; letra oficial en SUIN-Juriscol pendiente).
 - Ley 1581 de 2012, art. 4 lit. b, y Decreto 1377 de 2013, art. 4 (recolección limitada), con su numeración en el Decreto 1074 de 2015.

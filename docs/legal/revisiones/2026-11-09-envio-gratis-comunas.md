@@ -38,6 +38,8 @@ Sigue a `2026-11-06-qa-diseno-paquete-v1.md` (LEG-101 a LEG-105).
 | LEG-116 | Baja | Metadatos, Open Graph, JSON-LD | Riesgo de declarar `shippingRate: 0` o «Envío gratis» en `description`. | Afirmación general que no corresponde a la mayoría de los destinos (arts. 29 y 30). | No declarar el envío gratis en JSON-LD (`OfferShippingDetails`) ni en metadatos. |
 | LEG-117 | Informativa | Costo del domiciliario y contraentrega | ¿Quién paga al mensajero? | «Gratis» exige que el cliente no pague nada por el envío, tampoco al mensajero ni como comisión de recaudo (arts. 26 y 29; envíos §3 ya promete «sin recargos»). | Condiciones: «lo asumimos nosotros; no le pagas nada al mensajero por el envío; si pagas contraentrega, solo pagas el valor de los cafés». El dueño confirma que así opera con el domiciliario y con DiDi (P32). |
 
+**Nota posterior (2026-11-09).** LEG-118 queda resuelto en el texto con P33 bis (validación manual del pago Bre-B, el mismo día hábil si llega en horario de atención y el siguiente si no; falta el horario, D-24). La vigencia se cierra con P34 = b (terminación inmediata). Detalle en `2026-11-09-verificacion-envio-gratis.md` v0.2 (LEG-120 a LEG-129).
+
 ## Estado de hallazgos anteriores
 
 Sin cambios. LEG-024/066 sigue **Bloqueante, abierto, riesgo aceptado por el dueño**. LEG-101 a LEG-105, según `2026-11-06-qa-diseno-paquete-v1.md`.
