@@ -81,12 +81,14 @@ export function TotalesPedido({
 
         {envio?.tipo === "gratis" && destino && (
           // Rejilla: rótulo | «Envío gratis» $0 en la primera fila; la nota y el plazo a todo el ancho debajo (a 360 px no caben en una columna).
-          <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-4" data-testid="linea-envio">
+          // pt-1: la etiqueta (26 px) sobresale de la línea de 20 px del rótulo; sin él roza la leyenda de IVA de arriba.
+          <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 pt-1" data-testid="linea-envio">
             <dt>
               Envío a {nombreDestino(destino.municipio)} <span className="text-ink-muted">· zona {envio.zona} · {envio.comuna}</span>
             </dt>
-            {/* «$0, no precio tachado» (diseño §2); la etiqueta va junto al valor (microcopy §8.3), en contorno y sin hover. */}
-            <dd className="flex flex-wrap items-center justify-end gap-2 self-start">
+            {/* «$0, no precio tachado» (diseño §2); la etiqueta va junto al valor (microcopy §8.3), en contorno y sin hover.
+                items-baseline (no items-center ni self-start): «Envío gratis» y «$0» comparten la línea base de «Envío a …». */}
+            <dd className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-1">
               <span className="ds-tag ds-tag--outline !border-monte-900 !font-bold !text-ink-title" data-testid="etiqueta-envio-gratis">{TEXTOS_ENVIO_GRATIS.etiqueta}</span>
               <span className="whitespace-nowrap font-bold tabular-nums text-ink-title">{formatearCOP(0)}</span>
             </dd>

@@ -125,7 +125,7 @@ export default async function PaginaEnvios() {
                 <div key={i}>
                   <p className="body mt-2 max-w-2xl text-ink-muted">{b.texto}</p>
                   {i === 0 && (
-                    <ul className="body mt-4 grid gap-x-6 gap-y-1 rounded-lg border border-line bg-surface px-5 py-4 text-ink sm:grid-cols-2 md:grid-cols-3" aria-label="Comunas con envío gratis" data-testid="lista-comunas">
+                    <ul className="body mt-4 grid max-w-2xl gap-x-6 gap-y-1 rounded-lg border border-line bg-surface px-5 py-4 text-ink sm:grid-cols-2 md:grid-cols-3" aria-label="Comunas con envío gratis" data-testid="lista-comunas">
                       {comunasAlfabeticas(promo).map((c) => <li key={c}>{c}</li>)}
                     </ul>
                   )}
