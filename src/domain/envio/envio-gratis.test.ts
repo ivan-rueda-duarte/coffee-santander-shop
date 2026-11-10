@@ -12,6 +12,7 @@ import {
   comunasAlfabeticas,
   DIAS_AVISO_FIN_PROMOCION,
   ENLACE_PLAZO_ZONA1,
+  lineaPromocionNoVigente,
   lineaVerificacionMensaje,
   notaVerificacionResumen,
   OPCION_OTRA_COMUNA,
@@ -195,5 +196,24 @@ describe("aviso de fin de la promoción en npm run datos (LEG-125)", () => {
   it("recuerda que falta el estado «terminada» (LEG-127)", () => {
     expect(avisoFinPromocion(conFin("2026-11-08"), "2026-11-09")).toContain("«terminada»");
     expect(avisoFinPromocion(conFin("2026-11-12"), "2026-11-09")).toContain("«terminada»");
+  });
+});
+
+describe("línea de npm run datos con la promoción fuera de vigencia (QA-010)", () => {
+  const promo = (desde: string, hasta: string | null) => ({ ...PROMO, desde, hasta });
+  it("sin promoción o vigente: null", () => {
+    expect(lineaPromocionNoVigente(null, "2026-11-09")).toBeNull();
+    expect(lineaPromocionNoVigente(promo("2026-11-06", "2026-11-09"), "2026-11-09")).toBeNull();
+    expect(lineaPromocionNoVigente(promo("2026-11-09", null), "2026-11-09")).toBeNull();
+  });
+  it("programada (inicio futuro): pide reconstruir el día de inicio", () => {
+    const linea = lineaPromocionNoVigente(promo("2026-11-12", "2026-11-30"), "2026-11-09");
+    expect(linea).toBe("Envío gratis por comunas: programada, no rige hoy (2026-11-09); vigencia 2026-11-12 a 2026-11-30. No aparece en el sitio; hay que reconstruir y desplegar el 2026-11-12 para que aparezca.");
+    expect(lineaPromocionNoVigente(promo("2026-11-12", null), "2026-11-09")).toContain("vigencia 2026-11-12 a sin fecha final");
+  });
+  it("vencida (fecha final pasada): dice que terminó y no habla de empezar", () => {
+    const linea = lineaPromocionNoVigente(promo("2026-11-06", "2026-11-08"), "2026-11-09");
+    expect(linea).toBe("Envío gratis por comunas: vencida, no rige hoy (2026-11-09); vigencia 2026-11-06 a 2026-11-08. No aparece en el sitio construido hoy.");
+    expect(linea).not.toMatch(/empieza|programada/);
   });
 });

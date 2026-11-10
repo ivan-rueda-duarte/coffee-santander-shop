@@ -95,6 +95,19 @@ export function promocionVigente(p: PromocionEnvioGratis | null, hoy: string): b
   return p !== null && p.desde <= hoy && (p.hasta === null || hoy <= p.hasta);
 }
 
+/**
+ * Línea de `npm run datos` cuando la promoción existe pero no rige `hoy` (QA-010): distingue
+ * «programada» (`desde` en el futuro) de «vencida» (`hasta` ya pasó). null si rige o no existe.
+ */
+export function lineaPromocionNoVigente(p: PromocionEnvioGratis | null, hoy: string): string | null {
+  if (!p || promocionVigente(p, hoy)) return null;
+  const vigencia = `vigencia ${p.desde} a ${p.hasta ?? "sin fecha final"}`;
+  if (hoy < p.desde) {
+    return `Envío gratis por comunas: programada, no rige hoy (${hoy}); ${vigencia}. No aparece en el sitio; hay que reconstruir y desplegar el ${p.desde} para que aparezca.`;
+  }
+  return `Envío gratis por comunas: vencida, no rige hoy (${hoy}); ${vigencia}. No aparece en el sitio construido hoy.`;
+}
+
 /** La promoción si rige `hoy`; null si no (apagada, programada o vencida). */
 export function promocionActiva(p: PromocionEnvioGratis | null, hoy: string): PromocionEnvioGratis | null {
   return promocionVigente(p, hoy) ? p : null;
