@@ -391,7 +391,9 @@ test.describe("ficha del café (microcopy §3)", () => {
 test("/envios/: frase de plazos exacta, metadatos, enlace final y sin textos retirados", async ({ page }) => {
   await page.goto("/envios/");
   await expect(page.getByText("El estimado es lo que suele tardar. El máximo es el plazo que nos comprometemos a cumplir. Los dos se cuentan en días hábiles desde que aceptas el total en el chat y, si pagas por transferencia Bre-B, desde que recibimos el pago. Si no entregamos en el máximo, puedes cancelar y te devolvemos todo en 15 días calendario.", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("leyenda-iva")).toHaveText("Tarifas en pesos colombianos, con IVA del 5 % incluido. Más de 5 kg, en cualquier zona, se cotiza aparte. Nunca cobramos primero y ajustamos después.");
+  // Con el build de prueba del envío gratis (ENVIO_GRATIS_PRUEBA=si), microcopy §8.5 agrega la salvedad de las comunas.
+  const salvedad = leerConfig("envio_gratis_desde") && process.env.ENVIO_GRATIS_PRUEBA === "si" ? " Salvo en las siete comunas de Bucaramanga con envío gratis." : "";
+  await expect(page.getByTestId("leyenda-iva")).toHaveText(`Tarifas en pesos colombianos, con IVA del 5 % incluido. Más de 5 kg, en cualquier zona, se cotiza aparte.${salvedad} Nunca cobramos primero y ajustamos después.`);
   await expect(page.getByTestId("retracto-envios")).toHaveText(`${AVISO_RETRACTO} Más en envíos, devoluciones, retracto y garantía.`);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", "Cómo calculamos el envío de tu pedido: zonas, tarifas por peso con IVA incluido y plazos de entrega desde Bucaramanga.");
   await expect(page.getByRole("link", { name: "Lee la política completa de envíos, devoluciones, retracto y garantía." })).toHaveAttribute("href", "/legal/envios-devoluciones/");
