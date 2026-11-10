@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { OPCION_OTRA_COMUNA } from "../envio/envio-gratis";
+import { PROMOCION_PRUEBA } from "../pruebas/fixtures";
 import { crearEsquemaEnvio, DOCUMENTO_OBLIGATORIO, errorCodigoPostal, errorDocumento, esquemaConsentimientos, formatearCelular, normalizarCelular, normalizarDocumento, validar } from "./envio";
 
 const PAGOS = ["Efectivo contraentrega", "Transferencia Bre-B"] as const;
@@ -201,5 +203,24 @@ describe("consentimientos", () => {
     const r = validar(esquemaConsentimientos, { autorizacionDatos: false, aceptaTerminos: false });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(Object.keys(r.errores).sort()).toEqual(["aceptaTerminos", "autorizacionDatos"]);
+  });
+});
+
+describe("comuna (envío gratis, microcopy §8.2)", () => {
+  const conPromo = crearEsquemaEnvio(PAGOS, CODIGOS, { envioGratis: PROMOCION_PRUEBA });
+  const comunaDe = (entrada: Record<string, unknown>, e = conPromo) => {
+    const r = validar(e, { ...valido, ...entrada });
+    if (!r.ok) throw new Error(JSON.stringify(r.errores));
+    return r.datos.comuna;
+  };
+  it("conserva una comuna de la lista con Bucaramanga, con el nombre del dato", () => {
+    expect(comunaDe({ departamento: "Santander", municipio: "Bucaramanga", comuna: "la concordia" })).toBe("La Concordia");
+  });
+  it("«Otra comuna o no la sé», vacío o un valor fuera de la lista quedan sin comuna y no son error", () => {
+    for (const comuna of [OPCION_OTRA_COMUNA, "", "Provenza", undefined]) expect(comunaDe({ departamento: "Santander", municipio: "Bucaramanga", comuna })).toBeUndefined();
+  });
+  it("otro municipio o la promoción apagada descartan la comuna", () => {
+    expect(comunaDe({ departamento: "Santander", municipio: "Floridablanca", comuna: "Centro" })).toBeUndefined();
+    expect(comunaDe({ departamento: "Santander", municipio: "Bucaramanga", comuna: "Centro" }, esquema)).toBeUndefined();
   });
 });

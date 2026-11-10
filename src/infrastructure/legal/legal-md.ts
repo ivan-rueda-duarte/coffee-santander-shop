@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ContenidoLegal, ContenidoRepositorio } from "@/application/puertos";
+import { numeralEnvioGratis, numeralEnvioGratisBorrador, revisarPublicacionEnvioGratis, type RevisionPublicacion } from "@/domain/legal/envio-gratis";
 import { parsearTextoLegal, problemasTextoLegal, type RotuloLegal } from "@/domain/legal/texto-legal";
+import type { PromocionEnvioGratis } from "@/domain/envio/tipos";
+import type { BloqueEstructurado } from "@/domain/marca/reglas-texto";
 import type { VersionesLegales } from "@/domain/pedido/tienda";
 import { ErrorDatos } from "../csv/lector";
 
@@ -68,4 +71,39 @@ export function conRespaldoLegal(interno: ContenidoRepositorio, respaldo: (secci
     slugs: () => interno.slugs(),
     legal: async (seccion) => (await interno.legal(seccion)) ?? respaldo(seccion),
   };
+}
+
+/** Texto público (bloques) de una sección de docs/legal/. Vacío si el documento no existe. */
+function bloquesPublicados(leer: LeerDocumento, seccion: keyof typeof DOCUMENTOS_LEGALES): BloqueEstructurado[] {
+  try {
+    return parsearTextoLegal(leer(DOCUMENTOS_LEGALES[seccion].archivo)).bloques;
+  } catch {
+    return [];
+  }
+}
+
+/** Control de publicación del envío gratis (LEG-106) con los documentos de docs/legal/. */
+export function revisarEnvioGratisEnDocs(leer: LeerDocumento, promo: PromocionEnvioGratis, legal: VersionesLegales): RevisionPublicacion {
+  return revisarPublicacionEnvioGratis(promo, legal, {
+    envios: bloquesPublicados(leer, "envios-devoluciones"),
+    terminos: bloquesPublicados(leer, "terminos"),
+    politica: bloquesPublicados(leer, "privacidad"),
+  });
+}
+
+/**
+ * Condiciones del envío gratis para /envios/ (microcopy §8.5). Salen del texto publicado de «Envíos, devoluciones,
+ * retracto y garantía» (`publicado`, el mismo que sirve /legal/envios-devoluciones/). Sin el numeral, lanza
+ * ErrorDatos: la promoción no se publica sin sus condiciones (LEG-106, art. 33 de la Ley 1480). Solo en un build
+ * de prueba (`borrador = true`) se usa el borrador de la nota E.
+ */
+export function condicionesEnvioGratis(publicado: readonly BloqueEstructurado[], leer: LeerDocumento, promo: PromocionEnvioGratis, borrador: boolean): BloqueEstructurado[] {
+  const numeral = numeralEnvioGratis(publicado);
+  if (numeral) return numeral;
+  const archivo = DOCUMENTOS_LEGALES["envios-devoluciones"].archivo;
+  if (borrador) {
+    const deBorrador = numeralEnvioGratisBorrador(leer(archivo), promo.desde);
+    if (deBorrador) return deBorrador;
+  }
+  throw new ErrorDatos([`${CARPETA_LEGAL}/${archivo}: el texto publicado no tiene el numeral «Envío gratis en comunas de Bucaramanga» y config.csv enciende el envío gratis (envio_gratis_desde). Legal publica la versión 2 ese mismo día (LEG-106).`]);
 }

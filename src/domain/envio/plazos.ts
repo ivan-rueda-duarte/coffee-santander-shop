@@ -1,3 +1,4 @@
+import { TEXTOS_ENVIO_GRATIS } from "./envio-gratis";
 import { ZONA_ESPECIAL, type PlazoEnvio, type ResultadoEnvio, type Zona } from "./tipos";
 
 // Plazos de entrega por zona (data/plazos_envio.csv; docs/legal/microcopy-legal.md §5.6 y §5.8).
@@ -12,9 +13,11 @@ export function plazoDeZona(plazos: readonly PlazoEnvio[], zona: Zona): PlazoEnv
 
 /**
  * Línea bajo el envío en el resumen y en el paso de envío (§5.6). Con tarifa usa la zona del destino;
- * por cotizar (zona 5 o más de 5 kg) usa el estimado de la zona 5 y el máximo «al cotizar».
+ * por cotizar (zona 5 o más de 5 kg) usa el estimado de la zona 5 y el máximo «al cotizar». Con envío gratis,
+ * el plazo propio de la promoción con cualquier peso (§8.3), que no depende de data/plazos_envio.csv.
  */
 export function textoPlazoResumen(plazos: readonly PlazoEnvio[], envio: ResultadoEnvio): string | null {
+  if (envio.tipo === "gratis") return TEXTOS_ENVIO_GRATIS.plazoResumen;
   if (envio.tipo === "tarifa") {
     const p = plazoDeZona(plazos, envio.zona);
     return p && p.maximo !== null ? `Entrega estimada: ${p.estimado}. Plazo máximo: ${p.maximo}.` : null;

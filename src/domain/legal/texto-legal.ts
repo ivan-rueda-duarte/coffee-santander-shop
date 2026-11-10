@@ -39,7 +39,7 @@ export function lineasTextoConsumidor(md: string): string[] {
 }
 
 /** Una línea de Markdown sencillo → bloque. Solo subtítulos (###), listas (- / 1.) y párrafos. */
-function bloqueDeLinea(linea: string): BloqueEstructurado | null {
+export function bloqueDeLinea(linea: string): BloqueEstructurado | null {
   if (!linea) return null;
   if (linea.startsWith("### ")) return { tipo: "titulo", texto: linea.slice(4).trim() };
   if (linea.startsWith("- ")) return { tipo: "item", texto: linea.slice(2).trim(), numerada: false };

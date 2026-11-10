@@ -1,6 +1,6 @@
 import { perfilesDeNotas } from "../catalogo/perfiles";
 import type { Cafe, Provincia } from "../catalogo/tipos";
-import type { ReglasEnvio } from "../envio/tipos";
+import type { PromocionEnvioGratis, ReglasEnvio } from "../envio/tipos";
 
 // Datos de prueba: los cinco cafés de la v1. Solo para tests.
 
@@ -157,7 +157,23 @@ export const REGLAS_ENVIO_PRUEBA: ReglasEnvio = {
     { zona: 4, estimado: "2 a 6 días hábiles", maximo: "6 días hábiles" },
     { zona: 5, estimado: "5 a 12 días hábiles", maximo: null },
   ],
+  envioGratis: null,
 };
+
+/**
+ * Promoción de envío gratis de prueba (fixture): las siete comunas de la decisión del dueño, en el orden de los
+ * textos legales, con una fecha de inicio ficticia. La fecha real (D-21) no existe todavía.
+ */
+export const PROMOCION_PRUEBA: PromocionEnvioGratis = {
+  departamento: "Santander",
+  municipio: "Bucaramanga",
+  comunas: ["San Francisco", "Oriental", "Centro", "Cabecera del Llano", "La Concordia", "Ciudadela Real de Minas", "Mutis"],
+  desde: "2026-01-01",
+  hasta: null,
+};
+
+/** Reglas de prueba con la promoción encendida. */
+export const REGLAS_CON_PROMOCION: ReglasEnvio = { ...REGLAS_ENVIO_PRUEBA, envioGratis: PROMOCION_PRUEBA };
 
 /** Datos de prueba del vendedor y de las versiones legales (mismos valores que data/config.csv). */
 export const VENDEDOR_PRUEBA = {

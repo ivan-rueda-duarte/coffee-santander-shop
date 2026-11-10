@@ -26,6 +26,10 @@ describe("leyendas de IVA (microcopy §1.4)", () => {
     expect(notaIvaSubtotal(5)).toBe(" (IVA del 5 % incluido)");
     expect(leyendaIvaPie(5)).toBe("Precios en pesos colombianos, con IVA del 5 % incluido.");
     expect(leyendaIvaTarifas(5)).toBe("Tarifas en pesos colombianos, con IVA del 5 % incluido. Más de 5 kg, en cualquier zona, se cotiza aparte. Nunca cobramos primero y ajustamos después.");
+    // Con el envío gratis por comunas vigente (microcopy §8.5).
+    expect(leyendaIvaTarifas(5, " Salvo en las siete comunas de Bucaramanga con envío gratis.")).toBe(
+      "Tarifas en pesos colombianos, con IVA del 5 % incluido. Más de 5 kg, en cualquier zona, se cotiza aparte. Salvo en las siete comunas de Bucaramanga con envío gratis. Nunca cobramos primero y ajustamos después.",
+    );
   });
   it("sin tarifa usa la alternativa prudente (LEG-082) y nunca dice «sin IVA»", () => {
     const textos = [leyendaIva(null), notaIvaSubtotal(null), leyendaIvaPie(null), leyendaIvaTarifas(null)];

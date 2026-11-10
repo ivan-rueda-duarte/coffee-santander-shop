@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { construirEnlace, construirMensaje, formatearWhatsapp, lineaConstancia, LIMITE_MENSAJE, type PedidoMensaje } from "./mensaje-whatsapp";
 import type { DatosEnvio } from "./envio";
 import type { ResultadoEnvio } from "../envio/tipos";
+import { calcularEnvio } from "../envio/envio";
+import { REGLAS_CON_PROMOCION } from "../pruebas/fixtures";
 
 const envio: DatosEnvio = {
   nombre: "Ana Rueda",
@@ -14,6 +16,7 @@ const envio: DatosEnvio = {
   codigoPostal: undefined,
   direccion: "Calle 45 # 12-30",
   barrio: "Cabecera",
+  comuna: undefined,
   indicaciones: "Dejar en portería",
   formaPago: "Transferencia Bre-B",
 };
@@ -202,5 +205,56 @@ describe("formatearWhatsapp", () => {
   it("da formato a números colombianos", () => {
     expect(formatearWhatsapp("573001129874")).toBe("+57 300 112 9874");
     expect(formatearWhatsapp("14155550123")).toBe("+14155550123");
+  });
+});
+
+describe("construirMensaje con envío gratis por comuna (microcopy §8.4)", () => {
+  const enMutis = { ...envio, comuna: "Mutis" };
+  const gratis = (kg: number) => calcularEnvio([{ gramos: 500, cantidad: kg * 2 }], enMutis, REGLAS_CON_PROMOCION);
+
+  it("hasta 5 kg: $0, plazo de la promoción, comuna y tarifa alternativa antes de la constancia", () => {
+    const { texto } = construirMensaje({ ...pedido, costoEnvio: gratis(2), envio: enMutis });
+    expect(texto).toMatchInlineSnapshot(`
+      "¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.
+
+      • Café Barichara (Guanentá) — Grano entero — 500 g × 2 = $100.000
+      • Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000
+
+      Subtotal de productos: $125.000 (IVA del 5 % incluido)
+      Envío (Bucaramanga · zona 1 · Mutis): $0 (envío gratis, sujeto a verificar la dirección)
+      Total: $125.000
+      Plazo de entrega: máximo 1 día hábil desde que validen mi pedido y me den el aprobado por el chat.
+
+      Envío a:
+      Nombre: Ana Rueda
+      Celular: 300 123 4567
+      Ciudad: Bucaramanga, Santander
+      Dirección: Calle 45 # 12-30 · Barrio: Cabecera
+      Comuna: Mutis
+      Indicaciones: Dejar en portería
+      Forma de pago: Transferencia Bre-B
+
+      Si mi dirección no está en esa comuna, el envío es de $11.600 y el total queda en $136.600; espero su confirmación.
+
+      Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026."
+    `);
+  });
+  it.each([6, 10, 30])("con %i kg: $0 y «Total», nunca por cotizar, con la línea de más de 5 kg", (kg) => {
+    const { texto } = construirMensaje({ ...pedido, costoEnvio: gratis(kg), envio: enMutis });
+    expect(texto).toContain("Envío (Bucaramanga · zona 1 · Mutis): $0 (envío gratis, sujeto a verificar la dirección)\nTotal: $125.000\nPlazo de entrega: máximo 1 día hábil desde que validen mi pedido y me den el aprobado por el chat.");
+    expect(texto).not.toMatch(/POR COTIZAR|Total sin envío|5 a 12/);
+    expect(texto).toContain(`Forma de pago: Transferencia Bre-B\n\nSi mi dirección no está en esa comuna, quedo atento al valor del envío para confirmar mi pedido.\n\n${CONSTANCIA}`);
+  });
+  it("sin envío gratis no lleva «Comuna:» aunque el dato venga", () => {
+    const { texto } = construirMensaje({ ...pedido, envio: enMutis });
+    expect(texto).not.toContain("Comuna:");
+  });
+  it("con todos los campos llenos y la comuna más larga cabe en 2.000 caracteres", () => {
+    const lleno = { ...envio, comuna: "Ciudadela Real de Minas", nombre: "N".repeat(80), correo: `${"c".repeat(100)}@correo.co`, tipoDocumento: "PAS" as const, numeroDocumento: "A".repeat(20), codigoPostal: "680001", direccion: "D".repeat(120), barrio: "B".repeat(60), indicaciones: "I".repeat(300) };
+    const costoEnvio = calcularEnvio([{ gramos: 500, cantidad: 4 }], lleno, REGLAS_CON_PROMOCION);
+    const r = construirMensaje({ ...pedido, costoEnvio, envio: lleno });
+    expect(r.texto.length).toBeLessThan(LIMITE_MENSAJE);
+    expect(r.indicacionesResumidas).toBe(false);
+    expect(r.texto).toContain("Comuna: Ciudadela Real de Minas");
   });
 });

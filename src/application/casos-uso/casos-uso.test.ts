@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Catalogo } from "@/domain/catalogo/catalogo";
 import { buscarCafe, crearBuscadorDePrecios, provinciasConCafes, provinciasProximas } from "@/domain/catalogo/catalogo";
-import { crearCafe, CAFES_PRUEBA, LEGAL_PRUEBA, MALAGA, OIBA, PROVINCIAS_PRUEBA, REGLAS_ENVIO_PRUEBA, SAN_GIL, SOCORRO, VENDEDOR_PRUEBA } from "@/domain/pruebas/fixtures";
+import { crearCafe, CAFES_PRUEBA, LEGAL_PRUEBA, MALAGA, OIBA, PROVINCIAS_PRUEBA, REGLAS_CON_PROMOCION, REGLAS_ENVIO_PRUEBA, SAN_GIL, SOCORRO, VENDEDOR_PRUEBA } from "@/domain/pruebas/fixtures";
 import type { CatalogoRepositorio, ContenidoRepositorio } from "../puertos";
 import { obtenerCatalogo } from "./obtener-catalogo";
 import { obtenerFichaCafe } from "./obtener-ficha-cafe";
@@ -161,6 +161,24 @@ describe("prepararPedido", () => {
   it("de más de 5 kg va por cotizar aunque la zona tenga tarifa", () => {
     const r = preparar(catalogo, entrada({ lineas: [{ cafeSlug: SOCORRO.slug, gramos: 500, molienda: "grano", cantidad: 11 }] }));
     expect(r.ok && r.pedido.texto).toContain("Envío: POR COTIZAR (más de 5 kg)");
+  });
+  it("con envío gratis y una comuna de la lista: $0, «Comuna:» y la tarifa alternativa", () => {
+    const conPromo = { ...catalogo, envios: REGLAS_CON_PROMOCION };
+    const r = preparar(conPromo, entrada({ envio: { ...envioValido, comuna: "Centro" } }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.pedido.envio).toMatchObject({ tipo: "gratis", comuna: "Centro", alternativa: { tipo: "tarifa", valorCop: 11600 } });
+    expect(r.pedido.totalCop).toBe(125000);
+    expect(r.pedido.texto).toContain("Envío (Bucaramanga · zona 1 · Centro): $0 (envío gratis, sujeto a verificar la dirección)\nTotal: $125.000");
+    expect(r.pedido.texto).toContain("Comuna: Centro");
+    expect(r.pedido.texto).toContain("el envío es de $11.600 y el total queda en $136.600; espero su confirmación.");
+  });
+  it("con «Otra comuna o no la sé» o con la promoción apagada rige la tarifa normal y no hay «Comuna:»", () => {
+    for (const [cat, comuna] of [[{ ...catalogo, envios: REGLAS_CON_PROMOCION }, "otra"], [catalogo, "Centro"]] as const) {
+      const r = preparar(cat, entrada({ envio: { ...envioValido, comuna } }));
+      expect(r.ok && r.pedido.envio).toMatchObject({ tipo: "tarifa", valorCop: 11600 });
+      expect(r.ok && r.pedido.texto).not.toContain("Comuna:");
+    }
   });
   it("rechaza un pedido vacío", () => {
     const r = preparar(catalogo, entrada({ lineas: [] }));

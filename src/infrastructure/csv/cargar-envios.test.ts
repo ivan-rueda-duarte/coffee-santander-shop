@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Errores } from "./campos";
-import { cargarEnvios, type DatosDivipola } from "./cargar-envios";
+import { cargarEnvios, type DatosDivipola, type VigenciaEnvioGratis } from "./cargar-envios";
 import type { LeerArchivo } from "./tabla";
 
 const DIVIPOLA: DatosDivipola = {
@@ -106,5 +106,62 @@ describe("cargarEnvios", () => {
     expect(e.lista).toContain("tarifas_envio.csv: no se encontró el archivo en data/.");
     expect(e.lista).toContain("zonas_envio.csv: no se encontró el archivo en data/.");
     expect(e.lista).toContain("plazos_envio.csv: no se encontró el archivo en data/.");
+  });
+});
+
+const COMUNAS = `departamento,municipio,comuna,orden
+Santander,Bucaramanga,San Francisco,1
+Santander,Bucaramanga,Oriental,2
+Santander,Bucaramanga,Centro,3
+Santander,Bucaramanga,Cabecera del Llano,4
+Santander,Bucaramanga,La Concordia,5
+Santander,Bucaramanga,Ciudadela Real de Minas,6
+Santander,Bucaramanga,Mutis,7
+`;
+
+function conComunas(comunas: string | null, vigencia: VigenciaEnvioGratis) {
+  const leer: LeerArchivo = (n) => {
+    if (n === "tarifas_envio.csv") return TARIFAS;
+    if (n === "zonas_envio.csv") return ZONAS;
+    if (n === "plazos_envio.csv") return PLAZOS;
+    if (n === "comunas_envio_gratis.csv" && comunas !== null) return comunas;
+    throw new Error("no existe");
+  };
+  const e = new Errores();
+  const reglas = cargarEnvios(leer, e, DIVIPOLA, vigencia);
+  return { errores: e.lista, promo: reglas.envioGratis };
+}
+const APAGADA = { desde: null, hasta: null };
+const DESDE = { desde: "2026-12-01", hasta: null };
+
+describe("comunas_envio_gratis.csv", () => {
+  it("sin envio_gratis_desde la promoción queda apagada aunque haya comunas", () => {
+    expect(conComunas(COMUNAS, APAGADA)).toEqual({ errores: [], promo: null });
+    expect(conComunas(null, APAGADA)).toEqual({ errores: [], promo: null });
+  });
+  it("con fecha arma la promoción con las comunas en el orden del dato", () => {
+    expect(conComunas(COMUNAS, DESDE)).toEqual({
+      errores: [],
+      promo: { departamento: "Santander", municipio: "Bucaramanga", comunas: ["San Francisco", "Oriental", "Centro", "Cabecera del Llano", "La Concordia", "Ciudadela Real de Minas", "Mutis"], desde: "2026-12-01", hasta: null },
+    });
+    expect(conComunas(COMUNAS.replace("San Francisco,1", "San Francisco,8"), DESDE).promo?.comunas).toEqual(["Oriental", "Centro", "Cabecera del Llano", "La Concordia", "Ciudadela Real de Minas", "Mutis", "San Francisco"]);
+  });
+  it("con fecha y sin el archivo es un error", () => {
+    expect(conComunas(null, DESDE).errores).toEqual([expect.stringContaining("comunas_envio_gratis.csv: no se encontró el archivo")]);
+  });
+  it("exige siete comunas de Bucaramanga, sin repetir, porque los textos legales lo dicen", () => {
+    expect(conComunas(COMUNAS.replace("Santander,Bucaramanga,Mutis,7\n", ""), DESDE).errores).toEqual([expect.stringContaining("tiene 6 comunas")]);
+    expect(conComunas(COMUNAS.replace("Mutis,7", "centro,7"), DESDE).errores).toEqual([expect.stringContaining('"centro" ya aparece en la línea 4')]);
+    expect(conComunas(COMUNAS.replace("Mutis,7", "Mutis,3"), DESDE).errores).toEqual([expect.stringContaining('columna "orden": "3" ya aparece')]);
+    const giron = conComunas(COMUNAS.replaceAll("Bucaramanga", "Girón"), DESDE).errores;
+    expect(giron.some((m) => m.includes("los textos legales del envío gratis nombran Bucaramanga"))).toBe(true);
+    expect(giron.some((m) => m.includes("debe ser de zona 1"))).toBe(true);
+    expect(conComunas(COMUNAS.replace("Santander,Bucaramanga,Mutis", "Santander,Girón,Mutis"), DESDE).errores).toEqual([expect.stringContaining("todas las comunas deben ser del mismo municipio")]);
+    expect(conComunas(COMUNAS.replace("Santander,Bucaramanga,Mutis", "Santander,Rionegro,Mutis"), DESDE).errores.some((m) => m.includes('"Rionegro" no existe en Santander'))).toBe(true);
+    expect(conComunas(COMUNAS.replace("Mutis,7", '"Mutis|Centro",7'), DESDE).errores).toEqual([expect.stringContaining("una comuna por fila")]);
+  });
+  it("valida las fechas entre sí", () => {
+    expect(conComunas(COMUNAS, { desde: null, hasta: "2026-12-31" }).errores).toEqual([expect.stringContaining("envio_gratis_desde está vacía")]);
+    expect(conComunas(COMUNAS, { desde: "2026-12-01", hasta: "2026-11-30" }).errores).toEqual([expect.stringContaining("es anterior a envio_gratis_desde")]);
   });
 });

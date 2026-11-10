@@ -5,7 +5,9 @@ import { verificarContenido } from "../src/application/casos-uso/verificar-conte
 import { crearClienteSanity, RepositorioContenidoSanity } from "../src/infrastructure/sanity/contenido-sanity";
 import { ErrorDatos } from "../src/infrastructure/csv/lector";
 import { cargarCatalogoDesdeDisco } from "../src/infrastructure/csv/repositorio-catalogo-csv";
-import { DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, problemasDocsLegales } from "../src/infrastructure/legal/legal-md";
+import { DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, problemasDocsLegales, revisarEnvioGratisEnDocs } from "../src/infrastructure/legal/legal-md";
+import { hoyEnColombia, modoPruebaEnvioGratis } from "../src/infrastructure/entorno";
+import { promocionVigente } from "../src/domain/envio/envio-gratis";
 
 // Next lee .env.local solo; este script corre fuera de Next.
 for (const archivo of [".env.local", ".env"]) {
@@ -30,6 +32,24 @@ async function main() {
   const problemasLegales = problemasDocsLegales(leerDocsLegalesDesdeDisco(), catalogo.tienda.legal);
   if (problemasLegales.length) throw new ErrorDatos(problemasLegales);
   console.log(`Documentos legales publicables: ${Object.keys(DOCUMENTOS_LEGALES).length} (versión ${catalogo.tienda.legal.versionTerminos}, vigentes desde ${catalogo.tienda.legal.fechaTerminos}).`);
+
+  // Envío gratis por comunas (microcopy §8): no se enciende sin los documentos versión 2 publicados (LEG-106).
+  const promo = catalogo.envios.envioGratis;
+  const hoy = hoyEnColombia();
+  if (!promo) console.log("Envío gratis por comunas: apagado (envio_gratis_desde vacía en config.csv).");
+  else if (!promocionVigente(promo, hoy)) {
+    console.log(`Envío gratis por comunas: no rige hoy (${hoy}); vigencia ${promo.desde} a ${promo.hasta ?? "sin fecha final"}. No aparece en el sitio; si empieza después, hay que reconstruir ese día.`);
+  } else {
+    const prueba = modoPruebaEnvioGratis();
+    const revision = revisarEnvioGratisEnDocs(leerDocsLegalesDesdeDisco(), promo, catalogo.tienda.legal);
+    revision.avisos.forEach((a) => console.warn(`  - Aviso, envío gratis: ${a}`));
+    if (revision.errores.length && !prueba) throw new ErrorDatos(revision.errores.map((e) => `Envío gratis (envio_gratis_desde ${promo.desde}): ${e}`));
+    if (prueba) {
+      console.warn(`\nENVIO_GRATIS_PRUEBA=si: build de PRUEBA con el envío gratis encendido. No se despliega.${revision.errores.length ? " Sin este modo fallaría por:" : ""}`);
+      revision.errores.forEach((e) => console.warn(`  - ${e}`));
+    }
+    console.log(`Envío gratis por comunas: encendido desde ${promo.desde} en ${promo.comunas.length} comunas de ${promo.municipio}.`);
+  }
 
   const cliente = crearClienteSanity();
   if (!cliente) {

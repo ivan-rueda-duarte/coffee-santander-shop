@@ -1,0 +1,121 @@
+import { formatearCOP } from "../comun/dinero";
+import { normalizar } from "../comun/slug";
+import type { EnvioGratis, PromocionEnvioGratis, ResultadoEnvio } from "./tipos";
+
+// Envío gratis en siete comunas de Bucaramanga (decisiones del dueño del 2026-11-09; LEG-106 a LEG-119).
+// Los textos son los de docs/legal/microcopy-legal.md §8 (v1.3), letra por letra. Los nombres de las comunas
+// salen siempre del dato (data/comunas_envio_gratis.csv), nunca del código. «siete» y «Bucaramanga» están
+// escritos en los textos legales: `npm run datos` exige siete comunas de Bucaramanga para que sigan siendo ciertos.
+
+/** Número de comunas que nombran los textos legales («siete comunas de Bucaramanga»). */
+export const COMUNAS_EN_TEXTOS = 7;
+/** Municipio que nombran los textos legales. */
+export const MUNICIPIO_EN_TEXTOS = "Bucaramanga";
+
+/** Valor de la opción «Otra comuna o no la sé»: equivale a no elegir comuna (no se registra ninguna comuna fuera de la lista). */
+export const OPCION_OTRA_COMUNA = "otra";
+
+export const TEXTOS_ENVIO_GRATIS = {
+  /** §8.2 */
+  etiquetaCampo: "Comuna",
+  primeraOpcion: "Elige tu comuna",
+  otraComuna: "Otra comuna o no la sé",
+  enlaceCondiciones: "Condiciones",
+  /** §8.3: junto al valor «$0». */
+  etiqueta: "Envío gratis",
+  /** §8.3: plazo propio de la promoción, con cualquier peso (no sale de data/plazos_envio.csv). */
+  plazoResumen: "Entrega estimada: mismo día o siguiente día hábil. Plazo máximo: 1 día hábil desde que validamos tu pedido y te damos el aprobado por el chat.",
+  /** §8.4: bajo «Total:» en el mensaje. */
+  plazoMensaje: "Plazo de entrega: máximo 1 día hábil desde que validen mi pedido y me den el aprobado por el chat.",
+  /** §8.6: portada y cajón, seguido del enlace «Ver condiciones». */
+  anuncio: "Envío gratis en siete comunas de Bucaramanga.",
+  enlaceAnuncio: "Ver condiciones",
+  /** §8.5 */
+  tituloSeccion: "Envío gratis en comunas de Bucaramanga",
+  notaTabla: "Gratis en siete comunas, con cualquier peso (ver condiciones).",
+  salvedadTarifas: " Salvo en las siete comunas de Bucaramanga con envío gratis.",
+  plazoZona1: " Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso.",
+  plazoZona5: " No aplica a las siete comunas de Bucaramanga con envío gratis.",
+} as const;
+
+/** Ancla de las condiciones en /envios/. */
+export const ANCLA_ENVIO_GRATIS = "envio-gratis";
+
+/** La promoción rige si existe, ya empezó y no ha vencido (`hasta` es inclusive). `hoy` en ISO yyyy-mm-dd. */
+export function promocionVigente(p: PromocionEnvioGratis | null, hoy: string): boolean {
+  return p !== null && p.desde <= hoy && (p.hasta === null || hoy <= p.hasta);
+}
+
+/** La promoción si rige `hoy`; null si no (apagada, programada o vencida). */
+export function promocionActiva(p: PromocionEnvioGratis | null, hoy: string): PromocionEnvioGratis | null {
+  return promocionVigente(p, hoy) ? p : null;
+}
+
+/** Comunas en orden alfabético, para el selector (diseño §1). */
+export function comunasAlfabeticas(p: PromocionEnvioGratis): string[] {
+  return [...p.comunas].sort((a, b) => a.localeCompare(b, "es"));
+}
+
+/** ¿El campo «Comuna» aplica a este destino? Solo con el municipio de la promoción (sin importar tildes ni mayúsculas). */
+export function aplicaAlMunicipio(p: PromocionEnvioGratis | null, departamento: string, municipio: string): p is PromocionEnvioGratis {
+  return p !== null && normalizar(p.departamento) === normalizar(departamento) && normalizar(p.municipio) === normalizar(municipio);
+}
+
+/**
+ * Comuna cubierta del destino, con el nombre del dato, o null: sin promoción, otro municipio, sin comuna,
+ * «Otra comuna o no la sé» o un valor que no está en la lista.
+ */
+export function comunaCubierta(destino: { departamento: string; municipio: string; comuna?: string | null }, p: PromocionEnvioGratis | null): string | null {
+  if (!destino.comuna || !aplicaAlMunicipio(p, destino.departamento, destino.municipio)) return null;
+  const buscada = normalizar(destino.comuna);
+  return p.comunas.find((c) => normalizar(c) === buscada) ?? null;
+}
+
+/** «a, b o c»: así nombran las comunas las ayudas (§8.2). */
+export function unirConO(items: readonly string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} o ${items[items.length - 1]}`;
+}
+
+/** Ayuda del campo «Comuna» sin comuna de la lista (vacío u «Otra comuna o no la sé»), §8.2. Sigue el enlace « Condiciones». */
+export function ayudaCampoComuna(p: PromocionEnvioGratis): string {
+  return `Envío gratis si tu dirección está en ${unirConO(p.comunas)}. Si no eliges una de ellas, pagas la tarifa normal. Verificamos tu dirección por el chat antes de que aceptes el total.`;
+}
+
+/** Ayuda al elegir una comuna de la lista (reemplaza a la anterior), §8.2. Sigue el enlace « Condiciones». */
+export function ayudaComunaElegida(comuna: string): string {
+  return `Tu envío es gratis si tu dirección está en ${comuna}. Lo verificamos por el chat antes de que aceptes el total.`;
+}
+
+/**
+ * Nota bajo la línea de envío del resumen (§8.3), con la tarifa y el total alternativos (LEG-109).
+ * `subtotalCop` es el de los productos: con envío gratis, el total es el subtotal.
+ */
+export function notaVerificacionResumen(envio: EnvioGratis, subtotalCop: number): string {
+  const inicio = `Envío gratis en ${envio.comuna}, si verificamos por el chat que tu dirección está en esa comuna.`;
+  const a = envio.alternativa;
+  if (a.tipo === "tarifa") {
+    return `${inicio} Si no lo está, el envío es de ${formatearCOP(a.valorCop)} y el total queda en ${formatearCOP(subtotalCop + a.valorCop)}; tú decides si lo aceptas antes de pagar.`;
+  }
+  // La promoción solo cubre un municipio de zona 1 (lo exige `npm run datos`): la alternativa por cotizar es la de más de 5 kg.
+  return `${inicio} Si no lo está, el envío de más de 5 kg se cotiza: te informamos el valor por el chat y tú decides si lo aceptas antes de pagar.`;
+}
+
+/** Penúltima línea del mensaje de WhatsApp (§8.4), en el lugar de «Quedo atento al valor del envío…». */
+export function lineaVerificacionMensaje(envio: EnvioGratis, subtotalCop: number): string {
+  const a = envio.alternativa;
+  if (a.tipo === "tarifa") {
+    return `Si mi dirección no está en esa comuna, el envío es de ${formatearCOP(a.valorCop)} y el total queda en ${formatearCOP(subtotalCop + a.valorCop)}; espero su confirmación.`;
+  }
+  return "Si mi dirección no está en esa comuna, quedo atento al valor del envío para confirmar mi pedido.";
+}
+
+/**
+ * Frase de la región `role="status"` del paso Envío (diseño §2): una sola frase con el envío y el total,
+ * que solo se anuncia cuando cambia. La del envío gratis está pendiente de revisión de legal.
+ */
+export function anuncioEnvio(envio: ResultadoEnvio, subtotalCop: number): string {
+  if (envio.tipo === "gratis") return `Envío gratis en ${envio.comuna}: $0. Total: ${formatearCOP(subtotalCop)}.`;
+  if (envio.tipo === "por_cotizar") return `Envío por cotizar. Total sin envío: ${formatearCOP(subtotalCop)}.`;
+  return `Envío: ${formatearCOP(envio.valorCop)}. Total: ${formatearCOP(subtotalCop + envio.valorCop)}.`;
+}

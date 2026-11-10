@@ -15,7 +15,7 @@ import {
 import type { ConfigTienda, DatosVendedor } from "@/domain/pedido/tienda";
 import { Errores, LectorFila, verificarUnicos } from "./campos";
 import { ErrorDatos, type FilaCsv } from "./lector";
-import { cargarEnvios, type DatosDivipola } from "./cargar-envios";
+import { cargarEnvios, type DatosDivipola, type VigenciaEnvioGratis } from "./cargar-envios";
 import { tabla, type LeerArchivo } from "./tabla";
 import divipolaCrudo from "@/data/divipola.json";
 
@@ -217,10 +217,10 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
   verificarUnicos(ARCHIVO_CATALOGO, "slug", cCafe, errores);
 
   // ---------- config ----------
-  const tienda = leerConfig(leer, errores);
+  const { tienda, vigenciaEnvioGratis } = leerConfig(leer, errores);
 
-  // ---------- envíos (zonas y tarifas) ----------
-  const envios = cargarEnvios(leer, errores, divipola);
+  // ---------- envíos (zonas, tarifas, plazos y envío gratis por comunas) ----------
+  const envios = cargarEnvios(leer, errores, divipola, vigenciaEnvioGratis);
 
   if (errores.lista.length) throw new ErrorDatos(errores.lista);
   return {
@@ -235,9 +235,11 @@ const CLAVES_REQUERIDAS = [
   "version_terminos", "fecha_terminos", "version_politica_datos", "fecha_politica_datos",
 ] as const;
 const CLAVES_VENDEDOR = ["razon_social", "nit", "domicilio", "direccion_notificacion", "correo_contacto", "correo_notificacion", "matricula_mercantil", "representante_legal", "area_datos"] as const;
-const CLAVES_OPCIONALES = ["iva_tarifa", ...CLAVES_VENDEDOR] as const;
+/** Vacías = envío gratis por comunas apagado (decisión de legal: no se activa antes de publicar los documentos v2). */
+const CLAVES_ENVIO_GRATIS = ["envio_gratis_desde", "envio_gratis_hasta"] as const;
+const CLAVES_OPCIONALES = ["iva_tarifa", ...CLAVES_VENDEDOR, ...CLAVES_ENVIO_GRATIS] as const;
 
-function leerConfig(leer: LeerArchivo, errores: Errores): ConfigTienda | null {
+function leerConfig(leer: LeerArchivo, errores: Errores): { tienda: ConfigTienda | null; vigenciaEnvioGratis: VigenciaEnvioGratis } {
   const filas = tabla(leer, "config.csv", ["clave", "valor"], [], errores);
   const valores = new Map<string, { valor: string; fila: FilaCsv }>();
   const permitidas: readonly string[] = [...CLAVES_REQUERIDAS, ...CLAVES_OPCIONALES];
@@ -282,8 +284,12 @@ function leerConfig(leer: LeerArchivo, errores: Errores): ConfigTienda | null {
   const fechaPolitica = obtener("fecha_politica_datos")?.f.fecha("valor") ?? null;
   const iva = obtener("iva_tarifa");
   const ivaTarifa = iva ? iva.f.entero("valor", { min: 0, max: 100 }) : null;
+  const vigenciaEnvioGratis: VigenciaEnvioGratis = {
+    desde: obtener("envio_gratis_desde")?.f.fecha("valor") ?? null,
+    hasta: obtener("envio_gratis_hasta")?.f.fecha("valor") ?? null,
+  };
 
-  if (!nombre || !whatsapp || !ciudad || !nota || !pagos || maxCantidad === null || !versionTerminos || !versionPolitica || !fechaTerminos || !fechaPolitica) return null;
+  if (!nombre || !whatsapp || !ciudad || !nota || !pagos || maxCantidad === null || !versionTerminos || !versionPolitica || !fechaTerminos || !fechaPolitica) return { tienda: null, vigenciaEnvioGratis };
   const vendedor: DatosVendedor = {
     razonSocial: opcional("razon_social"),
     nit: opcional("nit"),
@@ -295,7 +301,7 @@ function leerConfig(leer: LeerArchivo, errores: Errores): ConfigTienda | null {
     representanteLegal: opcional("representante_legal"),
     areaDatos: opcional("area_datos"),
   };
-  return {
+  const tienda: ConfigTienda = {
     nombre: nombre.f.texto("valor"),
     whatsapp: numero,
     ciudadDespacho: ciudad.f.texto("valor"),
@@ -311,4 +317,5 @@ function leerConfig(leer: LeerArchivo, errores: Errores): ConfigTienda | null {
     },
     vendedor,
   };
+  return { tienda, vigenciaEnvioGratis };
 }

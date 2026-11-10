@@ -1,6 +1,7 @@
 import { formatearCOP } from "../comun/dinero";
 import { fechaEnLetras } from "../comun/fecha";
 import { nombreDestino, TEXTO_POR_COTIZAR, totalConEnvio } from "../envio/envio";
+import { lineaVerificacionMensaje, TEXTOS_ENVIO_GRATIS } from "../envio/envio-gratis";
 import type { ResultadoEnvio } from "../envio/tipos";
 import { ETIQUETA_MOLIENDA, type Molienda } from "../catalogo/tipos";
 import { formatearCelular, SIGLA_DOCUMENTO, type DatosEnvio } from "./envio";
@@ -43,13 +44,21 @@ function lineaDeProducto(l: LineaMensaje): string {
   return `• ${l.nombreCafe}${origen} — ${ETIQUETA_MOLIENDA[l.molienda]} — ${l.gramos} g × ${l.cantidad} = ${formatearCOP(l.totalCop)}`;
 }
 
-/** Líneas de subtotal, envío y total (microcopy §1.1, §1.2 y §1.4). */
+/** Líneas de subtotal, envío y total (microcopy §1.1, §1.2, §1.4 y, con envío gratis, §8.4). */
 function lineasDeTotales(p: PedidoMensaje): string[] {
   const c = p.costoEnvio;
   const { totalCop } = totalConEnvio(p.subtotalCop, c);
   const subtotal = `Subtotal de productos: ${formatearCOP(p.subtotalCop)}${notaIvaSubtotal(p.ivaTarifa)}`;
   if (c.tipo === "por_cotizar") {
     return [subtotal, `Envío: POR COTIZAR (${TEXTO_POR_COTIZAR[c.motivo]})`, `Total sin envío: ${formatearCOP(totalCop)}`];
+  }
+  if (c.tipo === "gratis") {
+    return [
+      subtotal,
+      `Envío (${nombreDestino(p.envio.municipio)} · zona ${c.zona} · ${c.comuna}): $0 (envío gratis, sujeto a verificar la dirección)`,
+      `Total: ${formatearCOP(totalCop)}`,
+      TEXTOS_ENVIO_GRATIS.plazoMensaje,
+    ];
   }
   return [subtotal, `Envío (${nombreDestino(p.envio.municipio)} · zona ${c.zona}): ${formatearCOP(c.valorCop)}`, `Total: ${formatearCOP(totalCop)}`];
 }
@@ -59,10 +68,21 @@ export function lineaConstancia(legal: PedidoMensaje["legal"]): string {
   return `Acepto los Términos y condiciones versión ${legal.versionTerminos} y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión ${legal.versionPoliticaDatos} del ${fechaEnLetras(legal.fechaPoliticaDatos)}.`;
 }
 
-/** Plantilla completa de microcopy §5.5 (sin número de solicitud: el sitio no numera pedidos). */
+/** Línea antes de la constancia: por cotizar (§1.2) o verificación de la comuna (§8.4). */
+function lineaAntesDeConstancia(p: PedidoMensaje): string | null {
+  const c = p.costoEnvio;
+  if (c.tipo === "por_cotizar") return "Quedo atento al valor del envío para confirmar mi pedido.";
+  if (c.tipo === "gratis") return lineaVerificacionMensaje(c, p.subtotalCop);
+  return null;
+}
+
+/** Plantilla completa de microcopy §5.5 (sin número de solicitud: el sitio no numera pedidos), con los cambios de §8.4. */
 function cuerpo(p: PedidoMensaje, indicaciones: string | undefined): string {
   const e = p.envio;
   const direccion = e.barrio ? `${e.direccion} · Barrio: ${e.barrio}` : e.direccion;
+  // «Comuna:» solo si eligió una comuna de la lista y el envío es gratis (§8.4).
+  const comuna = p.costoEnvio.tipo === "gratis" ? p.costoEnvio.comuna : null;
+  const antesDeConstancia = lineaAntesDeConstancia(p);
   return [
     `¡Hola, ${p.nombreTienda}! Envío mi solicitud de compra para que me confirmen el total con el envío.`,
     "",
@@ -78,9 +98,10 @@ function cuerpo(p: PedidoMensaje, indicaciones: string | undefined): string {
     `Ciudad: ${e.municipio}, ${e.departamento}`,
     ...(e.codigoPostal ? [`Código postal: ${e.codigoPostal}`] : []),
     `Dirección: ${direccion}`,
+    ...(comuna ? [`Comuna: ${comuna}`] : []),
     ...(indicaciones ? [`Indicaciones: ${indicaciones}`] : []),
     `Forma de pago: ${e.formaPago}`,
-    ...(p.costoEnvio.tipo === "por_cotizar" ? ["", "Quedo atento al valor del envío para confirmar mi pedido."] : []),
+    ...(antesDeConstancia ? ["", antesDeConstancia] : []),
     "",
     lineaConstancia(p.legal),
   ].join("\n");

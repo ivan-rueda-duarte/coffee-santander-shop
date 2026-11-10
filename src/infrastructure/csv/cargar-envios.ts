@@ -1,6 +1,8 @@
 import { normalizar, slugify } from "@/domain/comun/slug";
+import { resolverZona } from "@/domain/envio/envio";
+import { COMUNAS_EN_TEXTOS, MUNICIPIO_EN_TEXTOS } from "@/domain/envio/envio-gratis";
 import { esquemaReglaZona, esquemaTarifa } from "@/domain/envio/esquema";
-import { ZONA_ESPECIAL, ZONA_POR_DEFECTO, ZONAS, type PlazoEnvio, type ReglaZona, type ReglasEnvio, type TarifaEnvio, type Zona } from "@/domain/envio/tipos";
+import { ZONA_ESPECIAL, ZONA_POR_DEFECTO, ZONAS, type PlazoEnvio, type PromocionEnvioGratis, type ReglaZona, type ReglasEnvio, type TarifaEnvio, type Zona } from "@/domain/envio/tipos";
 import { Errores, LectorFila, verificarUnicos } from "./campos";
 import { tabla, type LeerArchivo } from "./tabla";
 
@@ -12,6 +14,13 @@ export interface DatosDivipola {
 export const ARCHIVO_TARIFAS = "tarifas_envio.csv";
 export const ARCHIVO_ZONAS = "zonas_envio.csv";
 export const ARCHIVO_PLAZOS = "plazos_envio.csv";
+export const ARCHIVO_COMUNAS = "comunas_envio_gratis.csv";
+
+/** Claves envio_gratis_desde y envio_gratis_hasta de data/config.csv, ya validadas como fechas (o null). */
+export interface VigenciaEnvioGratis {
+  desde: string | null;
+  hasta: string | null;
+}
 
 const POR_COTIZAR = "por_cotizar";
 /** En plazos_envio.csv el máximo de la zona 5 se escribe así (con espacio, como se lee). */
@@ -43,6 +52,77 @@ function cargarPlazos(leer: LeerArchivo, errores: Errores): PlazoEnvio[] {
   return plazos.sort((a, b) => a.zona - b.zona);
 }
 
+/**
+ * Lee data/comunas_envio_gratis.csv y arma la promoción con las fechas de config.csv. Sin `envio_gratis_desde`
+ * devuelve null (apagada), aunque el archivo exista; las comunas se validan igual. Los textos legales dicen
+ * «siete comunas de Bucaramanga» (microcopy §8): por eso se exigen siete filas de ese municipio.
+ */
+function cargarEnvioGratis(leer: LeerArchivo, errores: Errores, vigencia: VigenciaEnvioGratis, divipola: DatosDivipola, reglas: Pick<ReglasEnvio, "tarifas" | "zonas">): PromocionEnvioGratis | null {
+  const { desde, hasta } = vigencia;
+  if (hasta && !desde) errores.agregar("config.csv: envio_gratis_hasta tiene fecha pero envio_gratis_desde está vacía; sin fecha de inicio la promoción no se publica.");
+  if (desde && hasta && hasta < desde) errores.agregar(`config.csv: envio_gratis_hasta (${hasta}) es anterior a envio_gratis_desde (${desde}).`);
+
+  let existe = true;
+  try {
+    leer(ARCHIVO_COMUNAS);
+  } catch {
+    existe = false;
+  }
+  if (!existe) {
+    if (desde) errores.agregar(`${ARCHIVO_COMUNAS}: no se encontró el archivo en data/ y config.csv tiene envio_gratis_desde. Sin la lista de comunas no hay envío gratis.`);
+    return null;
+  }
+
+  const filas = tabla(leer, ARCHIVO_COMUNAS, ["departamento", "municipio", "comuna", "orden"], [], errores);
+  const comunas: { nombre: string; orden: number }[] = [];
+  const nombres: { valor: string; linea: number }[] = [];
+  const ordenes: { valor: string; linea: number }[] = [];
+  let lugar: { departamento: string; municipio: string } | null = null;
+  for (const fila of filas) {
+    const f = new LectorFila(ARCHIVO_COMUNAS, fila, errores);
+    const departamento = f.texto("departamento", true);
+    const municipio = f.texto("municipio", true);
+    const comuna = f.texto("comuna", true);
+    const orden = f.entero("orden", { min: 1 });
+    if (!departamento || !municipio || !comuna || orden === null) continue;
+    if (/[|,;]/.test(comuna)) f.error("comuna", `"${comuna}" no puede llevar «|», «,» ni «;»: escribe una comuna por fila.`);
+    const municipios = divipola.departamentos.find((d) => normalizar(d.nombre) === normalizar(departamento))?.municipios;
+    if (!municipios) f.error("departamento", `"${departamento}" no existe en src/data/divipola.json.`);
+    else if (!municipios.some((m) => normalizar(m.nombre) === normalizar(municipio))) f.error("municipio", `"${municipio}" no existe en ${departamento} según src/data/divipola.json.`);
+    if (lugar === null) lugar = { departamento, municipio };
+    else if (normalizar(lugar.departamento) !== normalizar(departamento) || normalizar(lugar.municipio) !== normalizar(municipio)) {
+      f.error("municipio", `todas las comunas deben ser del mismo municipio (${lugar.municipio}, ${lugar.departamento}).`);
+    }
+    nombres.push({ valor: normalizar(comuna), linea: f.linea });
+    ordenes.push({ valor: String(orden), linea: f.linea });
+    comunas.push({ nombre: comuna, orden });
+  }
+  verificarUnicos(ARCHIVO_COMUNAS, "comuna", nombres, errores);
+  verificarUnicos(ARCHIVO_COMUNAS, "orden", ordenes, errores);
+
+  if (lugar && normalizar(lugar.municipio) !== normalizar(MUNICIPIO_EN_TEXTOS)) {
+    errores.agregar(`${ARCHIVO_COMUNAS}: las comunas son de ${lugar.municipio}, pero los textos legales del envío gratis nombran ${MUNICIPIO_EN_TEXTOS} (docs/legal/microcopy-legal.md §8). Cambiar de municipio exige textos nuevos de legal.`);
+  }
+  if (filas.length !== COMUNAS_EN_TEXTOS) {
+    errores.agregar(`${ARCHIVO_COMUNAS}: tiene ${filas.length} ${filas.length === 1 ? "comuna" : "comunas"} y los textos legales dicen «siete comunas» (docs/legal/microcopy-legal.md §8). Agregar o quitar una comuna exige textos nuevos de legal y la versión nueva de los documentos.`);
+  }
+  if (lugar) {
+    const zona = resolverZona(lugar.departamento, lugar.municipio, reglas);
+    if (zona.zona !== 1 || !reglas.tarifas.some((t) => t.clave === zona.clave && t.escalones)) {
+      errores.agregar(`${ARCHIVO_COMUNAS}: ${lugar.municipio} debe ser de zona 1 en ${ARCHIVO_ZONAS} y tener su tarifa en ${ARCHIVO_TARIFAS}: el envío gratis muestra la tarifa de zona 1 como alternativa.`);
+    }
+  }
+
+  if (!desde || !lugar) return null;
+  return {
+    departamento: lugar.departamento,
+    municipio: lugar.municipio,
+    comunas: comunas.sort((a, b) => a.orden - b.orden).map((c) => c.nombre),
+    desde,
+    hasta,
+  };
+}
+
 /** Escalón: entero en pesos, o "por_cotizar" (null). Devuelve undefined si la celda no se pudo leer. */
 function leerEscalon(f: LectorFila, columna: string, valor: string): number | null | undefined {
   if (valor === POR_COTIZAR) return null;
@@ -50,11 +130,11 @@ function leerEscalon(f: LectorFila, columna: string, valor: string): number | nu
 }
 
 /**
- * Lee data/tarifas_envio.csv, data/zonas_envio.csv y data/plazos_envio.csv.
+ * Lee data/tarifas_envio.csv, data/zonas_envio.csv, data/plazos_envio.csv y data/comunas_envio_gratis.csv.
  * Además de los tipos, comprueba que cada departamento y municipio exista en DIVIPOLA (sin importar tildes ni
  * mayúsculas), que haya tarifa para cada zona y para cada municipio de zona 1, y que exista la zona 4.
  */
-export function cargarEnvios(leer: LeerArchivo, errores: Errores, divipola: DatosDivipola): ReglasEnvio {
+export function cargarEnvios(leer: LeerArchivo, errores: Errores, divipola: DatosDivipola, vigencia: VigenciaEnvioGratis = { desde: null, hasta: null }): ReglasEnvio {
   // ---------- tarifas ----------
   const tarifas: TarifaEnvio[] = [];
   const claves: { valor: string; linea: number }[] = [];
@@ -137,5 +217,5 @@ export function cargarEnvios(leer: LeerArchivo, errores: Errores, divipola: Dato
     else if (tarifa.zona !== 1) errores.agregar(`${ARCHIVO_TARIFAS}: la tarifa "${clave}" debe ser de la zona 1.`);
   }
 
-  return { tarifas, zonas: reglas, plazos: cargarPlazos(leer, errores) };
+  return { tarifas, zonas: reglas, plazos: cargarPlazos(leer, errores), envioGratis: cargarEnvioGratis(leer, errores, vigencia, divipola, { tarifas, zonas: reglas }) };
 }

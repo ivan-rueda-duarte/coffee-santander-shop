@@ -1,4 +1,5 @@
 import { normalizar, slugify } from "../comun/slug";
+import { comunaCubierta } from "./envio-gratis";
 import {
   EMPAQUE_G,
   ESCALONES_KG,
@@ -11,6 +12,7 @@ import {
   type ItemPesable,
   type ReglasEnvio,
   type ResultadoEnvio,
+  type ResultadoEnvioNormal,
   type Zona,
   type ZonaResuelta,
 } from "./tipos";
@@ -39,9 +41,21 @@ export function resolverZona(departamento: string, municipio: string, reglas: Pi
 
 /**
  * Costo de envío de un pedido (docs/ENVIOS.md §3 y §4).
- * Más de 5 kg o zona 5: "por cotizar". Si no, el primer escalón (1, 2 o 5 kg) cuyo límite, con empaque, sea ≥ al peso.
+ * Con la promoción de envío gratis y una comuna cubierta del municipio de la promoción: $0 con cualquier peso,
+ * con la tarifa normal como alternativa (microcopy §8.1). Si no, la regla normal: más de 5 kg o zona 5 va
+ * "por cotizar"; si no, el primer escalón (1, 2 o 5 kg) cuyo límite, con empaque, sea ≥ al peso.
+ * `reglas.envioGratis` ya llega filtrada por vigencia (`promocionActiva`).
  */
 export function calcularEnvio(items: readonly ItemPesable[], destino: DestinoEnvio, reglas: ReglasEnvio): ResultadoEnvio {
+  const normal = calcularEnvioNormal(items, destino, reglas);
+  const comuna = comunaCubierta(destino, reglas.envioGratis);
+  if (!comuna) return normal;
+  const { zona, clave } = resolverZona(destino.departamento, destino.municipio, reglas);
+  return { tipo: "gratis", zona, clave, pesoFacturableG: normal.pesoFacturableG, comuna, alternativa: normal };
+}
+
+/** La regla de zonas y escalones, sin promoción. */
+export function calcularEnvioNormal(items: readonly ItemPesable[], destino: DestinoEnvio, reglas: Pick<ReglasEnvio, "tarifas" | "zonas">): ResultadoEnvioNormal {
   const pesoFacturableG = calcularPesoFacturable(items);
   const { zona, clave } = resolverZona(destino.departamento, destino.municipio, reglas);
 
@@ -55,9 +69,11 @@ export function calcularEnvio(items: readonly ItemPesable[], destino: DestinoEnv
   return { tipo: "tarifa", zona, clave, pesoFacturableG, escalonKg: ESCALONES_KG[indice], valorCop: tarifa.escalones[indice] };
 }
 
-/** Total del pedido: con envío si hay tarifa; sin envío si va por cotizar. */
+/** Total del pedido: con envío si hay tarifa; igual al subtotal con envío gratis; sin envío si va por cotizar. */
 export function totalConEnvio(subtotalCop: number, envio: ResultadoEnvio): { totalCop: number; sinEnvio: boolean } {
-  return envio.tipo === "tarifa" ? { totalCop: subtotalCop + envio.valorCop, sinEnvio: false } : { totalCop: subtotalCop, sinEnvio: true };
+  if (envio.tipo === "tarifa") return { totalCop: subtotalCop + envio.valorCop, sinEnvio: false };
+  if (envio.tipo === "gratis") return { totalCop: subtotalCop, sinEnvio: false };
+  return { totalCop: subtotalCop, sinEnvio: true };
 }
 
 /** "Bogotá, D.C." → "Bogotá": el nombre con que se muestra el destino. */

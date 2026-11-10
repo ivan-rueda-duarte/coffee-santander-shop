@@ -55,10 +55,31 @@ export interface PlazoEnvio {
   maximo: string | null;
 }
 
+/**
+ * Envío gratis en comunas de un municipio de zona 1 (data/comunas_envio_gratis.csv y las claves
+ * envio_gratis_desde / envio_gratis_hasta de data/config.csv; microcopy-legal §8). Decisiones del dueño del
+ * 2026-11-09: $0 con cualquier peso, sin pedido mínimo, sin fecha final.
+ */
+export interface PromocionEnvioGratis {
+  departamento: string;
+  municipio: string;
+  /** Comunas cubiertas, en el orden en que las nombran los textos legales (§8.1). El selector las ordena alfabéticamente. */
+  comunas: readonly string[];
+  /** ISO yyyy-mm-dd: desde cuándo rige (D-21). */
+  desde: string;
+  /** ISO yyyy-mm-dd, inclusive; null = sin fecha final (P25 = a). */
+  hasta: string | null;
+}
+
 export interface ReglasEnvio {
   tarifas: readonly TarifaEnvio[];
   zonas: readonly ReglaZona[];
   plazos: readonly PlazoEnvio[];
+  /**
+   * Promoción de envío gratis. null = apagada: sin `envio_gratis_desde`, o fuera de vigencia en el build
+   * (`promocionActiva` la filtra antes de llegar a las páginas).
+   */
+  envioGratis: PromocionEnvioGratis | null;
 }
 
 /** Lo mínimo que hace falta de cada línea del pedido para pesarlo. */
@@ -70,6 +91,8 @@ export interface ItemPesable {
 export interface DestinoEnvio {
   departamento: string;
   municipio: string;
+  /** Comuna elegida en el formulario (solo con el municipio de la promoción). Cualquier otro valor se ignora. */
+  comuna?: string | null;
 }
 
 export interface ZonaResuelta {
@@ -80,6 +103,23 @@ export interface ZonaResuelta {
 
 export type MotivoPorCotizar = "zona_especial" | "mas_de_5kg";
 
-export type ResultadoEnvio =
+/** Envío sin promoción: la regla de zonas y escalones de docs/ENVIOS.md. */
+export type ResultadoEnvioNormal =
   | { tipo: "tarifa"; zona: Zona; clave: string; pesoFacturableG: number; escalonKg: EscalonKg; valorCop: number }
   | { tipo: "por_cotizar"; zona: Zona; pesoFacturableG: number; motivo: MotivoPorCotizar };
+
+/**
+ * Envío gratis por comuna: vale $0 con cualquier peso. `alternativa` es lo que costaría con la regla normal
+ * (tarifa de zona 1, o por cotizar con más de 5 kg): se muestra y va en el mensaje porque la comuna la declara
+ * el cliente y se verifica por el chat (microcopy §8.3 y §8.4; LEG-109).
+ */
+export interface EnvioGratis {
+  tipo: "gratis";
+  zona: Zona;
+  clave: string;
+  pesoFacturableG: number;
+  comuna: string;
+  alternativa: ResultadoEnvioNormal;
+}
+
+export type ResultadoEnvio = ResultadoEnvioNormal | EnvioGratis;

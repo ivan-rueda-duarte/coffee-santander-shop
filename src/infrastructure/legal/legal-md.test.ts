@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { LEGAL_PRUEBA } from "@/domain/pruebas/fixtures";
+import { LEGAL_PRUEBA, PROMOCION_PRUEBA } from "@/domain/pruebas/fixtures";
 import { ErrorDatos } from "../csv/lector";
 import { RepositorioContenidoVacio } from "../sanity/contenido-sanity";
-import { cargarLegalDesdeDocs, conRespaldoLegal, DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, problemasDocsLegales } from "./legal-md";
+import { cargarLegalDesdeDocs, condicionesEnvioGratis, conRespaldoLegal, DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, problemasDocsLegales, revisarEnvioGratisEnDocs } from "./legal-md";
 import { cargarCatalogoDesdeDisco } from "../csv/repositorio-catalogo-csv";
 
 // Estas pruebas leen los documentos reales de docs/legal/ y data/config.csv: si legal deja un marcador
@@ -75,5 +75,31 @@ describe("conRespaldoLegal", () => {
       respaldo,
     );
     expect((await conSanity.legal("terminos"))?.version).toBe("9");
+  });
+});
+
+// Envío gratis por comunas (LEG-106): con los documentos versión 1 de hoy, la promoción no puede encenderse.
+describe("envío gratis con los documentos de docs/legal/", () => {
+  const publicado = cargarLegalDesdeDocs(leer, legal, "envios-devoluciones")!.contenido;
+  it("el texto público de hoy no trae todavía el numeral de condiciones (lo pasa legal el día de la publicación)", () => {
+    expect(publicado.some((b) => b.texto.includes("Envío gratis en comunas de Bucaramanga"))).toBe(false);
+  });
+  it("el control de publicación bloquea la promoción mientras no estén los documentos versión 2", () => {
+    const r = revisarEnvioGratisEnDocs(leer, PROMOCION_PRUEBA, legal);
+    expect(r.errores.length).toBeGreaterThan(0);
+    expect(r.errores[0]).toContain("no publica el numeral");
+  });
+  it("sin el numeral publicado, /envios/ no se puede construir con la promoción encendida", () => {
+    expect(() => condicionesEnvioGratis(publicado, leer, PROMOCION_PRUEBA, false)).toThrow(ErrorDatos);
+  });
+  it("en un build de prueba usa el borrador de la nota E, completo, con la fecha de inicio y sin marcadores", () => {
+    const bloques = condicionesEnvioGratis(publicado, leer, PROMOCION_PRUEBA, true);
+    const texto = bloques.map((b) => b.texto).join("\n");
+    expect(bloques[0]).toMatchObject({ tipo: "parrafo" });
+    expect(bloques.filter((b) => b.tipo === "item").length).toBeGreaterThanOrEqual(12);
+    for (const comuna of PROMOCION_PRUEBA.comunas) expect(texto).toContain(comuna);
+    expect(texto).toContain("Vigencia: rige desde el 1 de enero de 2026.");
+    expect(texto).toContain("Peso: aplica con cualquier peso.");
+    expect(texto).not.toMatch(/[{}[\]]|TODO\(|VERIFICAR|```/);
   });
 });

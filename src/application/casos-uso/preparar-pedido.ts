@@ -59,7 +59,7 @@ export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido, codig
   }
   if (problemasLineas.length) errores.lineas = "Revisa tu pedido: hay cafés que cambiaron.";
 
-  const envio = validar(crearEsquemaEnvio(tienda.formasPago, codigosDepartamento), entrada.envio);
+  const envio = validar(crearEsquemaEnvio(tienda.formasPago, codigosDepartamento, { envioGratis: catalogo.envios.envioGratis }), entrada.envio);
   if (!envio.ok) Object.assign(errores, envio.errores);
 
   const consentimientos = validar(esquemaConsentimientos, {

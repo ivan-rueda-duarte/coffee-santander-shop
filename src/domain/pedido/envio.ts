@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { comunaCubierta } from "../envio/envio-gratis";
+import type { PromocionEnvioGratis } from "../envio/tipos";
 
 // Formulario de envío. Los campos opcionales aceptan "" (un input vacío) y quedan como undefined.
 
@@ -89,6 +91,11 @@ export function errorCodigoPostal(codigo: string, departamento: string, codigoDe
 export interface OpcionesEsquemaEnvio {
   /** Por omisión, `DOCUMENTO_OBLIGATORIO`. */
   documentoObligatorio?: boolean;
+  /**
+   * Promoción de envío gratis vigente (o null). La comuna solo se conserva si es una de su lista y el destino es
+   * su municipio; «Otra comuna o no la sé» y cualquier otro valor quedan vacíos (minimización, microcopy §8.2).
+   */
+  envioGratis?: PromocionEnvioGratis | null;
 }
 
 /**
@@ -118,6 +125,7 @@ export function crearEsquemaEnvio(formasPago: readonly string[], codigosDepartam
         .transform((v) => v?.replace(/\s/g, "") || undefined),
       direccion: textoRequerido("la dirección", 5, 120),
       barrio: textoOpcional(60),
+      comuna: z.string().optional(),
       indicaciones: textoOpcional(MAX_INDICACIONES),
       formaPago: z
         .string({ error: "Elige una forma de pago." })
@@ -138,8 +146,9 @@ export function crearEsquemaEnvio(formasPago: readonly string[], codigosDepartam
         if (error) ctx.addIssue({ code: "custom", path: ["codigoPostal"], message: error });
       }
     })
-    .transform(({ tipoDocumento, numeroDocumento, ...resto }) => ({
+    .transform(({ tipoDocumento, numeroDocumento, comuna, ...resto }) => ({
       ...resto,
+      comuna: comunaCubierta({ departamento: resto.departamento, municipio: resto.municipio, comuna }, opciones.envioGratis ?? null) ?? undefined,
       // Sin número, el tipo se ignora (modo opcional).
       tipoDocumento: numeroDocumento && tipoDocumento && esTipoDocumento(tipoDocumento) ? tipoDocumento : undefined,
       numeroDocumento,

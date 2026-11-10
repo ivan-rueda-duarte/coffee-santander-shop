@@ -306,6 +306,13 @@ describe("errores con archivo, línea y columna", () => {
     const iva = errores({ "config.csv": `${BASE["config.csv"]}iva_tarifa,cinco\n` });
     expect(iva.some((m) => m.includes('"cinco" no es un número entero'))).toBe(true);
   });
+  it("envio_gratis_desde y envio_gratis_hasta son opcionales; vacías, la promoción queda apagada (LEG-106)", () => {
+    expect(cargarCatalogo(con({ "config.csv": `${BASE["config.csv"]}envio_gratis_desde,\nenvio_gratis_hasta,\n` })).catalogo.envios.envioGratis).toBeNull();
+    const mala = errores({ "config.csv": `${BASE["config.csv"]}envio_gratis_desde,mañana\n` });
+    expect(mala.some((m) => m.includes('"mañana" no es una fecha válida'))).toBe(true);
+    // Con fecha y sin data/comunas_envio_gratis.csv no hay promoción posible.
+    expect(errores({ "config.csv": `${BASE["config.csv"]}envio_gratis_desde,2026-12-01\n` }).some((m) => m.includes("comunas_envio_gratis.csv: no se encontró"))).toBe(true);
+  });
   it("fabricante exige la expresión del rótulo, y la expresión o el titular exigen su dato", () => {
     const e = errores({
       "catalogo.csv": BASE["catalogo.csv"]
