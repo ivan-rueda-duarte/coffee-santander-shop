@@ -1,6 +1,8 @@
 # Revisión LEG-120 a LEG-128: Verificación del envío gratis por comunas implementado (2026-11-09)
 
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.2 — 2026-11-09.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.3 — 2026-11-09.
+
+**Versión 0.3 (2026-11-09).** D-24 cerrado con un dato del dueño, comunicado por el coordinador: horario de atención de lunes a viernes, de 7:00 a. m. a 5:00 p. m., hora de Colombia. El dato queda en el numeral 13 (nota E de envíos). Se agregan las precisiones de LEG-130 y la recomendación de publicar el horario en «Información del vendedor» versión 2. La entrega de la v0.2 no cambia, salvo por el punto 7 (abajo).
 
 Sigue a `2026-11-09-envio-gratis-comunas.md` (LEG-106 a LEG-119, v0.2).
 
@@ -51,6 +53,7 @@ Sigue a `2026-11-09-envio-gratis-comunas.md` (LEG-106 a LEG-119, v0.2).
 | LEG-126 | Informativa | Desviaciones resueltas por el desarrollador y el diseño | Ver la tabla de abajo. | — | Se confirman todas. Microcopy §8.2 se ajusta a la posición del campo. |
 | LEG-127 | Media | Fin de la promoción: no hay estado «terminada» ni textos completos | §8.6 v1.3 tenía un aviso («antes de esa fecha») que no coincidía con el numeral 13 («antes del aviso»). El código, al vencer, oculta todo, también el anuncio. No hay aviso en los mismos lugares. | Art. 33 inc. 3: revocar con los mismos medios e intensidad. Si el anuncio desaparece sin aviso, no hay revocación con igual visibilidad, y el cliente que vio el anuncio en otro lado (redes) puede exigirlo. | Textos de microcopy v1.4 §8.6.1: aviso previo con fecha final (A, recomendado) o fin inmediato (B), estado «terminada» con el aviso en los mismos lugares durante al menos 30 días calendario, viñeta de vigencia nueva para el numeral 13 (nota E de envíos) y aviso para redes. **No se implementa ahora:** basta con dejarlo previsto. Es obligatorio antes de poner fecha en `envio_gratis_hasta`. P34. |
 | LEG-129 (v0.2) | Media | Plazos generales con Bre-B (envíos §6, términos §8, `/envios/`) frente a la validación manual (P33) | Para todas las zonas, los plazos generales corren «desde que recibimos tu pago». El dueño valida a mano y, fuera del horario, al día hábil siguiente. | El texto general es más estricto con la tienda que la práctica: el plazo empieza a correr con la recepción, no con la validación. Lo publicado obliga (arts. 29 y 50 lit. h). En la zona 1 (máximo 1 día hábil), un pago que llega fuera del horario y se valida al día siguiente puede dejar sin margen el despacho. No es ilegal: es favorable al cliente. | **No se cambia el texto** (cambiarlo exigiría una versión nueva y sería menos favorable). Se informa al dueño: con pagos Bre-B fuera del horario, el plazo de las zonas ya corre desde la recepción. Si quiere alinearlo con la validación manual, legal redacta la versión siguiente de términos y envíos, con el mismo tope de P33 bis. |
+| LEG-130 (v0.3) | Media | Horario de atención en el tope de validación Bre-B (numeral 13) | Dato del dueño: «lunes a viernes, de 7 a. m. a 5 p. m., COT». Bre-B acredita a cualquier hora y cualquier día. | Tres ambigüedades se resolverían a favor del cliente (art. 34): (i) festivos de lunes a viernes; (ii) si el sábado es «día hábil» (Ley 1480 no lo define; Ley 4 de 1913, art. 62, solo excluye feriados y vacancia: VERIFICAR); (iii) hasta qué hora del día siguiente se valida. Hay otro riesgo: que el horario se lea como un límite para avisos de retracto o reclamos (arts. 43 y 47: VERIFICAR). | Numeral 13: «sin contar festivos»; «el siguiente día de atención, antes de las 5:00 p. m.»; casos fuera de horario enumerados. «Día hábil» no se redefine para todo el documento. «Información del vendedor» versión 2: horario y frase «el horario no cambia tus plazos» (recomendado). **Para el dueño:** si atiende festivos, se quita «sin contar festivos». |
 | LEG-128 | Informativa | Textos publicados del envío gratis | Ver «Verificación letra por letra». | — | **Conforme**, salvo LEG-120 a LEG-123. |
 
 ### Desviaciones confirmadas (LEG-126)
@@ -119,7 +122,7 @@ Solo textos. La lógica no cambia.
 
 | # | Estado |
 |---|---|
-| LEG-118 | **Resuelto en el texto.** El numeral 13 (nota E de envíos) cuenta el plazo, con Bre-B, desde la validación manual: el mismo día hábil si el pago llega en horario de atención, el día hábil siguiente si no (P33 bis, aceptada). El inicio del plazo ya no queda a voluntad de la tienda (Ley 1480, arts. 42 y 43: VERIFICAR). **Condición:** falta el horario de atención (D-24). El borrador lleva el marcador `{horario de atención}` y el control de publicación rechaza marcadores entre llaves, así que la promoción no puede encenderse sin el dato. |
+| LEG-118 | **Resuelto** (v0.3). El numeral 13 (nota E de envíos) cuenta el plazo, con Bre-B, desde la validación manual. La validación es el mismo día si el pago llega en horario de atención (lunes a viernes, 7:00 a. m. a 5:00 p. m., hora de Colombia, sin contar festivos) y el siguiente día de atención antes de las 5:00 p. m. si no (P33 bis; D-24; LEG-130). El inicio del plazo ya no queda a voluntad de la tienda (Ley 1480, arts. 42 y 43: VERIFICAR). Ya no hay marcador en el borrador. |
 | LEG-125 | **Baja de Alta a Media.** P35: el dueño reconstruye y despliega. Riesgo residual: entre la orden de apagar y el despliegue, el sitio sigue mostrando la promoción. Lo cubre el criterio «si tu pedido ya decía envío gratis» (numeral 13 y aviso). Se cierra cuando esté construido el estado «terminada» (entrega v0.2, punto 1) y QA lo verifique. |
 | LEG-127 | **Textos cerrados** para P34 b (microcopy v1.5 §8.6.1): clave `envio_gratis_terminada`, estado «terminada», aviso en los mismos lugares durante al menos 30 días y aviso en redes. La viñeta «Vigencia» del numeral 13 ya prevé la terminación y no cambia el día del fin. **Falta el código** (entrega v0.2). |
 | LEG-129 | Nuevo. Informativo para el dueño; sin cambio de texto. |
@@ -129,14 +132,13 @@ Solo textos. La lógica no cambia.
 - **Implementación:** Conforme con observaciones.
 - **Encender la promoción: No conforme** mientras falte alguna de estas condiciones:
   - los documentos versión 2 publicados el mismo día (LEG-106);
-  - el horario de atención (D-24), escrito en el numeral 13;
   - D-19 (mensajero: 1 día hábil con cualquier peso);
   - D-21 (fecha de inicio);
   - el estado «terminada» construido y verificado (LEG-125 y LEG-127).
 - Con todo eso: **Conforme con observaciones**.
 - **Lanzamiento:** No conforme, sin cambio (LEG-024/066).
 
-**Decisiones del cliente.** No queda ninguna abierta sobre el envío gratis: P33, P33 bis, P34 y P35 están cerradas. Solo faltan datos: D-24 (horario de atención), D-19, D-21, D-22 y D-23.
+**Decisiones del cliente.** No queda ninguna abierta sobre el envío gratis: P33, P33 bis, P34 y P35 están cerradas. Solo faltan datos: D-19, D-21, D-22 y D-23 (D-24 cerrado en la v0.3). Queda una confirmación menor para el dueño, que no bloquea: si atiende los festivos (LEG-130).
 
 ## Entrega para desarrollador-fullstack (v0.2, final)
 
@@ -158,12 +160,17 @@ Sustituye el punto 6 de la entrega v0.1. Los puntos 1 a 5 de la v0.1 ya están i
    - **Portada** (bajo «Cómo pedir») **y cajón**, en el lugar del anuncio y con el mismo tamaño de letra: `El envío gratis en siete comunas de Bucaramanga terminó el {fechaEnLetras(envio_gratis_terminada)}. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.` + ` ` + enlace `Ver condiciones` a `/envios/#envio-gratis`.
    - **`/envios/`, sección `id="envio-gratis"`**: título `Envío gratis en comunas de Bucaramanga`; primer párrafo, el mismo texto del aviso; luego `Estas fueron sus condiciones:` y el numeral 13 publicado, letra por letra. Sin la lista visual de comunas y sin la nota de la fila Bucaramanga.
    - Pasados los 30 días: sin aviso en portada ni cajón. La sección de `/envios/` se mantiene mientras el numeral 13 siga publicado.
-4. **Control de publicación.** El numeral 13 ya trae el marcador `{horario de atención}`. Cuando legal publique la versión 2 con el horario real, `revisarPublicacionEnvioGratis` debe seguir rechazando cualquier llave (ya lo hace): no hace falta cambiar código.
+4. **Control de publicación.** Sin cambios de código: `revisarPublicacionEnvioGratis` ya rechaza cualquier llave. Desde la v0.3 el numeral solo conserva `{fecha de inicio en letras}`.
 5. **Pruebas.**
    - Estado «terminada» con `terminada` = hoy, hoy − 30 y hoy − 31.
    - Fallos de `npm run datos` de los puntos 1 y 2.
    - El mensaje y el cálculo sin envío gratis en estado «terminada».
 6. **Sin cambios** en los textos del resumen, el mensaje ni el campo. El tope de P33 bis vive solo en el numeral 13 (documento).
+7. **Horario de atención (v0.3, D-24): no se crea clave en `config.csv` por ahora.**
+   - Solo aparece en dos documentos que se publican letra por letra: el numeral 13 de envíos y, recomendado, «Información del vendedor» versión 2. No hay ningún texto de interfaz que lo use.
+   - Una clave aparte crearía una segunda fuente del mismo dato sin consumidor.
+   - Si más adelante se muestra en el pie o en el resumen, se crea `horario_atencion` y `npm run datos` exige que el texto de la clave aparezca letra por letra en el numeral 13 y en «Información del vendedor» (mismo patrón que la versión y la fecha).
+   - **Opcional, recomendado:** una prueba que confirme que, el día de la publicación, el numeral 13 publicado contiene «de lunes a viernes, de 7:00 a. m. a 5:00 p. m., hora de Colombia».
 
 **Para `disenador-marca`:** el aviso de terminación ocupa el lugar y el estilo del anuncio (§8.6), sin caja nueva ni color de alerta.
 
@@ -174,6 +181,7 @@ Sustituye el punto 6 de la entrega v0.1. Los puntos 1 a 5 de la v0.1 ya están i
 
 ## Normas marcadas VERIFICAR
 
-- Ley 1480 de 2011, arts. 42 y 43 (plazo cuyo inicio depende del proveedor; LEG-118).
+- Ley 1480 de 2011, arts. 42 y 43 (plazo cuyo inicio depende del proveedor; LEG-118) y 47 (aviso de retracto fuera del horario; LEG-130).
+- Ley 4 de 1913, art. 62 (cómputo de días; si el sábado es día hábil; LEG-130).
 - Ley 1480 de 2011, arts. 23, 29, 33 (inc. 2 y 3) y 34 (leídos en compilación no oficial; letra oficial en SUIN-Juriscol pendiente).
 - Ley 1581 de 2012, art. 4 lit. b, y Decreto 1377 de 2013, art. 4 (recolección limitada), con su numeración en el Decreto 1074 de 2015.
