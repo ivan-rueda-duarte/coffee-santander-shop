@@ -1,10 +1,16 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.1 — 2026-11-06.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.4 — 2026-11-09.
 
 # Microcopy legal
 
 Textos exactos del sitio que tienen fundamento legal. El desarrollador los copia sin cambios; `{}` son variables que pone el código y salen de `data/config.csv` o de los CSV de datos. Cada texto distingue **exige la norma** y **se recomienda**.
 
-Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran.
+Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran; **§8** envío gratis en comunas de Bucaramanga.
+
+Cambios de la v1.4 (2026-11-09, verificación de lo implementado; LEG-120 a LEG-128): §8.2, el campo «Comuna» va después de «Municipio» (decisión de diseño, aceptada); §8.3, frase de la región `role="status"`; §8.5, variantes con la promoción del párrafo inicial de `/envios/`, de la caja «¿Tu destino es de zona 5 o pides más de 5 kg?» y del `dd` de la zona 1 (con el cómputo del plazo); §8.5 bis, `nota_envio` del pie y paso 3 de «Cómo pedir» sin cambio; §8.6, aviso previo con fecha final, aviso de terminación y estado «terminada».
+
+Cambios de la v1.3 (2026-11-09, decisiones del dueño; LEG-118 y LEG-119): §8 con envío gratis para cualquier peso (P27 b), casos de más de 5 kg en el resumen, el mensaje y `/envios/`, y plazo de 1 día hábil contado desde la validación de la transacción y el aprobado del pedido.
+
+Cambios de la v1.2 (2026-11-09, LEG-106 a LEG-117): nueva §8 (envío gratis en siete comunas de Bucaramanga: regla, campo «Comuna», resumen, mensaje de WhatsApp, `/envios/`, anuncios permitidos y prohibidos). No se implementa sin publicar el mismo día los Términos versión 2 y «Envíos, devoluciones, retracto y garantía» versión 2 (LEG-106). Las §1 a §7 no cambian.
 
 Cambios de la v1.0 (Paquete legal v1 y decisiones del dueño del 2026-11-06; revisión LEG-081 a LEG-100): leyenda de IVA del 5 % (§1.4); «Notificación sanitaria INVIMA» con titular y fabricante (§3); ayuda de molienda de fábrica (§3); casillas con versión y fecha (§4.3, §5.1); plantilla completa del mensaje sin número de solicitud (§5.5); línea de retracto de 5 días hábiles (§5.3); vendedor completo en pie y resumen (§5.4); plazos estimado y máximo por zona (§5.6, §5.8); comisión incluida en la tarifa (§1.7). Se retiran la casilla de promociones (v0.6 §4.7), la comisión de recaudo con dos estados (v0.6 §6) y la línea «no admite retracto».
 
@@ -340,3 +346,124 @@ Páginas legales: el contenido público de cada documento (`terminos-y-condicion
 - `Cafetal entre montañas de Santander con niebla de la mañana` (texto alternativo de la foto de respaldo de la Historia) y el crédito `De Santander` de esa foto (v1.1, LEG-104; reemplazados por §2).
 - `transferencia bre-b` y la unión de las formas de pago con «y» en «Cómo pedir» (v1.1, LEG-103).
 - Atributo `disabled` en «Preparar pedido para WhatsApp» sin explicación (v1.1, LEG-101; reemplazado por §5.9).
+
+## 8. Envío gratis en comunas de Bucaramanga (v1.2; LEG-106 a LEG-117)
+
+**Estado.** Textos listos para implementar. **No se publican** hasta que estén publicados, el mismo día, los Términos versión 2, «Envíos, devoluciones, retracto y garantía» versión 2, «Información del vendedor» con el rótulo de la versión 2 y la Política versión 2 (LEG-106). **Decisiones del dueño (2026-11-09):** P25 = a (sin fecha final), P26 = a (sin pedido mínimo), **P27 = b (cualquier peso)**, P28 = a (sin comuna elegida, tarifa normal), plazo de 1 día hábil contado desde la validación de la transacción y el aprobado del pedido. P29 a, P30 a, P31 a y P32 a se aplican como recomendación de legal; el dueño todavía puede cambiarlas. Falta P33 (cuándo se da el aprobado con Bre-B; LEG-118). En los textos no se usan números de comuna.
+
+### 8.1 Regla que suponen los textos
+
+- Aplica con municipio **Bucaramanga** y una de estas comunas: San Francisco, Oriental, Centro, Cabecera del Llano, La Concordia, Ciudadela Real de Minas y Mutis. «Ciudadela Real de Minas» es la comuna La Ciudadela completa (LEG-115). El orden de la lista en los textos es este; en el selector, el alfabético (§8.2).
+- Envío **$0 con cualquier peso** (P27 b). En las siete comunas, el pedido de más de 5 kg **no** es «por cotizar» y no usa la fila «Zona 5 y más de 5 kg» de los plazos (LEG-119).
+- Sin pedido mínimo (P26 a).
+- Sin comuna elegida, o con «Otra comuna o no la sé»: la regla de hoy para Bucaramanga, es decir, la tarifa de zona 1 hasta 5 kg y «por cotizar» con más de 5 kg (P28 a).
+- Plazo del envío gratis, con cualquier peso: **máximo 1 día hábil**, con un estimado de mismo día o siguiente día hábil. Se cuenta desde que la tienda valida la transacción y da por el chat el aprobado del pedido. Con contraentrega, ese momento es la aceptación del total. Con Bre-B, es la validación del pago (LEG-118). El plazo no se toma de una fila de `data/plazos_envio.csv`: es un valor propio de la promoción, para que un cambio en la zona 1 no lo cambie sin revisión.
+- Vigencia: desde `envio_gratis_desde` (D-21), sin fecha final (P25 a). Sin ese dato, nada de esta sección aparece en el sitio. `envio_gratis_hasta` se deja preparado para cuando el dueño anuncie el fin.
+
+### 8.2 Campo «Comuna» (formulario de envío)
+
+| Dónde | Texto exacto |
+|---|---|
+| Etiqueta | `Comuna (opcional)` |
+| Cuándo se muestra | Solo con municipio Bucaramanga, justo después de `Municipio` (v1.4: decisión de diseño aceptada por legal, LEG-126; antes decía «después de `Barrio`»). Si el cliente cambia el departamento o el municipio, el campo se vacía y se oculta |
+| Control | Lista desplegable; no texto libre |
+| Primera opción (vacía, por defecto) | `Elige tu comuna` |
+| Opciones | `Cabecera del Llano` · `Centro` · `Ciudadela Real de Minas` · `La Concordia` · `Mutis` · `Oriental` · `San Francisco` · `Otra comuna o no la sé` |
+| Ayuda (siempre visible) | `Envío gratis si tu dirección está en San Francisco, Oriental, Centro, Cabecera del Llano, La Concordia, Ciudadela Real de Minas o Mutis. Si no eliges una de ellas, pagas la tarifa normal. Verificamos tu dirección por el chat antes de que aceptes el total.` + enlace ` Condiciones` (a `/envios/#envio-gratis`) |
+| Ayuda al elegir una comuna de la lista (reemplaza a la anterior) | `Tu envío es gratis si tu dirección está en {comuna}. Lo verificamos por el chat antes de que aceptes el total.` + enlace ` Condiciones` |
+| Variante si el dueño elige P28 b (reemplaza la segunda frase de la ayuda) | `Si no sabes tu comuna, no pasa nada: al revisar tu dirección por el chat te aplicamos el envío gratis si está en una de ellas.` |
+| Error | *(ninguno: el campo es opcional y de lista cerrada)* |
+
+`Otra comuna o no la sé` envía el campo vacío: no se pide ni se registra una comuna fuera de la lista (minimización, Ley 1581, art. 4). La comuna **no** se guarda en `localStorage`, no va en la URL ni en analítica (política §2).
+
+### 8.3 Resumen del pedido
+
+| Dónde | Caso | Texto exacto |
+|---|---|---|
+| Línea de envío, rótulo | Comuna de la lista, cualquier peso | `Envío a Bucaramanga` con la nota `· zona 1 · {comuna}` en gris |
+| Línea de envío, valor | Mismo caso | `$0` y, junto al valor, `Envío gratis` |
+| Bajo la línea de envío, `caption` | Comuna de la lista, hasta 5 kg | `Envío gratis en {comuna}, si verificamos por el chat que tu dirección está en esa comuna. Si no lo está, el envío es de {$ tarifa de zona 1} y el total queda en {$ total + tarifa}; tú decides si lo aceptas antes de pagar.` |
+| Bajo la línea de envío, `caption` | Comuna de la lista, más de 5 kg | `Envío gratis en {comuna}, si verificamos por el chat que tu dirección está en esa comuna. Si no lo está, el envío de más de 5 kg se cotiza: te informamos el valor por el chat y tú decides si lo aceptas antes de pagar.` |
+| Plazo, `caption` (reemplaza a §5.6 en este caso) | Comuna de la lista, cualquier peso | `Entrega estimada: mismo día o siguiente día hábil. Plazo máximo: 1 día hábil desde que validamos tu pedido y te damos el aprobado por el chat.` |
+| Total | Mismo caso | `Total` (sin cambio; el envío suma $0). Con más de 5 kg **no** se usa `Total sin envío` ni la nota de §1.2 |
+| Región `role="status"` del paso Envío (solo lectores de pantalla; v1.4, LEG-120) | Comuna de la lista, cualquier peso | `Envío gratis en {comuna}, sujeto a verificar tu dirección: $0. Total: {$ total}.` |
+| Todos los demás casos | — | Sin cambio (§1.1, §1.2, §5.6) |
+
+La nota con la tarifa y el total alternativos (`data-testid="referencia-tarifa"`) es la nota completa de esta tabla, letra por letra; no es una nota aparte. La etiqueta `Envío gratis` va junto al `$0` y no se usa sola fuera de esta línea (§8.6).
+
+Exige la norma informar antes de la compra el precio total, el costo del envío y el plazo (Ley 1480, art. 50 lits. c y h). Como la comuna es autodeclarada, también se informa el precio que se cobraría si no se confirma, para que el cliente conozca los dos totales antes de enviar el mensaje (arts. 33 y 50). La región `role="status"` debe llevar la condición, porque es lo único que oye quien usa lector de pantalla al elegir la comuna: sin ella, el anuncio diría «envío gratis» sin condición (arts. 23 y 29; LEG-107).
+
+### 8.4 Mensaje de WhatsApp (cambios sobre la plantilla de §5.5)
+
+| Dónde | Caso | Texto exacto |
+|---|---|---|
+| Línea de envío | Comuna de la lista, cualquier peso | `Envío (Bucaramanga · zona 1 · {comuna}): $0 (envío gratis, sujeto a verificar la dirección)` |
+| Bajo `Total:` | Mismo caso | `Plazo de entrega: máximo 1 día hábil desde que validen mi pedido y me den el aprobado por el chat.` |
+| Bloque «Envío a», después de `Dirección:` | Siempre que el cliente eligió una comuna de la lista | `Comuna: {comuna}` |
+| Penúltima línea (lugar de «Quedo atento al valor del envío…»), antes de la constancia | Comuna de la lista, hasta 5 kg | `Si mi dirección no está en esa comuna, el envío es de {$ tarifa de zona 1} y el total queda en {$ total + tarifa}; espero su confirmación.` |
+| Mismo lugar | Comuna de la lista, más de 5 kg | `Si mi dirección no está en esa comuna, quedo atento al valor del envío para confirmar mi pedido.` |
+| Resto | — | Sin cambio (§5.5). La constancia final toma la versión 2 de `config.csv` |
+
+### 8.5 Página `/envios/`
+
+| Dónde | Texto exacto |
+|---|---|
+| Tabla de tarifas, nota en la fila «Bucaramanga» | `Gratis en siete comunas, con cualquier peso (ver condiciones).` (enlace a `#envio-gratis`) |
+| Nota bajo la tabla (la que dice «Más de 5 kg, en cualquier zona, se cotiza aparte», §1.4) | Se agrega: ` Salvo en las siete comunas de Bucaramanga con envío gratis.` |
+| Párrafo inicial (bajo el título), con la promoción vigente (v1.4, LEG-121; reemplaza al de hoy solo mientras rige) | `El envío se calcula por zona y por peso, y lo ves en tu pedido en cuanto eliges la ciudad. Pagas el valor que te mostramos; solo se cotiza aparte en zonas especiales y en pedidos de más de 5 kg. En siete comunas de Bucaramanga el envío es gratis con cualquier peso, si verificamos por el chat que tu dirección está en una de ellas.` + enlace ` Ver condiciones` (a `#envio-gratis`) |
+| Plazos de entrega, `dd` de la zona 1 (v1.4, LEG-123; reemplaza al de la v1.3) | Se agrega: ` Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso, contado desde que validamos tu pedido y te damos el aprobado por el chat (ver condiciones).` («ver condiciones» con enlace a `#envio-gratis`) |
+| Plazos de entrega, `dd` de la zona 5 y más de 5 kg | Se agrega: ` No aplica a las siete comunas de Bucaramanga con envío gratis.` |
+| Caja final «¿Tu destino es de zona 5 o pides más de 5 kg?», con la promoción vigente (v1.4, LEG-122) | Título sin cambio. Segundo párrafo: `Escríbenos al {WhatsApp} y te cotizamos. Si tu dirección está en una de las siete comunas de Bucaramanga con envío gratis, no hace falta: el envío es gratis con cualquier peso.` |
+| Sección nueva, `id="envio-gratis"`, título | `Envío gratis en comunas de Bucaramanga` |
+| Contenido | El texto del **numeral 13** de «Envíos, devoluciones, retracto y garantía» versión 2 (nota E de ese documento), completo y letra por letra, como lista. Al final: ` Más en envíos, devoluciones, retracto y garantía.` (enlace a `/legal/envios-devoluciones/`). v1.4: se acepta la lista visual de las siete comunas en orden alfabético después del primer párrafo (diseño), porque repite el dato y no cambia el numeral (LEG-126) |
+| `metadata.description` | Sin cambio (LEG-116) |
+
+Sin la promoción vigente, el párrafo inicial, la caja final y los `dd` vuelven a los textos de hoy (§5.8). El párrafo general de «Plazos de entrega» («Los dos se cuentan en días hábiles desde que aceptas el total…») no cambia: rige para las zonas y la salvedad del envío gratis va en el `dd` de la zona 1, que remite a las condiciones.
+
+Exige la norma que las condiciones de tiempo, modo y lugar estén en la publicidad de la promoción (Ley 1480, art. 33 inc. 2): por eso van completas en `/envios/` y no solo en la página legal. Dos fórmulas distintas para contar el mismo plazo en la misma página se interpretarían a favor del cliente (art. 34): por eso el `dd` de la zona 1 dice cómo se cuenta el plazo del envío gratis (LEG-123).
+
+### 8.5 bis Textos que no cambian con la promoción (v1.4, LEG-124)
+
+| Dónde | Decisión |
+|---|---|
+| Pie, `nota_envio` de `data/config.csv` (§1.5) | **Sin cambio.** Sigue siendo exacta con la promoción: el valor del envío se ve en el pedido y, en los destinos por cotizar y en los pedidos de más de 5 kg, se confirma por WhatsApp antes de pagar (en las siete comunas también se confirma, al verificar la dirección). **No** se agrega la promoción a `nota_envio`: es un texto fijo del CSV que no se apaga con `envio_gratis_hasta` y seguiría anunciando el envío gratis después de terminado (art. 33 inc. 3). Si el dueño quiere mencionarla en el pie, se usa el anuncio de §8.6, generado por el código y condicionado a la vigencia. |
+| «Cómo pedir», paso 3 (§2) | **Sin cambio.** `… Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues…` no afirma nada sobre los 5 kg ni sobre Bucaramanga, y la línea de §8.6 que va debajo de los tres pasos informa la promoción con su condición. |
+
+### 8.6 Anuncios de la promoción
+
+| Dónde | Texto exacto |
+|---|---|
+| Portada, pie o cajón del carrito (opcional) | `Envío gratis en siete comunas de Bucaramanga.` + enlace ` Ver condiciones` (a `/envios/#envio-gratis`). En el cajón va solo mientras no hay destino, bajo «Se calcula al elegir tu ciudad» (v1.4: implementado así, conforme) |
+| Redes o WhatsApp (si el dueño la difunde) | `Envío gratis en San Francisco, Oriental, Centro, Cabecera del Llano, La Concordia, Ciudadela Real de Minas y Mutis (Bucaramanga), con cualquier peso y sin pedido mínimo. Condiciones en {URL}/envios/.` |
+| Si termina la promoción | *(v1.4: reemplazado por §8.6.1; el texto anterior decía «antes de esa fecha» y no coincidía con el numeral 13, que respeta los pedidos enviados «antes del aviso»)* |
+
+#### 8.6.1 Fin de la promoción (v1.4, LEG-125 y LEG-127)
+
+Hoy no hay fecha final (P25 a). La promoción termina solo si el dueño lo decide, y se puede hacer de dos maneras (P34). En las dos, `envio_gratis_hasta` es el **último día con envío gratis, inclusive**.
+
+**A. Con aviso previo (recomendada).** El dueño fija la fecha final con anticipación. Ese día se publica «Envíos, devoluciones, retracto y garantía» con la viñeta de vigencia nueva (versión siguiente, con los términos y el vendedor) y los anuncios cambian así:
+
+| Dónde | Texto exacto, mientras rige y ya hay fecha final |
+|---|---|
+| Portada, cajón y pie (si se usa) | `Envío gratis en siete comunas de Bucaramanga hasta el {envio_gratis_hasta en letras}.` + enlace ` Ver condiciones` (a `/envios/#envio-gratis`) |
+| Redes o WhatsApp | `Envío gratis en San Francisco, Oriental, Centro, Cabecera del Llano, La Concordia, Ciudadela Real de Minas y Mutis (Bucaramanga), con cualquier peso y sin pedido mínimo, hasta el {envio_gratis_hasta en letras}. Condiciones en {URL}/envios/.` |
+| Numeral 13 de envíos, viñeta «Vigencia» (reemplaza la de la versión 2) | `- Vigencia: rige desde el {envio_gratis_desde en letras} hasta el {envio_gratis_hasta en letras}, inclusive. Respetamos el envío gratis de todo pedido que nos mandes por WhatsApp mientras lo anunciemos en este sitio, aunque lo entreguemos después.` |
+
+**B. Sin aviso previo.** El dueño decide terminarla de inmediato: `envio_gratis_hasta` es el día anterior al despliegue que la apaga. Los documentos cambian ese mismo día (viñeta de vigencia de A, con esa fecha).
+
+**Después del último día (A y B): estado «terminada».** El código deja de mostrar el campo, el $0, las notas de la tabla y los `dd`, y muestra el aviso en **los mismos lugares** donde estaba el anuncio, durante al menos 30 días calendario (recomendación de legal; la norma exige la misma visibilidad, no fija la duración):
+
+| Dónde | Texto exacto |
+|---|---|
+| Portada, cajón y pie (donde estuvo el anuncio) | `El envío gratis en siete comunas de Bucaramanga terminó el {envio_gratis_hasta en letras}. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.` + enlace ` Ver condiciones` (a `/envios/#envio-gratis`) |
+| `/envios/`, sección `id="envio-gratis"`, título | `Envío gratis en comunas de Bucaramanga` |
+| `/envios/`, primer párrafo de la sección | El mismo texto del aviso, seguido de `Estas fueron sus condiciones:` y del numeral 13 publicado, letra por letra |
+| Redes o WhatsApp (si se difundió por ahí) | `Terminó el envío gratis en siete comunas de Bucaramanga: rigió hasta el {envio_gratis_hasta en letras}. Si tu pedido ya decía «envío gratis», lo respetamos con las mismas condiciones.` |
+
+**Por qué «si tu pedido ya decía envío gratis».** El sitio es estático: la promoción se apaga cuando se reconstruye y despliega, no a la medianoche del último día. Lo que el sitio mostró obliga (arts. 29 y 33), así que se respeta todo pedido cuyo mensaje de WhatsApp diga `$0 (envío gratis, sujeto a verificar la dirección)`, aunque haya llegado después del último día. Así el aviso, el numeral 13 y la práctica dicen lo mismo, y el criterio es verificable en el chat.
+
+**Prohibidos:** `Envío gratis` solo; `Envío gratis en Bucaramanga`; `Domicilio gratis`; `Envío gratis a todo Bucaramanga`; `Entrega el mismo día` (el compromiso es 1 día hábil); cualquier anuncio en el que la condición vaya en letra más pequeña o en una nota aparte; `shippingRate: 0` u `OfferShippingDetails` en JSON-LD (LEG-107, LEG-116).
+
+### 8.7 Fundamento
+
+**Exige la norma:** condiciones de la promoción completas en la publicidad y vigencia (Ley 1480, arts. 5 num. 10 y 33; VERIFICAR la letra oficial); información veraz y no engañosa (arts. 23, 29 y 30); precio total, envío y plazo antes de comprar (art. 50); interpretación favorable en la duda (art. 34); no contradecir lo ya publicado en los términos (LEG-106). **Se recomienda:** mostrar la tarifa y el total alternativos (LEG-109), aplicar el envío gratis en la duda (P29 a) y al cliente cubierto que no eligió comuna (P28 b), y la lista cerrada del campo.

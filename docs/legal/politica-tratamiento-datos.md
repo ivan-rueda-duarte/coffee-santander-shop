@@ -171,3 +171,18 @@ Texto corto para el resumen del pedido o para responder por el chat a quien preg
 - 2026-11-06, Paquete legal v1: aplicación WhatsApp Business; «ACEPTO» en el chat; conservación 10 años; encargados; versión 1 del 6 de noviembre de 2026; publicar sin esperar la aprobación del abogado (LEG-094).
 - 2026-11-06, decisiones adicionales: sin promociones por ahora (P12 → «no por ahora»); retracto de 5 días hábiles (vuelve la finalidad «atender tu retracto» en §3); modelo C (§1: la sociedad comercializa; los fabricantes no reciben datos).
 - Documento opcional (`DOCUMENTO_OBLIGATORIO = false`). Si el contador no confirma la facturación a nombre del comprador, se retira el campo y la viñeta de §3 (LEG-040).
+
+### E. Versión 2 (recomendada): campo «Comuna» para el envío gratis en Bucaramanga (2026-11-09; LEG-114)
+
+**Qué exige la norma.** La comuna es un dato de ubicación, no sensible y opcional. La finalidad («calcular el envío y entregar el pedido»), el responsable y los encargados (mensajero de zona 1) no cambian. Solo un cambio de finalidad obliga a pedir una nueva autorización (Decreto 1377 de 2013, art. 5, compilado en el Decreto 1074 de 2015: VERIFICAR la numeración). Los demás cambios se comunican publicando la nueva versión antes de aplicarlos (Decreto 1377, art. 13: VERIFICAR). Por eso **no se exige una nueva autorización** a quienes ya pidieron, y las casillas conservan su redacción.
+
+**Qué se recomienda (P31 a, aplicada el 2026-11-09 por instrucción del dueño, que aún puede cambiarla).** Publicar la versión 2 el mismo día que la funcionalidad, porque la versión 1 describe uno por uno los datos que se recogen (§2 y §3) y quedaría incompleta (Ley 1581, arts. 4 lit. e y 12). El día de la publicación, legal pasa estos cambios al texto público, pone la fecha real (D-21) en el rótulo («Versión 2 · vigente desde AAAA-MM-DD», línea 5) y sube el encabezado a 2.0; el desarrollador cambia `version_politica_datos` a `2` y `fecha_politica_datos` a esa fecha. La casilla, la constancia del mensaje y el aviso de privacidad toman la versión y la fecha nuevas.
+
+**Cambios del texto público.**
+1. §2, tercera viñeta, frase «Tu nombre, celular, documento, dirección, código postal y correo no se guardan allí.» pasa a: `Tu nombre, celular, documento, dirección, barrio, comuna, código postal y correo no se guardan allí.`
+2. §3, después de la viñeta «Barrio, código postal e indicaciones…», viñeta nueva: `Comuna (opcional, solo si el envío es a Bucaramanga): saber si tu pedido tiene envío gratis y verificar que tu dirección esté en esa comuna. Solo te preguntamos por las comunas donde el envío es gratis. Si no la eliges, tu pedido sigue igual y se cobra la tarifa normal de la zona 1.`
+3. §7, viñeta del mensajero de la zona 1, frase final «Recibe los mismos datos de entrega.» pasa a: `Recibe los mismos datos de entrega, incluida tu comuna si la elegiste.`
+4. §13: `Esta política rige desde el {fecha de inicio en letras} (versión 2). La versión 1 rigió desde el 6 de noviembre de 2026. Las bases de datos estarán vigentes mientras se mantenga la finalidad del tratamiento y por el plazo de conservación del numeral 6.`
+5. Aviso de privacidad, última frase: `Lee la Política de tratamiento de datos versión 2 del {fecha de inicio en letras} en /legal/privacidad/.`
+
+**Antes de aplicarla.** Confirmar con el desarrollador que la comuna no se guarda en `localStorage` (si se guardara, la frase 1 cambia). Si el dueño elige P28 b, la última frase de la viñeta 2 pasa a `Si no la eliges, tu pedido sigue igual.` **Alternativa P31 b:** mantener la versión 1; es lícito, pero la política no mencionaría un dato que se recoge.

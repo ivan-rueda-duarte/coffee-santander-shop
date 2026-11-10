@@ -136,3 +136,49 @@ Los máximos del paquete coinciden con el tope del estimado (zona 1: 0–1 y má
 - Resumen: línea de plazo bajo el envío (microcopy §5.6); línea de retracto nueva (§5.3).
 - Enlaces y títulos «Envíos, devoluciones y retracto» (pie, `SECCIONES`, resumen) pasan a «Envíos, devoluciones, retracto y garantía».
 - Microcopy §6 de la v0.6 (comisión de recaudo con dos estados) queda sin efecto: ni línea, ni rótulo «Total sin comisión de recaudo», ni «POR CONFIRMAR».
+
+### E. Versión 2: envío gratis en comunas de Bucaramanga (2026-11-09; LEG-106 a LEG-117)
+
+**Cuándo se aplica.** No antes de que la funcionalidad esté lista para publicarse y el dueño responda P25 a P32. El día de la publicación, legal pasa estos cambios a la sección «Texto para el consumidor», pone la fecha real (D-21) en el rótulo («Versión 2 · vigente desde AAAA-MM-DD», línea 5 de este archivo) y en la vigencia del numeral 13, y sube el encabezado a 2.0. Lo mismo hacen los términos y la información del vendedor, que comparten la versión. Hasta entonces el texto público sigue siendo la versión 1: así el sitio no publica condiciones de una promoción que todavía no existe (el sitio publica esta sección letra por letra).
+
+**Cambios del texto público.**
+
+1. §2, viñeta de la zona 1, al final: `En siete comunas de Bucaramanga el envío es gratis (numeral 13).`
+2. §3, tercera viñeta, se reemplaza por: `El valor que ves para las zonas 1 a 4 es el que pagas. No lo cambiamos después. La única salvedad es el envío gratis en comunas de Bucaramanga: si al verificar tu dirección vemos que no está en la comuna que elegiste, te informamos la tarifa normal de la zona 1 antes de que aceptes el total (numeral 13). Si la guía nos cuesta más de lo publicado, la diferencia la asumimos nosotros.`
+3. §6, viñeta de la zona 1, al final: `Con envío gratis en comunas de Bucaramanga, el plazo máximo es también de un (1) día hábil, con cualquier peso, y se cuenta como dice el numeral 13.` Y la viñeta «Zona 5 y pedidos de más de 5 kg», al final: `Esto no aplica a las siete comunas de Bucaramanga con envío gratis (numeral 13).`
+3 bis. §3, quinta viñeta («Por cotizar»), después de «ni para pedidos de más de 5 kg»: `, salvo en las siete comunas de Bucaramanga con envío gratis, donde el envío es gratis con cualquier peso (numeral 13)`.
+4. §7, primera viñeta, se reemplaza por: `El envío de tu compra lo pagas tú, por el valor que viste antes de confirmar, salvo cuando tiene envío gratis (numeral 13).`
+5. Numeral nuevo, antes de «Normas que aplican»:
+
+```
+### 13. Envío gratis en comunas de Bucaramanga
+El envío es gratis para los pedidos que entregamos en una dirección de estas comunas de Bucaramanga: San Francisco, Oriental, Centro, Cabecera del Llano, La Concordia, Ciudadela Real de Minas y Mutis. Estas son las condiciones:
+- Dónde aplica: solo en esas siete comunas, completas, según la división en comunas de la Alcaldía de Bucaramanga. No aplica en las demás comunas ni en la zona rural de Bucaramanga, ni en Floridablanca, Piedecuesta o Girón.
+- Cómo lo pides: en los datos de envío, con Bucaramanga como municipio, elige tu comuna en el campo «Comuna (opcional)». Si está en la lista, el resumen y el mensaje de WhatsApp muestran el envío en $0.
+- Si no eliges tu comuna: se aplica la regla normal de Bucaramanga, es decir, la tarifa de la zona 1 que ves en el resumen o, si tu pedido pesa más de 5 kg, el envío por cotizar.
+- Quién lo verifica: antes de que aceptes el total, De Santander revisa por el chat que tu dirección esté en la comuna que elegiste. Podemos pedirte el barrio o un punto de referencia.
+- Si tu dirección no está en una de esas comunas: te lo decimos por el chat antes de que aceptes el total y te informamos el envío con la tarifa normal de la zona 1, que también ves en el resumen; si tu pedido pesa más de 5 kg, te informamos el valor cotizado. Puedes aceptarlo o desistir sin costo. Si hay duda sobre la comuna de tu dirección, aplicamos el envío gratis.
+- Peso: aplica con cualquier peso. En estas comunas, los pedidos de más de 5 kg también tienen envío gratis y no se cotizan.
+- Pedido mínimo: no hay.
+- Quién paga el envío: lo asumimos nosotros. No le pagas nada al mensajero por el envío. Si pagas contraentrega, solo pagas el valor de los cafés.
+- Precio de los cafés: es el mismo en todo el país e incluye todos los impuestos. El envío gratis no cambia el precio de los cafés.
+- Plazo de entrega: máximo un (1) día hábil, con cualquier peso; lo normal es el mismo día o el siguiente día hábil. Se cuenta desde que validamos la transacción y te damos por el chat el aprobado de tu pedido: si pagas contraentrega, cuando aceptas el total; si pagas por transferencia Bre-B, cuando validamos tu pago, lo que hacemos el mismo día hábil en que lo recibimos.
+- Si te retractas: te devolvemos todo lo que pagaste, sin descontar el envío gratis. Como en todo retracto, el transporte de la devolución corre por tu cuenta (numeral 9).
+- Garantía: si el café llega con un problema cubierto por la garantía, el transporte de la devolución y del reenvío lo pagamos nosotros (numeral 11).
+- Nuevo intento de entrega: si hay que volver a llevar el pedido porque la dirección estaba incompleta o no había quien recibiera, el nuevo intento se cobra por la tarifa normal de la zona 1 o, si el pedido pesa más de 5 kg, por el valor que te cotizamos, y te lo decimos antes de volver a despachar (numeral 7).
+- Vigencia: rige desde el {fecha de inicio en letras}. No tiene fecha de terminación: sigue vigente hasta que publiquemos en este sitio que terminó, con la misma visibilidad con la que la anunciamos. Si termina, respetamos el envío gratis de los pedidos que nos mandaste por WhatsApp antes del aviso.
+```
+
+6. «Normas que aplican» pasa a ser el numeral 14 y agrega los arts. 33 y 34: `Ley 1480 de 2011, arts. 7, 8, 10, 11, 16, 23, 26, 33, 34, 47 (num. 4), 50 y 51; Ley 2439 de 2024, arts. 3, 4 y 5; Decreto 587 de 2016; Estatuto Tributario, arts. 447 y 468-1.`
+
+**Decisiones aplicadas (2026-11-09).** P25 = a, P26 = a, **P27 = b (cualquier peso)**, P28 = a: decididas por el dueño. P29 = a, P30 = a, P32 = a: recomendación de legal, aplicada por instrucción del dueño, que aún puede cambiarlas. Plazo: fórmula del dueño («desde que se valide la transacción y se dé el aprobado del pedido»), redactada con los dos casos de pago.
+
+**Frase condicionada a P33 (LEG-118).** «…lo que hacemos el mismo día hábil en que lo recibimos» es una propuesta de legal para que el inicio del plazo no quede a voluntad de la tienda. Si el dueño no la confirma, se reemplaza por otro límite que él fije. No se publica sin ningún límite.
+
+**Variantes si el dueño cambia una recomendación:**
+- P29 b: se quita la última frase de la viñeta «Si tu dirección no está…».
+- P30 b: la viñeta «Nuevo intento de entrega» pasa a `Nuevo intento de entrega: si hay que volver a llevar el pedido, el nuevo intento también es gratis.`
+- Fin de la promoción (P34, LEG-127; 2026-11-09): el día en que se fije la fecha final, la viñeta «Vigencia» del numeral 13 pasa a `- Vigencia: rige desde el {fecha de inicio en letras} hasta el {fecha final en letras}, inclusive. Respetamos el envío gratis de todo pedido que nos mandes por WhatsApp mientras lo anunciemos en este sitio, aunque lo entreguemos después.` Es un cambio del texto público: sube la versión de envíos, términos y vendedor ese día. Avisos y estado «terminada» en `microcopy-legal.md` §8.6.1. El numeral se conserva después del fin, como historia, por lo menos hasta que se resuelvan los pedidos que lo tuvieron (retracto y garantía); legal decide cuándo retirarlo.
+- P28 b (si el dueño la reconsidera): la viñeta «Si no eliges tu comuna» pasa a `Si no eliges tu comuna: el resumen muestra la tarifa normal de la zona 1, pero si al revisar tu dirección por el chat vemos que está en una de esas comunas, te aplicamos el envío gratis antes de que aceptes el total.`
+
+**Coherencia (LEG-119).** Con P27 = b, las reglas de hoy para más de 5 kg («por cotizar» en §3 y la fila «Zona 5 y pedidos de más de 5 kg» en §6) chocan con la promoción. Por eso la versión 2 les agrega una salvedad (cambios 3 y 3 bis). También hay que cambiar términos §6 (nota E de los términos), `PRODUCT.md` (decisión del 2026-11-05 sobre el envío por zonas; lo edita quien tenga autorización) y el cálculo del dominio. La tarifa de zona 1 no se escribe aquí: vive en el CSV. El numeral 13 se reproduce completo en `/envios/` (microcopy §8.5).

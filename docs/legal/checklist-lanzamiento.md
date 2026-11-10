@@ -1,8 +1,10 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.4 — 2026-11-06.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.6 — 2026-11-09.
 
 # Checklist de lanzamiento legal
 
 Reúne los hallazgos **abiertos** de severidad Bloqueante y Alta de LEG-001 a LEG-100, más los Media que condicionan la publicación. Fuente: `docs/legal/revisiones/` (LEG-001 a LEG-080) y `2026-11-06-paquete-v1.md` (LEG-081 a LEG-100). Se actualiza en cada revisión.
+
+Cambios de la v0.5 (2026-11-09): envío gratis en siete comunas de Bucaramanga (`revisiones/2026-11-09-envio-gratis-comunas.md`, LEG-106 a LEG-117). Requisitos 30 y 31; datos D-21 a D-23; preguntas P25 a P32. No cambia el dictamen de lanzamiento. La funcionalidad no se publica sin los Términos y Envíos versión 2 el mismo día (LEG-106).
 
 Cambios de la v0.4 (2026-11-06, tarde): el dueño entregó el **Paquete legal v1** (datos completos del vendedor, IVA del 5 % incluido, plazos máximos por zona, retracto de 5 días hábiles, reversión 4A, conservación 10 años, «ACEPTO» en el chat, encargados, versiones v1 del 2026-11-06, NSA por café) y cinco decisiones adicionales que priman: modelo C se mantiene; sin número de solicitud; Arreboles sigue activo sin NSA; comisión incluida en la tarifa y sin promociones por ahora; **publicar los cuatro documentos**. Los documentos pasaron a **v1.0**. Quedan cerradas en lo decisorio P1 (máximos), P2 (retracto, ahora concedido), P7 (sustituida), P11 (sustituida), P12 («no por ahora»), P13 a P15 (sin objeto). Se abren P19 a P23 y D-16 a D-20.
 
@@ -69,6 +71,9 @@ Grupos: **(a)** lo cierra legal con documentos; **(b)** lo decide el dueño; **(
 | 27 | LEG-043 | Informativa | Sin datos personales en analítica ni `localStorage` | Ley 1581, art. 4 lit. g | Sitio | **Cumple** | — | — |
 | 28 | LEG-070, P16 | Media (recomendación) | Autorización escrita de los titulares de las marcas | Decisión 486, art. 157 | — | **Falta dato** (D-12) | Dueño; tostador | b → c |
 | 29 | LEG-072, D-14 | Media | Marcas «De Santander», «Casa Martínez», «Arreboles» verificadas ante la SIC; sin ® | Decisión 486 | Sitio | **Falta dato** | Abogado (L6) | c |
+| 30 | LEG-106 | **Bloqueante (de la funcionalidad)** | Envío gratis por comuna sin contradecir los términos: salvedad de verificación publicada antes de activarlo | Ley 1480, arts. 29, 33 y 34 | Términos §6 y §8, Envíos §3, §7 y §13 (versión 2; notas E) | **No cumple** hasta publicar la versión 2 el mismo día que la funcionalidad | Legal (al publicar) / desarrollador | a → d |
+| 32 | LEG-118, LEG-119 | Alta / Media | Cualquier peso sin contradecir «por cotizar» ni la fila de más de 5 kg; plazo de 1 día hábil con inicio determinado | Ley 1480, arts. 29, 34, 42, 43 y 50 lit. h | Envíos §3, §6 y §13; términos §6 y §8 (versión 2); resumen, mensaje, `/envios/`; `PRODUCT.md` | **No cumple** (no implementado); textos listos; **Falta dato** P33 y D-19 (mensajero con pedidos grandes) | Dueño; desarrollador | b → d |
+| 31 | LEG-107 a LEG-112, LEG-114 | Alta / Media | Condiciones completas de la promoción, vigencia, anuncios con la condición, tarifa y total alternativos, plazo de 1 día hábil; comuna opcional en lista cerrada, sin `localStorage` | Ley 1480, arts. 5 num. 10, 29, 30, 33, 50; Ley 1581, arts. 4 y 12 | Formulario, resumen, mensaje, `/envios/`, anuncios; política §2, §3 y §7 (versión 2) | **No cumple** (no implementado); textos listos (microcopy §8); **Falta dato** P25 a P32, D-21 a D-23 | Dueño; desarrollador | b → d |
 
 ## 3. Datos que debe entregar el dueño o un tercero
 
@@ -94,6 +99,9 @@ Grupos: **(a)** lo cierra legal con documentos; **(b)** lo decide el dueño; **(
 | **D-18** | Concepto escrito del contador: IVA del café y del envío; factura a nombre del comprador | Términos §4; envíos §3; leyendas | Pendiente. **Condición previa a publicar «IVA del 5 %».** |
 | **D-19** | Confirmación de la transportadora: máximos alcanzables; tarifa cubre la comisión | Envíos §3 y §6 | Pendiente (recomendado). |
 | **D-20** | Fecha real de publicación | `config.csv`, Sanity, documentos | Pendiente; si es posterior al 2026-11-06, se actualiza todo el mismo día. |
+| **D-21** | Fecha de inicio del envío gratis (la de publicación) | `config.csv`; envíos §13; rótulo de la versión 2 | Pendiente. |
+| **D-22** | Fuente oficial de la división de Bucaramanga en comunas y, si existe, lista de barrios por comuna (URL) | Verificar direcciones; envíos §13 | Pendiente. |
+| **D-23** | Contador: factura de un pedido con envío gratis (línea en $0 o sin línea) y efecto en la base (art. 447 E.T.) | Facturación; LEG-113 | Pendiente (amplía D-18). |
 
 ## 4. Preguntas para el dueño
 
@@ -109,6 +117,8 @@ P1 (B; máximos fijados en el paquete), P2 (reabierta por el paquete: **retracto
 - **P21.** Casilla de datos: a) texto del paquete tal cual (adoptado); b) más «Entiendo que el pedido se envía por WhatsApp (Meta)…» (**recomendada**).
 - **P22.** ¿Se usa Uber Courier en zona 1? Si sí, se agrega a la política §7.
 - **P23.** Plazo para chats sin pedido ni reclamo: a) 12 meses (**propuesta**); b) otro.
+- **P25 a P32 (envío gratis por comuna, 2026-11-09).** P25 vigencia: a) sin fecha final, hasta aviso (**recomendada**); b) fecha final. P26 pedido mínimo: a) no (**recomendada**); b) sí, {valor}. P27 peso: a) hasta 5 kg (**recomendada**); b) cualquiera. P28 cliente cubierto que no elige comuna: a) tarifa normal (regla del dueño); b) se aplica el gratis al verificar (**recomendada**). P29 dirección en duda: a) gratis (**recomendada**); b) tarifa. P30 reintento: a) tarifa de zona 1 (**recomendada**); b) gratis. P31 política versión 2: a) sí (**recomendada**); b) no. P32 costo del domiciliario: a) lo asume De Santander (**recomendada**); b) otro. Detalle en `revisiones/2026-11-09-envio-gratis-comunas.md`. Cerrada: nombre de «Real de Minas» (= «Ciudadela Real de Minas», comuna La Ciudadela). **Respondidas (v0.6):** P25 = a, P26 = a, **P27 = b (cualquier peso)**, P28 = a; P29 a, P30 a, P31 a y P32 a aplicadas como recomendación (el dueño puede cambiarlas).
+- **P33.** Con Bre-B, el aprobado del pedido (inicio del plazo de 1 día hábil del envío gratis) se da: a) el mismo día hábil en que se recibe el pago (**recomendada**; texto base); b) otro límite (dato). Sin límite no se publica (LEG-118).
 
 ## 5. Preguntas para terceros
 

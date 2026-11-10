@@ -150,3 +150,18 @@ No se incluyen: limitación de responsabilidad por defectos o demoras; renuncia 
 | Estatuto Tributario, arts. 447 y 468-1 | Base gravable incluye acarreos y comisiones; café (09.01, salvo 09.01.11) al 5 % | Art. 468-1 leído en compilación no oficial (estatuto.co / Actualícese, 2026-11-06). **Concepto escrito del contador pendiente (C1).** |
 | Decisión 486 de la CAN, arts. 157 y 158 | Uso informativo de marca ajena; agotamiento (§3, §14) | Texto oficial no accesible; VERIFICAR. |
 | Ley 2300 de 2023, art. 5 par. 2 | No obligar a recibir mensajes comerciales (§13) | Leída en el normograma de la DIAN; alcance a comercios no vigilados: VERIFICAR. |
+
+### E. Versión 2: envío gratis en comunas de Bucaramanga (2026-11-09; LEG-106)
+
+**Por qué hace falta.** El §6 de la versión 1 dice «No podemos cambiar las condiciones del resumen en tu contra después de que envías el mensaje: respetamos los precios y el envío que viste». Con la comuna autodeclarada, el resumen puede mostrar $0 y luego, al verificar, corresponder la tarifa de zona 1. Sin la salvedad, el cliente podría exigir el $0 (Ley 1480, arts. 29, 33 y 34). Es **Bloqueante** para publicar la funcionalidad.
+
+**Cuándo se aplica.** El día en que se publique la funcionalidad, junto con «Envíos, devoluciones, retracto y garantía» versión 2 (su nota E) e «Información del vendedor» con el mismo rótulo. Legal pasa los cambios al texto público, pone la fecha real (D-21) en el rótulo («Versión 2 · vigente desde AAAA-MM-DD», línea 5) y sube el encabezado a 2.0; el desarrollador cambia `version_terminos` a `2` y `fecha_terminos` a esa fecha. La casilla y la constancia del mensaje se actualizan solas desde `config.csv`. A los pedidos enviados antes se les sigue aplicando la versión 1 (§15).
+
+**Cambios del texto público.**
+1. §6, última viñeta, se reemplaza por: `No podemos cambiar las condiciones del resumen en tu contra después de que envías el mensaje: respetamos los precios y el envío que viste. La única salvedad es el envío gratis en comunas de Bucaramanga: si al verificar tu dirección vemos que no está en la comuna que elegiste, te informamos la tarifa normal de la zona 1 antes de que aceptes el total, y puedes aceptarla o desistir sin costo («Envíos, devoluciones, retracto y garantía», numeral 13).`
+2. §8, al final del primer párrafo: `En siete comunas de Bucaramanga el envío es gratis, con las condiciones del numeral 13 de «Envíos, devoluciones, retracto y garantía».`
+2 bis. §6, viñeta «Si el envío es "por cotizar" (zona 5 o pedidos de más de 5 kg)…», después del paréntesis: ` (salvo en las siete comunas de Bucaramanga con envío gratis, donde no se cotiza con ningún peso)` (P27 = b; LEG-119).
+2 ter. §8, segundo párrafo, después de la primera frase: `Con envío gratis en comunas de Bucaramanga, el plazo máximo es de un (1) día hábil con cualquier peso y se cuenta desde que validamos la transacción y te damos el aprobado de tu pedido por el chat, como explica el numeral 13 de «Envíos, devoluciones, retracto y garantía».` (LEG-118).
+3. §17: `Ley 1480 de 2011, arts. 4, 26, 29, 33, 34, 42, 43, 47 (num. 4) y 50; Ley 2439 de 2024, arts. 3, 4 y 5; Ley 527 de 1999, arts. 14 y 15; Código de Comercio, arts. 845 y 864; Estatuto Tributario, arts. 447 y 468-1.`
+
+**Sin cambios:** §4 (precio con impuestos: el envío gratis no cambia el precio de los cafés; LEG-113), §9 (retracto: el numeral 13 de envíos aclara que no se descuenta el envío gratis), §13 (no es una promoción por mensajes: no requiere autorización de datos aparte ni aplica la Ley 2300 de 2023, porque se anuncia en el sitio y no se envía al cliente).
