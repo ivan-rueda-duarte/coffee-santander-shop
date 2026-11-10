@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { calcularEnvio, nombreDestino, totalConEnvio } from "@/domain/envio/envio";
-import { ANCLA_ENVIO_GRATIS, notaVerificacionResumen, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
+import { ANCLA_ENVIO_GRATIS, avisoTerminacion, notaVerificacionResumen, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
 import { textoPlazoResumen } from "@/domain/envio/plazos";
 import type { DestinoEnvio } from "@/domain/envio/tipos";
 import { leyendaIva } from "@/domain/pedido/iva";
@@ -56,10 +56,11 @@ export function TotalesPedido({
             <dt>Envío</dt>
             <dd className="text-right">
               Se calcula al elegir tu ciudad{ciudadDespacho ? ` · desde ${ciudadDespacho}` : ""}
-              {/* Cajón (§3): solo con la promoción vigente. La condición va en la misma frase (LEG-107). */}
-              {ciudadDespacho && catalogo.envios.envioGratis && (
+              {/* Cajón (§3): con la promoción vigente, el anuncio; la condición va en la misma frase (LEG-107).
+                  Terminada (§8.6.1), el aviso de terminación en el mismo lugar y estilo durante 30 días. */}
+              {ciudadDespacho && (catalogo.envios.envioGratis || catalogo.envios.finEnvioGratis?.avisoVisible) && (
                 <span className="caption mt-1 block" data-testid="anuncio-envio-gratis">
-                  {TEXTOS_ENVIO_GRATIS.anuncio}{" "}
+                  {catalogo.envios.envioGratis ? TEXTOS_ENVIO_GRATIS.anuncio : avisoTerminacion(catalogo.envios.finEnvioGratis!)}{" "}
                   <Link href={`/envios/#${ANCLA_ENVIO_GRATIS}`} className="underline underline-offset-4" onClick={alNavegar}>
                     {TEXTOS_ENVIO_GRATIS.enlaceAnuncio}
                   </Link>

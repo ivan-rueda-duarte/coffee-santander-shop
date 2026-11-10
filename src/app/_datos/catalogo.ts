@@ -2,10 +2,10 @@ import { cache } from "react";
 import { obtenerCatalogo, type VistaCatalogo } from "@/application/casos-uso/obtener-catalogo";
 import { crearRepositorioContenido } from "@/infrastructure/sanity/contenido-sanity";
 import { RepositorioCatalogoCsv } from "@/infrastructure/csv/repositorio-catalogo-csv";
-import { promocionActiva } from "@/domain/envio/envio-gratis";
+import { finEnvioGratis, promocionActiva } from "@/domain/envio/envio-gratis";
 import type { BloqueEstructurado } from "@/domain/marca/reglas-texto";
 import { hoyEnColombia, modoPruebaEnvioGratis } from "@/infrastructure/entorno";
-import { cargarLegalDesdeDocs, condicionesEnvioGratis, conRespaldoLegal, leerDocsLegalesDesdeDisco } from "@/infrastructure/legal/legal-md";
+import { cargarLegalDesdeDocs, condicionesEnvioGratis, condicionesEnvioGratisTerminada, conRespaldoLegal, leerDocsLegalesDesdeDisco } from "@/infrastructure/legal/legal-md";
 
 // Se ejecuta en el build (Server Components). Los repositorios se eligen aquí, en la capa app.
 export const repositorioCatalogo = new RepositorioCatalogoCsv();
@@ -15,10 +15,13 @@ export const cargarCatalogo = cache(async (): Promise<VistaCatalogo> => {
   const vista = await obtenerCatalogo(repositorioCatalogo);
   // Al navegador solo viaja lo que usa: los municipios que tienen café.
   const conCafe = new Set(vista.cafes.map((c) => c.municipioSlug));
-  // Envío gratis por comunas: solo si rige el día del build (envio_gratis_desde ≤ hoy ≤ envio_gratis_hasta).
-  // Apagada o vencida, no llega a ninguna página ni a out/ (ni siquiera los nombres de las comunas).
-  const envioGratis = promocionActiva(vista.envios.envioGratis, hoyEnColombia());
-  return { ...vista, municipios: vista.municipios.filter((m) => conCafe.has(m.slug)), envios: { ...vista.envios, envioGratis } };
+  // Envío gratis por comunas: solo si rige el día del build (envio_gratis_desde ≤ hoy, sin envio_gratis_terminada).
+  // Apagada, programada o terminada, la promoción no llega a ninguna página ni a out/ (ni los nombres de las comunas).
+  // Terminada (P34 b, §8.6.1), solo llegan sus fechas para el aviso de terminación.
+  const hoy = hoyEnColombia();
+  const envioGratis = promocionActiva(vista.envios.envioGratis, hoy);
+  const fin = finEnvioGratis(vista.envios.envioGratis, hoy);
+  return { ...vista, municipios: vista.municipios.filter((m) => conCafe.has(m.slug)), envios: { ...vista.envios, envioGratis, finEnvioGratis: fin } };
 });
 
 /**
@@ -40,13 +43,16 @@ export const repositorioContenido = conRespaldoLegal(crearRepositorioContenido()
 
 /**
  * Condiciones del envío gratis para /envios/#envio-gratis: el numeral publicado de «Envíos, devoluciones, retracto
- * y garantía» (el mismo texto de /legal/envios-devoluciones/). null con la promoción apagada. Falla el build si la
+ * y garantía» (el mismo texto de /legal/envios-devoluciones/). null con la promoción apagada o programada, y
+ * terminada si el numeral ya no está publicado. Falla el build si la
  * promoción está encendida y el numeral no está publicado (LEG-106), salvo en un build de prueba (ENVIO_GRATIS_PRUEBA).
  */
 export const cargarCondicionesEnvioGratis = cache(async (): Promise<BloqueEstructurado[] | null> => {
-  const promo = (await cargarCatalogo()).envios.envioGratis;
-  if (!promo) return null;
+  const { envioGratis: promo, finEnvioGratis: fin } = (await cargarCatalogo()).envios;
+  if (!promo && !fin) return null;
   const publicado = (await repositorioContenido.legal("envios-devoluciones"))?.contenido ?? [];
+  // Terminada (§8.6.1): «Estas fueron sus condiciones:» y el numeral publicado; sin numeral, no hay sección (no falla).
+  if (!promo) return condicionesEnvioGratisTerminada(publicado, leerDocsLegalesDesdeDisco(), fin!, modoPruebaEnvioGratis());
   return condicionesEnvioGratis(publicado, leerDocsLegalesDesdeDisco(), promo, modoPruebaEnvioGratis());
 });
 

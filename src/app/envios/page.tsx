@@ -3,7 +3,7 @@ import Link from "next/link";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { slugify } from "@/domain/comun/slug";
 import { coberturaPorZona } from "@/domain/envio/envio";
-import { ANCLA_ENVIO_GRATIS, comunasAlfabeticas, ENLACE_PLAZO_ZONA1, partirEnlace, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
+import { ANCLA_ENVIO_GRATIS, avisoTerminacion, comunasAlfabeticas, ENLACE_PLAZO_ZONA1, partirEnlace, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
 import type { BloqueEstructurado } from "@/domain/marca/reglas-texto";
 import { textoPlazoPagina } from "@/domain/envio/plazos";
 import { EMPAQUE_G, type TarifaEnvio } from "@/domain/envio/tipos";
@@ -44,6 +44,8 @@ export default async function PaginaEnvios() {
   const { tarifas, plazos } = catalogo.envios;
   // Envío gratis por comunas (diseño 2026-11-09 §5; microcopy §8.5): sin la promoción vigente, nada de esto se pinta.
   const promo = condiciones ? catalogo.envios.envioGratis : null;
+  // Terminada (microcopy §8.6.1): solo la sección, con el aviso y las condiciones que rigieron; lo demás vuelve a §5.8.
+  const fin = condiciones && !promo ? (catalogo.envios.finEnvioGratis ?? null) : null;
   const clavePromo = promo ? slugify(promo.municipio) : null;
   const cobertura = coberturaPorZona(catalogo.envios);
   // Microcopy §8.5 v1.4 (LEG-123): «ver condiciones» del dd de la zona 1 enlazado a las condiciones.
@@ -128,14 +130,20 @@ export default async function PaginaEnvios() {
 
         {/* Microcopy §8.5: las condiciones completas son el numeral de «Envíos, devoluciones, retracto y garantía» v2,
             letra por letra (art. 33 de la Ley 1480). La lista de comunas sale de data/comunas_envio_gratis.csv. */}
-        {promo && condiciones && (
+        {(promo || fin) && condiciones && (
           <section aria-labelledby={ANCLA_ENVIO_GRATIS} data-testid="seccion-envio-gratis">
             <h2 id={ANCLA_ENVIO_GRATIS} className="h3 mt-12 scroll-mt-24 text-ink-title">{TEXTOS_ENVIO_GRATIS.tituloSeccion}</h2>
+            {fin && (
+              <>
+                <p className="body mt-2 max-w-2xl" data-testid="aviso-terminacion-envios">{avisoTerminacion(fin)}</p>
+                <p className="body mt-4 max-w-2xl text-ink-muted">{TEXTOS_ENVIO_GRATIS.introCondicionesTerminada}</p>
+              </>
+            )}
             {agrupar(condiciones).map((b, i) =>
               b.tipo === "parrafo" ? (
                 <div key={i}>
                   <p className="body mt-2 max-w-2xl text-ink-muted">{b.texto}</p>
-                  {i === 0 && (
+                  {i === 0 && promo && (
                     <ul className="body mt-4 grid max-w-2xl gap-x-6 gap-y-1 rounded-lg border border-line bg-surface px-5 py-4 text-ink sm:grid-cols-2 md:grid-cols-3" aria-label="Comunas con envío gratis" data-testid="lista-comunas">
                       {comunasAlfabeticas(promo).map((c) => <li key={c}>{c}</li>)}
                     </ul>

@@ -1,7 +1,7 @@
 import type { ContenidoHistoria, ContenidoInicio } from "@/application/puertos";
 import type { VistaCatalogo } from "@/application/casos-uso/obtener-catalogo";
 import Link from "next/link";
-import { ANCLA_ENVIO_GRATIS, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
+import { ANCLA_ENVIO_GRATIS, avisoTerminacion, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
 import { BotonEnlace } from "../marca/boton";
 import { Antetitulo, BarraAcento } from "../marca/etiquetas";
 import { Foto, Franja, Hoja, Textura } from "../marca/superficies";
@@ -89,9 +89,10 @@ export function ComoPedir({ catalogo, contenido }: { catalogo: VistaCatalogo; co
           ))}
         </ol>
         {/* Diseño 2026-11-09 §6 y microcopy §8.6: una línea, sin caja, solo con la promoción vigente. No depende de Sanity. */}
-        {catalogo.envios.envioGratis && (
+        {/* Terminada (microcopy §8.6.1): el aviso va en el mismo lugar y con el mismo estilo del anuncio, sin caja ni color de alerta. */}
+        {(catalogo.envios.envioGratis || catalogo.envios.finEnvioGratis?.avisoVisible) && (
           <p className="small mt-10 max-w-2xl text-ink" data-testid="anuncio-envio-gratis-inicio">
-            {TEXTOS_ENVIO_GRATIS.anuncio}{" "}
+            {catalogo.envios.envioGratis ? TEXTOS_ENVIO_GRATIS.anuncio : avisoTerminacion(catalogo.envios.finEnvioGratis!)}{" "}
             <Link className="inline-block py-1 font-semibold underline underline-offset-4" href={`/envios/#${ANCLA_ENVIO_GRATIS}`}>
               {TEXTOS_ENVIO_GRATIS.enlaceAnuncio}
             </Link>
