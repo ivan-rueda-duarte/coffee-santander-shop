@@ -7,7 +7,7 @@ import { ErrorDatos } from "../src/infrastructure/csv/lector";
 import { cargarCatalogoDesdeDisco } from "../src/infrastructure/csv/repositorio-catalogo-csv";
 import { DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, problemasDocsLegales, revisarEnvioGratisEnDocs } from "../src/infrastructure/legal/legal-md";
 import { hoyEnColombia, modoPruebaEnvioGratis } from "../src/infrastructure/entorno";
-import { promocionVigente } from "../src/domain/envio/envio-gratis";
+import { avisoFinPromocion, promocionVigente } from "../src/domain/envio/envio-gratis";
 
 // Next lee .env.local solo; este script corre fuera de Next.
 for (const archivo of [".env.local", ".env"]) {
@@ -50,6 +50,9 @@ async function main() {
     }
     console.log(`Envío gratis por comunas: encendido desde ${promo.desde} en ${promo.comunas.length} comunas de ${promo.municipio}.`);
   }
+  // LEG-125: la vigencia se evalúa al construir; avisa (no falla) si envio_gratis_hasta ya pasó o vence pronto.
+  const avisoFin = avisoFinPromocion(promo, hoy);
+  if (avisoFin) console.warn(`  - Aviso, envío gratis: ${avisoFin}`);
 
   const cliente = crearClienteSanity();
   if (!cliente) {

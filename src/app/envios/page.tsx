@@ -3,7 +3,7 @@ import Link from "next/link";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { slugify } from "@/domain/comun/slug";
 import { coberturaPorZona } from "@/domain/envio/envio";
-import { ANCLA_ENVIO_GRATIS, comunasAlfabeticas, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
+import { ANCLA_ENVIO_GRATIS, comunasAlfabeticas, ENLACE_PLAZO_ZONA1, partirEnlace, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
 import type { BloqueEstructurado } from "@/domain/marca/reglas-texto";
 import { textoPlazoPagina } from "@/domain/envio/plazos";
 import { EMPAQUE_G, type TarifaEnvio } from "@/domain/envio/tipos";
@@ -46,6 +46,11 @@ export default async function PaginaEnvios() {
   const promo = condiciones ? catalogo.envios.envioGratis : null;
   const clavePromo = promo ? slugify(promo.municipio) : null;
   const cobertura = coberturaPorZona(catalogo.envios);
+  // Microcopy §8.5 v1.4 (LEG-123): «ver condiciones» del dd de la zona 1 enlazado a las condiciones.
+  const plazoZona1 = partirEnlace(TEXTOS_ENVIO_GRATIS.plazoZona1, ENLACE_PLAZO_ZONA1);
+  const enlaceCondiciones = (texto: string) => (
+    <Link href={`#${ANCLA_ENVIO_GRATIS}`} className="font-semibold underline underline-offset-4">{texto}</Link>
+  );
 
   /** Qué abarca cada fila de la tabla, generado de zonas_envio.csv. */
   const cubre = (t: TarifaEnvio): string => {
@@ -63,8 +68,14 @@ export default async function PaginaEnvios() {
         <Migas items={[{ texto: "Inicio", href: "/" }, { texto: "Envíos" }]} />
         <Antetitulo className="mt-6">Envíos</Antetitulo>
         <Titular nivel="h1" antes={`Desde ${catalogo.tienda.ciudadDespacho}`} remate="a todo Colombia" className="display-l mt-2 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]" />
-        <p className="body-l mt-4 max-w-2xl">
+        <p className="body-l mt-4 max-w-2xl" data-testid="parrafo-inicial-envios">
           El envío se calcula por zona y por peso, y lo ves en tu pedido en cuanto eliges la ciudad. Pagas el valor que te mostramos; solo se cotiza aparte en zonas especiales y en pedidos de más de 5 kg.
+          {/* Microcopy §8.5 v1.4 (LEG-121): solo con la promoción vigente. */}
+          {promo && (
+            <>
+              {TEXTOS_ENVIO_GRATIS.parrafoEnvios} {enlaceCondiciones(TEXTOS_ENVIO_GRATIS.enlaceAnuncio)}
+            </>
+          )}
         </p>
 
         <h2 className="h3 mt-12 text-ink-title">Tarifas por zona</h2>
@@ -154,7 +165,7 @@ export default async function PaginaEnvios() {
               <dt className="font-bold text-ink-title">Zona {p.zona}</dt>
               <dd>
                 {textoPlazoPagina(p)}
-                {promo && p.zona === 1 && TEXTOS_ENVIO_GRATIS.plazoZona1}
+                {promo && p.zona === 1 && (plazoZona1 ? <>{plazoZona1[0]}{enlaceCondiciones(plazoZona1[1])}{plazoZona1[2]}</> : TEXTOS_ENVIO_GRATIS.plazoZona1)}
                 {promo && p.zona === 5 && TEXTOS_ENVIO_GRATIS.plazoZona5}
               </dd>
             </div>
@@ -181,7 +192,11 @@ export default async function PaginaEnvios() {
 
         <div className="mt-10 rounded-lg bg-surface-sunken p-6">
           <p className="body-l">¿Tu destino es de zona 5 o pides más de 5 kg?</p>
-          <p className="body mt-1 text-ink-muted">Escríbenos al {formatearWhatsapp(catalogo.tienda.whatsapp)} y te cotizamos.</p>
+          <p className="body mt-1 text-ink-muted" data-testid="caja-cotizar">
+            Escríbenos al {formatearWhatsapp(catalogo.tienda.whatsapp)} y te cotizamos.
+            {/* Microcopy §8.5 v1.4 (LEG-122): solo con la promoción vigente. */}
+            {promo && TEXTOS_ENVIO_GRATIS.cajaCotizar}
+          </p>
           <BotonEnlace href={`https://wa.me/${catalogo.tienda.whatsapp}`} className="mt-4" target="_blank" rel="noopener noreferrer">
             Escribir por WhatsApp
           </BotonEnlace>

@@ -4,14 +4,18 @@ import { calcularEnvio, totalConEnvio } from "./envio";
 import {
   anuncioEnvio,
   aplicaAlMunicipio,
+  avisoFinPromocion,
   ayudaCampoComuna,
   ayudaComunaElegida,
   COMUNAS_EN_TEXTOS,
   comunaCubierta,
   comunasAlfabeticas,
+  DIAS_AVISO_FIN_PROMOCION,
+  ENLACE_PLAZO_ZONA1,
   lineaVerificacionMensaje,
   notaVerificacionResumen,
   OPCION_OTRA_COMUNA,
+  partirEnlace,
   promocionActiva,
   promocionVigente,
   TEXTOS_ENVIO_GRATIS,
@@ -146,8 +150,50 @@ describe("textos del envío gratis (microcopy §8)", () => {
     for (const prohibido of ["Envío gratis en Bucaramanga", "Domicilio gratis", "Envío gratis a todo", "Entrega el mismo día", "¡"]) expect(todos).not.toContain(prohibido);
   });
   it("anuncio de la región viva: una frase con envío y total", () => {
-    expect(anuncioEnvio(calcularEnvio(kilos(1), enComuna("Mutis"), REGLAS), 50000)).toBe("Envío gratis en Mutis: $0. Total: $50.000.");
+    expect(anuncioEnvio(calcularEnvio(kilos(1), enComuna("Mutis"), REGLAS), 50000)).toBe("Envío gratis en Mutis, sujeto a verificar tu dirección: $0. Total: $50.000.");
     expect(anuncioEnvio(calcularEnvio(kilos(1), BGA, REGLAS), 50000)).toBe("Envío: $8.800. Total: $58.800.");
     expect(anuncioEnvio(calcularEnvio(kilos(6), BGA, REGLAS), 50000)).toBe("Envío por cotizar. Total sin envío: $50.000.");
+  });
+});
+
+describe("textos de /envios/ con la promoción (microcopy §8.5 v1.4)", () => {
+  it("dd de la zona 1 con el cómputo del plazo y «ver condiciones» enlazable (LEG-123)", () => {
+    expect(TEXTOS_ENVIO_GRATIS.plazoZona1).toBe(
+      " Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso, contado desde que validamos tu pedido y te damos el aprobado por el chat (ver condiciones).",
+    );
+    expect(partirEnlace(TEXTOS_ENVIO_GRATIS.plazoZona1, ENLACE_PLAZO_ZONA1)).toEqual([
+      " Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso, contado desde que validamos tu pedido y te damos el aprobado por el chat (",
+      "ver condiciones",
+      ").",
+    ]);
+    expect(partirEnlace("sin enlace", ENLACE_PLAZO_ZONA1)).toBeNull();
+  });
+  it("párrafo inicial y caja final (LEG-121, LEG-122)", () => {
+    expect(TEXTOS_ENVIO_GRATIS.parrafoEnvios).toBe(" En siete comunas de Bucaramanga el envío es gratis con cualquier peso, si verificamos por el chat que tu dirección está en una de ellas.");
+    expect(TEXTOS_ENVIO_GRATIS.cajaCotizar).toBe(" Si tu dirección está en una de las siete comunas de Bucaramanga con envío gratis, no hace falta: el envío es gratis con cualquier peso.");
+  });
+});
+
+describe("aviso de fin de la promoción en npm run datos (LEG-125)", () => {
+  const conFin = (hasta: string | null) => ({ ...PROMO, hasta });
+  it("sin promoción o sin fecha final no avisa", () => {
+    expect(avisoFinPromocion(null, "2026-11-09")).toBeNull();
+    expect(avisoFinPromocion(conFin(null), "2026-11-09")).toBeNull();
+  });
+  it(`no avisa si faltan más de ${DIAS_AVISO_FIN_PROMOCION} días`, () => {
+    expect(avisoFinPromocion(conFin("2026-11-17"), "2026-11-09")).toBeNull();
+  });
+  it("avisa si vence en 7 días o menos, con el día en que hay que reconstruir", () => {
+    expect(avisoFinPromocion(conFin("2026-11-16"), "2026-11-09")).toMatch(/^envio_gratis_hasta \(2026-11-16\) vence en 7 días: hay que reconstruir y desplegar el 2026-11-17 /);
+    expect(avisoFinPromocion(conFin("2026-11-10"), "2026-11-09")).toContain("vence en 1 día:");
+    expect(avisoFinPromocion(conFin("2026-11-09"), "2026-11-09")).toContain("vence hoy:");
+    expect(avisoFinPromocion(conFin("2026-12-31"), "2026-12-28")).toContain("desplegar el 2027-01-01");
+  });
+  it("avisa si ya pasó", () => {
+    expect(avisoFinPromocion(conFin("2026-11-08"), "2026-11-09")).toMatch(/^envio_gratis_hasta \(2026-11-08\) ya pasó/);
+  });
+  it("recuerda que falta el estado «terminada» (LEG-127)", () => {
+    expect(avisoFinPromocion(conFin("2026-11-08"), "2026-11-09")).toContain("«terminada»");
+    expect(avisoFinPromocion(conFin("2026-11-12"), "2026-11-09")).toContain("«terminada»");
   });
 });

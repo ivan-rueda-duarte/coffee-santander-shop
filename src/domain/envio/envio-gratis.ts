@@ -3,7 +3,7 @@ import { normalizar } from "../comun/slug";
 import type { EnvioGratis, PromocionEnvioGratis, ResultadoEnvio } from "./tipos";
 
 // Envío gratis en siete comunas de Bucaramanga (decisiones del dueño del 2026-11-09; LEG-106 a LEG-119).
-// Los textos son los de docs/legal/microcopy-legal.md §8 (v1.3), letra por letra. Los nombres de las comunas
+// Los textos son los de docs/legal/microcopy-legal.md §8 (v1.4), letra por letra. Los nombres de las comunas
 // salen siempre del dato (data/comunas_envio_gratis.csv), nunca del código. «siete» y «Bucaramanga» están
 // escritos en los textos legales: `npm run datos` exige siete comunas de Bucaramanga para que sigan siendo ciertos.
 
@@ -34,12 +34,61 @@ export const TEXTOS_ENVIO_GRATIS = {
   tituloSeccion: "Envío gratis en comunas de Bucaramanga",
   notaTabla: "Gratis en siete comunas, con cualquier peso (ver condiciones).",
   salvedadTarifas: " Salvo en las siete comunas de Bucaramanga con envío gratis.",
-  plazoZona1: " Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso.",
+  /** §8.5 v1.4 (LEG-123): «ver condiciones» va enlazado a #envio-gratis (ver `ENLACE_PLAZO_ZONA1`). */
+  plazoZona1: " Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso, contado desde que validamos tu pedido y te damos el aprobado por el chat (ver condiciones).",
+  /** §8.5 v1.4 (LEG-121): se agrega al párrafo inicial de /envios/, seguido del enlace « Ver condiciones» (`enlaceAnuncio`). */
+  parrafoEnvios: " En siete comunas de Bucaramanga el envío es gratis con cualquier peso, si verificamos por el chat que tu dirección está en una de ellas.",
+  /** §8.5 v1.4 (LEG-122): se agrega a «Escríbenos al {WhatsApp} y te cotizamos.» en la caja final de /envios/. */
+  cajaCotizar: " Si tu dirección está en una de las siete comunas de Bucaramanga con envío gratis, no hace falta: el envío es gratis con cualquier peso.",
   plazoZona5: " No aplica a las siete comunas de Bucaramanga con envío gratis.",
 } as const;
 
 /** Ancla de las condiciones en /envios/. */
 export const ANCLA_ENVIO_GRATIS = "envio-gratis";
+
+/** Parte de `plazoZona1` que va enlazada a #envio-gratis. */
+export const ENLACE_PLAZO_ZONA1 = "ver condiciones";
+
+/** Parte un texto en [antes, enlace, después] alrededor de la primera aparición de `enlace` (null si no aparece). */
+export function partirEnlace(texto: string, enlace: string): [string, string, string] | null {
+  const i = texto.indexOf(enlace);
+  return i < 0 ? null : [texto.slice(0, i), enlace, texto.slice(i + enlace.length)];
+}
+
+/** Días que avisa `npm run datos` antes de que venza `envio_gratis_hasta` (LEG-125). */
+export const DIAS_AVISO_FIN_PROMOCION = 7;
+
+/** Días de calendario de `desde` a `hasta` (ISO yyyy-mm-dd); negativo si `hasta` es anterior. */
+function diasEntre(desde: string, hasta: string): number {
+  const utc = (f: string) => {
+    const [a, m, d] = f.split("-").map(Number);
+    return Date.UTC(a, m - 1, d);
+  };
+  return Math.round((utc(hasta) - utc(desde)) / 86_400_000);
+}
+
+/**
+ * Aviso (no error) de `npm run datos` sobre el fin de la promoción (LEG-125, LEG-127): la vigencia se evalúa al
+ * construir, así que el sitio sigue mostrando el envío gratis hasta que se reconstruye y despliega. Avisa si
+ * `envio_gratis_hasta` ya pasó o vence en los próximos `DIAS_AVISO_FIN_PROMOCION` días; null si no hay fecha final.
+ */
+export function avisoFinPromocion(p: PromocionEnvioGratis | null, hoy: string): string | null {
+  if (!p?.hasta) return null;
+  const dias = diasEntre(hoy, p.hasta);
+  const falta = "El estado «terminada» (microcopy §8.6.1, LEG-127) aún no está construido: antes de esa fecha hay que implementarlo y publicar el aviso de terminación con la misma visibilidad.";
+  if (dias < 0) {
+    return `envio_gratis_hasta (${p.hasta}) ya pasó: si el sitio desplegado se construyó antes, sigue mostrando el envío gratis hasta que se reconstruya y despliegue. ${falta}`;
+  }
+  if (dias > DIAS_AVISO_FIN_PROMOCION) return null;
+  const cuando = dias === 0 ? "vence hoy" : `vence en ${dias} ${dias === 1 ? "día" : "días"}`;
+  return `envio_gratis_hasta (${p.hasta}) ${cuando}: hay que reconstruir y desplegar el ${diaSiguiente(p.hasta)} para que el sitio deje de mostrar el envío gratis. ${falta}`;
+}
+
+/** Día siguiente a `fecha` (ISO yyyy-mm-dd). */
+function diaSiguiente(fecha: string): string {
+  const [a, m, d] = fecha.split("-").map(Number);
+  return new Date(Date.UTC(a, m - 1, d + 1)).toISOString().slice(0, 10);
+}
 
 /** La promoción rige si existe, ya empezó y no ha vencido (`hasta` es inclusive). `hoy` en ISO yyyy-mm-dd. */
 export function promocionVigente(p: PromocionEnvioGratis | null, hoy: string): boolean {
@@ -112,10 +161,10 @@ export function lineaVerificacionMensaje(envio: EnvioGratis, subtotalCop: number
 
 /**
  * Frase de la región `role="status"` del paso Envío (diseño §2): una sola frase con el envío y el total,
- * que solo se anuncia cuando cambia. La del envío gratis está pendiente de revisión de legal.
+ * que solo se anuncia cuando cambia. La del envío gratis es la de microcopy §8.3 v1.4 (LEG-120).
  */
 export function anuncioEnvio(envio: ResultadoEnvio, subtotalCop: number): string {
-  if (envio.tipo === "gratis") return `Envío gratis en ${envio.comuna}: $0. Total: ${formatearCOP(subtotalCop)}.`;
+  if (envio.tipo === "gratis") return `Envío gratis en ${envio.comuna}, sujeto a verificar tu dirección: $0. Total: ${formatearCOP(subtotalCop)}.`;
   if (envio.tipo === "por_cotizar") return `Envío por cotizar. Total sin envío: ${formatearCOP(subtotalCop)}.`;
   return `Envío: ${formatearCOP(envio.valorCop)}. Total: ${formatearCOP(subtotalCop + envio.valorCop)}.`;
 }
