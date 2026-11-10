@@ -56,7 +56,7 @@ Revisar cada enero (ajuste por IPC de las transportadoras).
 
 ## 7. Envío gratis en siete comunas de Bucaramanga (decisión del 2026-11-09)
 
-- Comunas en `data/comunas_envio_gratis.csv` (siete, todas de Bucaramanga: los textos legales dicen «siete comunas de Bucaramanga»). Vigencia en `config.csv`: `envio_gratis_desde` (vacía = apagada) y `envio_gratis_hasta` (opcional, inclusive).
+- Comunas en `data/comunas_envio_gratis.csv` (siete, todas de Bucaramanga: los textos legales dicen «siete comunas de Bucaramanga»). Vigencia en `config.csv`: `envio_gratis_desde` (vacía = apagada) y `envio_gratis_terminada` (opcional: el día en que el dueño la apaga y despliega; desde ese build no rige y el sitio muestra el estado «terminada» de microcopy §8.6.1). No hay fecha final anunciada: `envio_gratis_hasta` ya no se usa y `npm run datos` falla si se llena (P34 b).
 - Con municipio Bucaramanga y una comuna de la lista, el envío vale $0 **con cualquier peso**: excepción a las reglas de §3 (más de 5 kg) y §4 («por cotizar»). La tarifa de zona 1 que habría correspondido (o «se cotiza» con más de 5 kg) se muestra como alternativa en el resumen y en el mensaje, porque la comuna la declara el cliente y se verifica por el chat antes de que acepte el total.
 - Sin comuna o con «Otra comuna o no la sé», rige la regla normal de Bucaramanga.
 - Plazo propio: estimado mismo día o siguiente día hábil, máximo 1 día hábil desde la validación y el aprobado del pedido, con cualquier peso. No sale de `plazos_envio.csv`.
