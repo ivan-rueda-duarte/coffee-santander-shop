@@ -8,6 +8,7 @@ import { fechaEnLetras } from "@/domain/comun/fecha";
 import { normalizar } from "@/domain/comun/slug";
 import { crearEsquemaEnvio, esquemaConsentimientos, SIGLA_DOCUMENTO, validar, type DatosEnvio } from "@/domain/pedido/envio";
 import { calcularEnvio } from "@/domain/envio/envio";
+import { anuncioEnvio } from "@/domain/envio/envio-gratis";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { lineaVendedor } from "@/domain/pedido/tienda";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
@@ -29,6 +30,24 @@ const PASOS = [
 type Paso = (typeof PASOS)[number]["id"];
 
 const esPaso = (v: string | null): v is Paso => PASOS.some((p) => p.id === v);
+
+/**
+ * Región viva del paso Envío (diseño 2026-11-09 §2): una sola frase con el envío y el total. Empieza vacía al
+ * montar el paso (no se anuncia nada al entrar ni al recargar) y solo cambia cuando cambian el envío o el total.
+ */
+function AnuncioEnvio({ frase }: { frase: string }) {
+  const [anterior, setAnterior] = useState(frase);
+  const [anuncio, setAnuncio] = useState("");
+  if (frase !== anterior) {
+    setAnterior(frase);
+    setAnuncio(frase);
+  }
+  return (
+    <p role="status" aria-live="polite" aria-atomic="true" className="sr-only" data-testid="anuncio-envio">
+      {anuncio}
+    </p>
+  );
+}
 
 /** Si la persona venía de la v1 con una ciudad escrita a mano, se propone si coincide con un solo municipio. */
 function adivinarMunicipio(ciudad: string | undefined): Pick<ValoresEnvio, "departamento" | "municipio"> | null {
@@ -87,7 +106,8 @@ function Contenido() {
     titulo.current?.focus({ preventScroll: false });
   }, [paso]);
 
-  const esquema = useMemo(() => crearEsquemaEnvio(tienda.formasPago, CODIGOS_DEPARTAMENTO), [tienda.formasPago]);
+  const envioGratis = catalogo.envios.envioGratis;
+  const esquema = useMemo(() => crearEsquemaEnvio(tienda.formasPago, CODIGOS_DEPARTAMENTO, { envioGratis }), [tienda.formasPago, envioGratis]);
 
   const continuarEnvio = () => {
     const r = validar(esquema, valores);
@@ -178,8 +198,10 @@ function Contenido() {
     );
   }
 
-  const destino = valores.departamento && valores.municipio ? { departamento: valores.departamento, municipio: valores.municipio } : null;
-  const envioPorCotizar = paso === "resumen" && destino !== null && totales.lineas.length > 0 && calcularEnvio(totales.lineas, destino, catalogo.envios).tipo === "por_cotizar";
+  // La comuna solo cuenta si es de la lista y el municipio es el de la promoción (lo decide calcularEnvio).
+  const destino = valores.departamento && valores.municipio ? { departamento: valores.departamento, municipio: valores.municipio, comuna: valores.comuna } : null;
+  const envioCalculado = destino !== null && totales.lineas.length > 0 ? calcularEnvio(totales.lineas, destino, catalogo.envios) : null;
+  const envioPorCotizar = paso === "resumen" && envioCalculado?.tipo === "por_cotizar";
   const resumenTotales = (
     <div className="rounded-lg bg-surface-raised p-5">
       <TotalesPedido totales={totales} destino={paso === "carrito" ? null : destino} />
@@ -230,10 +252,12 @@ function Contenido() {
               continuarEnvio();
             }}
           >
-            <FormularioEnvio valores={valores} errores={errores} formasPago={tienda.formasPago} alCambiar={(c) => { setValores((v) => ({ ...v, ...c })); setEnvioValido(false); }} />
-            <div className="mt-8 rounded-lg bg-surface-raised p-5" aria-live="polite">
+            <FormularioEnvio valores={valores} errores={errores} formasPago={tienda.formasPago} envioGratis={envioGratis} alCambiar={(c) => { setValores((v) => ({ ...v, ...c })); setEnvioValido(false); }} />
+            {/* Sin aria-live en la caja: releería todo el bloque en cada cambio. Anuncia una sola frase (diseño §2). */}
+            <div className="mt-8 rounded-lg bg-surface-raised p-5">
               <TotalesPedido totales={totales} destino={destino} />
             </div>
+            <AnuncioEnvio frase={envioCalculado ? anuncioEnvio(envioCalculado, totales.subtotalCop) : ""} />
             <div className="mt-8 flex flex-wrap gap-3">
               <Boton variante="secundario" onClick={() => irA("carrito")}>
                 <IconoFlechaAtras className="ds-btn__icon" /> Volver al carrito
@@ -274,6 +298,8 @@ function Contenido() {
             )}
             <p className="text-ink-muted">{valores.direccion}{valores.barrio ? ` · ${valores.barrio}` : ""}</p>
             <p className="text-ink-muted">{valores.municipio}, {valores.departamento}</p>
+            {/* Diseño §4: solo con una comuna de la lista (con «Otra comuna o no la sé» queda vacía). */}
+            {datosEnvio?.comuna && <p className="text-ink-muted" data-testid="resumen-comuna">Comuna: {datosEnvio.comuna}</p>}
             {datosEnvio?.codigoPostal && <p className="text-ink-muted">Código postal: {datosEnvio.codigoPostal}</p>}
             <p className="text-ink-muted">Pago: {valores.formaPago}</p>
           </div>

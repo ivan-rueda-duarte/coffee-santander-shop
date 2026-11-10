@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, type ReactNode, type SelectHTMLAttributes } from "react";
+import { ANCLA_ENVIO_GRATIS, aplicaAlMunicipio, ayudaCampoComuna, ayudaComunaElegida, comunaCubierta, comunasAlfabeticas, OPCION_OTRA_COMUNA, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
+import type { PromocionEnvioGratis } from "@/domain/envio/tipos";
 import { DOCUMENTO_OBLIGATORIO, MAX_DOCUMENTO, MAX_INDICACIONES, TIPOS_DOCUMENTO, type FinalidadDocumento, type TipoDocumento } from "@/domain/pedido/envio";
 import divipolaCrudo from "@/data/divipola.json";
 import { IconoChevron } from "../marca/iconos";
@@ -44,6 +47,8 @@ export interface ValoresEnvio {
   codigoPostal: string;
   direccion: string;
   barrio: string;
+  /** "" (sin elegir), OPCION_OTRA_COMUNA o una comuna de la promoción. Solo en memoria: ni navegador, ni URL, ni analítica. */
+  comuna: string;
   indicaciones: string;
   formaPago: string;
 }
@@ -59,6 +64,7 @@ export const ENVIO_VACIO: ValoresEnvio = {
   codigoPostal: "",
   direccion: "",
   barrio: "",
+  comuna: "",
   indicaciones: "",
   formaPago: "",
 };
@@ -114,14 +120,20 @@ export function FormularioEnvio({
   valores,
   errores,
   formasPago,
+  envioGratis,
   alCambiar,
 }: {
   valores: ValoresEnvio;
   errores: Record<string, string>;
   formasPago: readonly string[];
+  /** Promoción de envío gratis vigente (data/), o null: sin ella el campo «Comuna» no existe. */
+  envioGratis: PromocionEnvioGratis | null;
   alCambiar: (cambios: Partial<ValoresEnvio>) => void;
 }) {
   const documentoObligatorio = DOCUMENTO_OBLIGATORIO !== false;
+  // Campo «Comuna» (diseño 2026-11-09 §1; microcopy §8.2): solo con el municipio de la promoción.
+  const conComuna = aplicaAlMunicipio(envioGratis, valores.departamento, valores.municipio);
+  const comunaElegida = conComuna ? comunaCubierta(valores, envioGratis) : null;
   const municipios = useMemo(() => DEPARTAMENTOS.find((d) => d.nombre === valores.departamento)?.municipios ?? [], [valores.departamento]);
   /** Atributos comunes del campo, sin clase: los usa `SelectSuperpuesto`, que pone la suya. */
   const propsSelect = (campo: keyof ValoresEnvio, ayuda?: boolean) => ({
@@ -169,7 +181,7 @@ export function FormularioEnvio({
         <SelectSuperpuesto
           {...propsSelect("departamento")}
           autoComplete="address-level1"
-          onChange={(e) => alCambiar({ departamento: e.target.value, municipio: "" })}
+          onChange={(e) => alCambiar({ departamento: e.target.value, municipio: "", comuna: "" })}
           textoVisible={valores.departamento || "Elige el departamento"}
         >
           <option value="">Elige el departamento</option>
@@ -184,6 +196,7 @@ export function FormularioEnvio({
         {/* QA-004: «Primero elige el departamento» (≈247 px) no cabía en el select a 320 px (≈224 px útiles). */}
         <SelectSuperpuesto
           {...propsSelect("municipio")}
+          onChange={(e) => alCambiar({ municipio: e.target.value, comuna: "" })}
           autoComplete="address-level2"
           disabled={municipios.length === 0}
           textoVisible={valores.municipio || (municipios.length ? "Elige el municipio" : "Elige el departamento")}
@@ -196,6 +209,40 @@ export function FormularioEnvio({
           ))}
         </SelectSuperpuesto>
       </Campo>
+      {conComuna && (
+        // Aparece solo con opacidad (150 ms, ease-out) y sin transición con prefers-reduced-motion. Sin error: es opcional.
+        <div className="motion-safe:transition-opacity motion-safe:duration-150 motion-safe:ease-out motion-safe:starting:opacity-0" data-testid="campo-comuna">
+          <Campo
+            id="comuna"
+            etiqueta={TEXTOS_ENVIO_GRATIS.etiquetaCampo}
+            opcional
+            ayudaFija
+            ayuda={
+              <>
+                {comunaElegida ? ayudaComunaElegida(comunaElegida) : ayudaCampoComuna(envioGratis)}{" "}
+                <Link className="underline underline-offset-4" href={`/envios/#${ANCLA_ENVIO_GRATIS}`} target="_blank" rel="noopener noreferrer">
+                  {TEXTOS_ENVIO_GRATIS.enlaceCondiciones}
+                </Link>
+              </>
+            }
+          >
+            <SelectSuperpuesto
+              {...propsSelect("comuna", true)}
+              aria-invalid={undefined}
+              autoComplete="off"
+              textoVisible={comunaElegida ?? (valores.comuna === OPCION_OTRA_COMUNA ? TEXTOS_ENVIO_GRATIS.otraComuna : TEXTOS_ENVIO_GRATIS.primeraOpcion)}
+            >
+              <option value="">{TEXTOS_ENVIO_GRATIS.primeraOpcion}</option>
+              {comunasAlfabeticas(envioGratis).map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+              <option value={OPCION_OTRA_COMUNA}>{TEXTOS_ENVIO_GRATIS.otraComuna}</option>
+            </SelectSuperpuesto>
+          </Campo>
+        </div>
+      )}
       <Campo
         id="codigoPostal"
         etiqueta="Código postal"
@@ -214,7 +261,8 @@ export function FormularioEnvio({
       >
         <input {...props("codigoPostal", true)} aria-describedby={errores.codigoPostal ? "codigoPostal-error codigoPostal-ayuda" : "codigoPostal-ayuda"} type="text" inputMode="numeric" autoComplete="postal-code" maxLength={6} />
       </Campo>
-      <div className="hidden sm:block" />
+      {/* Con «Comuna», la fila es Comuna | Código postal y no hace falta el relleno. */}
+      {!conComuna && <div className="hidden sm:block" />}
       <div className="sm:col-span-2">
         <Campo id="direccion" etiqueta="Dirección" error={errores.direccion} ayuda="Calle o carrera, número, apartamento o casa.">
           <input {...props("direccion", true)} type="text" autoComplete="street-address" />

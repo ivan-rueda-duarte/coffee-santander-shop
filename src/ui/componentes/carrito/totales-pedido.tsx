@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { calcularEnvio, nombreDestino, totalConEnvio } from "@/domain/envio/envio";
+import { ANCLA_ENVIO_GRATIS, notaVerificacionResumen, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
 import { textoPlazoResumen } from "@/domain/envio/plazos";
 import type { DestinoEnvio } from "@/domain/envio/tipos";
 import { leyendaIva } from "@/domain/pedido/iva";
@@ -14,19 +15,25 @@ import { useCatalogo } from "@/ui/hooks/use-catalogo";
  * Subtotal, envío y total del pedido. Con destino (departamento y municipio) calcula el envío por zona y
  * muestra el plazo de entrega de esa zona (microcopy §5.6); sin destino dice que se calcula al elegir la ciudad.
  * Bajo el subtotal va la leyenda de IVA (§1.4). Se recalcula solo cuando cambia el carrito o el destino.
- * Los `data-testid` son estables: linea-subtotal, leyenda-iva, linea-envio, linea-plazo, linea-total.
+ * Con envío gratis por comuna (diseño 2026-11-09 §2 y §3; microcopy §8.3 y §8.6): «$0» con la etiqueta en contorno,
+ * la nota con la tarifa y el total alternativos y el plazo propio de la promoción; en el cajón, una línea que
+ * menciona la promoción. Los `data-testid` son estables: linea-subtotal, leyenda-iva, linea-envio, linea-plazo,
+ * linea-total, etiqueta-envio-gratis, referencia-tarifa, anuncio-envio-gratis.
  */
 export function TotalesPedido({
   totales,
   destino,
   ciudadDespacho,
   className = "",
+  alNavegar,
 }: {
   totales: Totales;
   destino: DestinoEnvio | null;
   /** Se muestra junto al aviso cuando todavía no hay destino (cajón del carrito). */
   ciudadDespacho?: string;
   className?: string;
+  /** Al pulsar un enlace (el cajón se cierra). */
+  alNavegar?: () => void;
 }) {
   const { catalogo } = useCatalogo();
   const envio = useMemo(() => (destino && totales.lineas.length ? calcularEnvio(totales.lineas, destino, catalogo.envios) : null), [destino, totales.lineas, catalogo.envios]);
@@ -47,7 +54,18 @@ export function TotalesPedido({
         {envio === null && (
           <div className="flex justify-between gap-4 text-ink-muted" data-testid="linea-envio">
             <dt>Envío</dt>
-            <dd className="text-right">Se calcula al elegir tu ciudad{ciudadDespacho ? ` · desde ${ciudadDespacho}` : ""}</dd>
+            <dd className="text-right">
+              Se calcula al elegir tu ciudad{ciudadDespacho ? ` · desde ${ciudadDespacho}` : ""}
+              {/* Cajón (§3): solo con la promoción vigente. La condición va en la misma frase (LEG-107). */}
+              {ciudadDespacho && catalogo.envios.envioGratis && (
+                <span className="caption mt-1 block" data-testid="anuncio-envio-gratis">
+                  {TEXTOS_ENVIO_GRATIS.anuncio}{" "}
+                  <Link href={`/envios/#${ANCLA_ENVIO_GRATIS}`} className="underline underline-offset-4" onClick={alNavegar}>
+                    {TEXTOS_ENVIO_GRATIS.enlaceAnuncio}
+                  </Link>
+                </span>
+              )}
+            </dd>
           </div>
         )}
 
@@ -58,6 +76,24 @@ export function TotalesPedido({
               {plazo && <span className="caption block text-ink-muted" data-testid="linea-plazo">{plazo}</span>}
             </dt>
             <dd className="font-bold tabular-nums text-ink-title">{formatearCOP(envio.valorCop)}</dd>
+          </div>
+        )}
+
+        {envio?.tipo === "gratis" && destino && (
+          // Rejilla: rótulo | «Envío gratis» $0 en la primera fila; la nota y el plazo a todo el ancho debajo (a 360 px no caben en una columna).
+          <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-4" data-testid="linea-envio">
+            <dt>
+              Envío a {nombreDestino(destino.municipio)} <span className="text-ink-muted">· zona {envio.zona} · {envio.comuna}</span>
+            </dt>
+            {/* «$0, no precio tachado» (diseño §2); la etiqueta va junto al valor (microcopy §8.3), en contorno y sin hover. */}
+            <dd className="flex flex-wrap items-center justify-end gap-2 self-start">
+              <span className="ds-tag ds-tag--outline !border-monte-900 !font-bold !text-ink-title" data-testid="etiqueta-envio-gratis">{TEXTOS_ENVIO_GRATIS.etiqueta}</span>
+              <span className="whitespace-nowrap font-bold tabular-nums text-ink-title">{formatearCOP(0)}</span>
+            </dd>
+            <dd className="col-span-2 mt-1">
+              <span className="caption block text-ink-muted" data-testid="referencia-tarifa">{notaVerificacionResumen(envio, totales.subtotalCop)}</span>
+              {plazo && <span className="caption mt-1 block text-ink-muted" data-testid="linea-plazo">{plazo}</span>}
+            </dd>
           </div>
         )}
 
@@ -79,7 +115,7 @@ export function TotalesPedido({
         )}
       </dl>
       <p className="caption mt-2 text-ink-muted">
-        <Link href="/envios/" className="underline underline-offset-4">
+        <Link href="/envios/" className="underline underline-offset-4" onClick={alNavegar}>
           Cómo calculamos el envío
         </Link>
       </p>

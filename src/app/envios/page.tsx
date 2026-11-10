@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { formatearCOP } from "@/domain/comun/dinero";
+import { slugify } from "@/domain/comun/slug";
 import { coberturaPorZona } from "@/domain/envio/envio";
+import { ANCLA_ENVIO_GRATIS, comunasAlfabeticas, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
+import type { BloqueEstructurado } from "@/domain/marca/reglas-texto";
 import { textoPlazoPagina } from "@/domain/envio/plazos";
 import { EMPAQUE_G, type TarifaEnvio } from "@/domain/envio/tipos";
 import { leyendaIvaTarifas } from "@/domain/pedido/iva";
@@ -10,7 +13,7 @@ import { BotonEnlace } from "@/ui/componentes/marca/boton";
 import { Antetitulo } from "@/ui/componentes/marca/etiquetas";
 import { Migas } from "@/ui/componentes/ficha/ficha-cafe";
 import { Titular } from "@/ui/componentes/layout/secciones-inicio";
-import { canonica, cargarCatalogo } from "../_datos/catalogo";
+import { canonica, cargarCatalogo, cargarCondicionesEnvioGratis } from "../_datos/catalogo";
 
 export const metadata: Metadata = {
   title: "Envíos",
@@ -20,12 +23,28 @@ export const metadata: Metadata = {
 
 const MEDIOS: Record<string, string> = { mensajero: "Mensajero", transportadora: "Transportadora", transportadora_o_472: "Transportadora" };
 
+/** Párrafos y listas seguidas del numeral de condiciones, en el orden del documento. */
+function agrupar(bloques: readonly BloqueEstructurado[]): ({ tipo: "parrafo"; texto: string } | { tipo: "lista"; items: string[] })[] {
+  const salida: ({ tipo: "parrafo"; texto: string } | { tipo: "lista"; items: string[] })[] = [];
+  for (const b of bloques) {
+    const ultimo = salida[salida.length - 1];
+    if (b.tipo === "item") {
+      if (ultimo?.tipo === "lista") ultimo.items.push(b.texto);
+      else salida.push({ tipo: "lista", items: [b.texto] });
+    } else salida.push({ tipo: "parrafo", texto: b.texto });
+  }
+  return salida;
+}
+
 /** Une con comas; si algún nombre ya lleva coma (San Andrés, Providencia…), con punto y coma. */
 const lista = (items: string[]) => items.join(items.some((i) => i.includes(",")) ? "; " : ", ");
 
 export default async function PaginaEnvios() {
-  const catalogo = await cargarCatalogo();
+  const [catalogo, condiciones] = await Promise.all([cargarCatalogo(), cargarCondicionesEnvioGratis()]);
   const { tarifas, plazos } = catalogo.envios;
+  // Envío gratis por comunas (diseño 2026-11-09 §5; microcopy §8.5): sin la promoción vigente, nada de esto se pinta.
+  const promo = condiciones ? catalogo.envios.envioGratis : null;
+  const clavePromo = promo ? slugify(promo.municipio) : null;
   const cobertura = coberturaPorZona(catalogo.envios);
 
   /** Qué abarca cada fila de la tabla, generado de zonas_envio.csv. */
@@ -71,6 +90,11 @@ export default async function PaginaEnvios() {
                   <td className="px-4 py-3 align-top">
                     {cubre(t)}
                     <span className="mt-1 block text-ink-muted">{MEDIOS[t.medio] ?? t.medio}</span>
+                    {t.clave === clavePromo && (
+                      <Link href={`#${ANCLA_ENVIO_GRATIS}`} className="mt-1 block text-ink-muted underline underline-offset-4" data-testid="nota-envio-gratis-tabla">
+                        {TEXTOS_ENVIO_GRATIS.notaTabla}
+                      </Link>
+                    )}
                   </td>
                   {t.escalones ? (
                     t.escalones.map((valor, i) => (
@@ -86,10 +110,38 @@ export default async function PaginaEnvios() {
         </div>
         {/* Microcopy §1.4 y §1.7 (paquete legal v1): IVA incluido y comisión de recaudo dentro de la tarifa.
             Diseño #12: las dos aclaraciones de la tabla en el mismo nivel (small), la leyenda de IVA pegada a la tabla. */}
-        <p className="small mt-3 max-w-2xl text-ink-muted" data-testid="leyenda-iva">{leyendaIvaTarifas(catalogo.tienda.ivaTarifa)}</p>
+        <p className="small mt-3 max-w-2xl text-ink-muted" data-testid="leyenda-iva">{leyendaIvaTarifas(catalogo.tienda.ivaTarifa, promo ? TEXTOS_ENVIO_GRATIS.salvedadTarifas : "")}</p>
         <p className="small mt-2 max-w-2xl text-ink-muted" data-testid="comision-incluida">
           Si pagas contraentrega, la tarifa de envío de tu zona ya incluye la comisión de recaudo de la transportadora; no cobramos recargos adicionales.
         </p>
+
+        {/* Microcopy §8.5: las condiciones completas son el numeral de «Envíos, devoluciones, retracto y garantía» v2,
+            letra por letra (art. 33 de la Ley 1480). La lista de comunas sale de data/comunas_envio_gratis.csv. */}
+        {promo && condiciones && (
+          <section aria-labelledby={ANCLA_ENVIO_GRATIS} data-testid="seccion-envio-gratis">
+            <h2 id={ANCLA_ENVIO_GRATIS} className="h3 mt-12 scroll-mt-24 text-ink-title">{TEXTOS_ENVIO_GRATIS.tituloSeccion}</h2>
+            {agrupar(condiciones).map((b, i) =>
+              b.tipo === "parrafo" ? (
+                <div key={i}>
+                  <p className="body mt-2 max-w-2xl text-ink-muted">{b.texto}</p>
+                  {i === 0 && (
+                    <ul className="body mt-4 grid gap-x-6 gap-y-1 rounded-lg border border-line bg-surface px-5 py-4 text-ink sm:grid-cols-2 md:grid-cols-3" aria-label="Comunas con envío gratis" data-testid="lista-comunas">
+                      {comunasAlfabeticas(promo).map((c) => <li key={c}>{c}</li>)}
+                    </ul>
+                  )}
+                </div>
+              ) : (
+                <ul key={i} className="body mt-4 max-w-2xl list-disc space-y-2 pl-5">
+                  {b.items.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              ),
+            )}
+            <p className="body mt-4 max-w-2xl">
+              Más en{" "}
+              <Link className="font-semibold underline underline-offset-4" href="/legal/envios-devoluciones/">envíos, devoluciones, retracto y garantía</Link>.
+            </p>
+          </section>
+        )}
 
         {/* Microcopy §5.8: plazos estimado y máximo por zona desde data/plazos_envio.csv (Ley 1480, art. 50 lit. h). */}
         <h2 className="h3 mt-12 text-ink-title">Plazos de entrega</h2>
@@ -100,7 +152,11 @@ export default async function PaginaEnvios() {
           {plazos.map((p) => (
             <div key={p.zona} className="grid gap-1 py-3 sm:grid-cols-[8rem_1fr] sm:gap-4" data-testid={`plazo-zona-${p.zona}`}>
               <dt className="font-bold text-ink-title">Zona {p.zona}</dt>
-              <dd>{textoPlazoPagina(p)}</dd>
+              <dd>
+                {textoPlazoPagina(p)}
+                {promo && p.zona === 1 && TEXTOS_ENVIO_GRATIS.plazoZona1}
+                {promo && p.zona === 5 && TEXTOS_ENVIO_GRATIS.plazoZona5}
+              </dd>
             </div>
           ))}
         </dl>
