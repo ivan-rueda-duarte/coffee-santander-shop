@@ -76,6 +76,7 @@ Pares `clave,valor`. Si el valor lleva comas, va entre comillas (`domicilio,"Buc
 | `iva_tarifa` *(opcional)* | Tarifa de IVA incluida en los precios (`5`). Con valor, el sitio dice «Precios con IVA del 5 % incluido (art. 468-1 del Estatuto Tributario)»; vacía, dice solo «con todos los impuestos incluidos». Solo se publica con el concepto escrito del contador. |
 | `razon_social`, `nit`, `domicilio`, `direccion_notificacion`, `correo_contacto`, `correo_notificacion` | Datos del vendedor (Ley 1480, art. 50). Se muestran en el pie, en el resumen del pedido y en `/legal/vendedor/`; cada dato se pinta solo si existe. `nit` con dígito de verificación (`902.121.184-8`). |
 | `matricula_mercantil`, `representante_legal`, `area_datos` | Solo se muestran en `/legal/vendedor/` (el representante es un dato personal; no va en el pie). `area_datos` es el área que atiende consultas de datos personales. |
+| `envio_gratis_desde`, `envio_gratis_hasta` *(opcionales)* | Envío gratis en siete comunas de Bucaramanga (ver `comunas_envio_gratis.csv`). **Hoy van vacías: la promoción está apagada.** Ver las instrucciones de esa sección antes de llenarlas. |
 
 ## tarifas_envio.csv, zonas_envio.csv y plazos_envio.csv (envíos por zona)
 
@@ -116,3 +117,15 @@ Una fila por zona (las cinco son obligatorias). Lo que se escribe aquí se publi
 | `plazo_maximo` | El plazo que la tienda se compromete a cumplir: `3 días hábiles`. En la zona 5 debe decir `por cotizar` (el sitio añade «nunca más de 30 días calendario»); en las zonas 1 a 4 tiene que ser un plazo real. |
 
 Los plazos se cuentan desde que el cliente acepta el total en el chat y, si paga por Bre-B, desde que se recibe el pago (texto legal en `docs/legal/envios-devoluciones-retracto.md`).
+
+## comunas_envio_gratis.csv (envío gratis por comunas)
+
+Una fila por comuna con envío gratis: `departamento`, `municipio`, `comuna` (el nombre que ve el cliente) y `orden` (el orden en que la nombran los textos legales; el selector las ordena alfabéticamente). Hoy son las siete comunas que decidió el dueño el 2026-11-09. `npm run datos` exige **siete comunas de Bucaramanga**, sin repetir, porque los textos legales dicen «siete comunas de Bucaramanga»: agregar, quitar o renombrar una comuna exige primero textos nuevos de legal y una versión nueva de los documentos.
+
+La promoción se enciende y se apaga en `config.csv`:
+
+- `envio_gratis_desde` (fecha `2026-12-01`): desde qué día rige. **Vacía = apagada:** no aparece nada en ningún lado del sitio. **No la llenes antes de que legal publique** los Términos, «Envíos, devoluciones, retracto y garantía» y la Política de tratamiento de datos versión 2 (LEG-106). Ese mismo día se cambian también `version_terminos`, `fecha_terminos`, `version_politica_datos` y `fecha_politica_datos`. Si la promoción está vigente y los documentos no traen el numeral «Envío gratis en comunas de Bucaramanga» (con cada comuna y la fecha de inicio en letras) y las salvedades, `npm run datos` falla y el sitio no se construye.
+- `envio_gratis_hasta` (opcional): último día en que rige, inclusive. Hoy no se usa (sin fecha final). Al terminar la promoción, legal debe publicar el aviso de terminación con la misma visibilidad con que se anunció.
+- Las fechas se comparan con el día del build en Colombia: si la promoción empieza o termina en una fecha futura, hay que reconstruir y desplegar ese día.
+
+Para ver la promoción en un entorno de prueba (nunca en el despliegue): pon una fecha pasada en `envio_gratis_desde` y construye con `ENVIO_GRATIS_PRUEBA=si npm run build`. En ese modo el control de documentos solo avisa y `/envios/` toma las condiciones del borrador de legal. Con `GITHUB_PAGES=true` ese modo falla a propósito. Después, deja otra vez la clave vacía.

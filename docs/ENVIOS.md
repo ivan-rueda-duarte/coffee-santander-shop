@@ -54,8 +54,18 @@ Revisar cada enero (ajuste por IPC de las transportadoras).
 - En municipios sin reparto a domicilio la guía puede cerrar en "reclamar en oficina".
 - Pedido mínimo sugerido: 2 bolsas de 250 g o 1 de 500 g (una bolsa suelta de 250 g o de 500 g, y también 2 bolsas de 500 g, pagan el escalón de 1 kg).
 
-## 7. Pendientes (TODO(dato))
+## 7. Envío gratis en siete comunas de Bucaramanga (decisión del 2026-11-09)
+
+- Comunas en `data/comunas_envio_gratis.csv` (siete, todas de Bucaramanga: los textos legales dicen «siete comunas de Bucaramanga»). Vigencia en `config.csv`: `envio_gratis_desde` (vacía = apagada) y `envio_gratis_hasta` (opcional, inclusive).
+- Con municipio Bucaramanga y una comuna de la lista, el envío vale $0 **con cualquier peso**: excepción a las reglas de §3 (más de 5 kg) y §4 («por cotizar»). La tarifa de zona 1 que habría correspondido (o «se cotiza» con más de 5 kg) se muestra como alternativa en el resumen y en el mensaje, porque la comuna la declara el cliente y se verifica por el chat antes de que acepte el total.
+- Sin comuna o con «Otra comuna o no la sé», rige la regla normal de Bucaramanga.
+- Plazo propio: estimado mismo día o siguiente día hábil, máximo 1 día hábil desde la validación y el aprobado del pedido, con cualquier peso. No sale de `plazos_envio.csv`.
+- La vigencia se evalúa en el build (hora de Colombia): para que empiece o termine en una fecha hay que reconstruir ese día.
+- No se enciende antes de que legal publique los documentos versión 2 (LEG-106): `npm run datos` lo impide. Regla de dominio: `src/domain/envio/envio-gratis.ts`.
+
+## 8. Pendientes (TODO(dato))
 
 - Confirmar lista final de ciudades de zona 3 con el cliente.
 - Confirmar plazos de entrega por zona con el agregador.
 - Verificar cobertura de zona 5 en el agregador antes de prometer entrega; sin ruta privada, usar 4-72.
+- Envío gratis por comunas: D-19 (el mensajero cumple 1 día hábil en las siete comunas, también con más de 5 kg), D-21 (fecha de inicio), D-22 (fuente oficial de las comunas), D-23 (facturación del envío en $0) y P33 (cuándo se da el aprobado con Bre-B).
