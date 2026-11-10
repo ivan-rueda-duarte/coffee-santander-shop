@@ -1,14 +1,18 @@
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page, type Request } from "@playwright/test";
-import { leerConfig } from "./ayudas";
+import { estadoEnvioGratisE2E, fechaEnLetras } from "./ayudas";
 
-// Envío gratis en siete comunas de Bucaramanga (ronda QA 2026-11-09; microcopy-legal §8 v1.4; diseño 2026-11-09).
-// Dos modos, según el build que sirve out/:
-// - Encendida: `envio_gratis_desde` con fecha y ENVIO_GRATIS_PRUEBA=si (build de PRUEBA, nunca se despliega).
-// - Apagada (repositorio): `envio_gratis_desde` vacía. Nada de la promoción aparece.
+// Envío gratis en siete comunas de Bucaramanga (ronda QA 2026-11-09; microcopy-legal §8 v1.4 y §8.6.1 v1.5; diseño 2026-11-09).
+// Tres modos, según el build que sirve out/ (estado leído de data/config.csv, igual que el build):
+// - Encendida: `envio_gratis_desde` con fecha, `envio_gratis_terminada` vacía y ENVIO_GRATIS_PRUEBA=si (build de PRUEBA, nunca se despliega).
+// - Terminada (P34 b): `envio_gratis_desde` y `envio_gratis_terminada` con fecha. Aviso 30 días; cálculo normal.
+// - Apagada (repositorio) o programada: nada de la promoción aparece.
 
-const ENCENDIDA = leerConfig("envio_gratis_desde") !== "" && process.env.ENVIO_GRATIS_PRUEBA === "si";
+const ESTADO = estadoEnvioGratisE2E();
+const ENCENDIDA = ESTADO.tipo === "vigente" && ESTADO.prueba;
+const TERMINADA = ESTADO.tipo === "terminada";
+const APAGADA = ESTADO.tipo === "apagada" || ESTADO.tipo === "programada";
 const COMUNAS = readFileSync("data/comunas_envio_gratis.csv", "utf8")
   .trim()
   .split("\n")
@@ -113,7 +117,7 @@ async function mensaje(page: Page) {
 }
 
 test.describe("envío gratis por comunas: ENCENDIDA (build de prueba)", () => {
-  test.skip(!ENCENDIDA, "Requiere envio_gratis_desde con fecha y ENVIO_GRATIS_PRUEBA=si");
+  test.skip(!ENCENDIDA, "Requiere envio_gratis_desde con fecha, envio_gratis_terminada vacía y ENVIO_GRATIS_PRUEBA=si");
 
   test("el campo solo existe con Bucaramanga, tras Municipio, con las opciones de §8.2", async ({ page }) => {
     await pasoEnvio(page, KG1);
@@ -498,8 +502,145 @@ test.describe("envío gratis por comunas: ENCENDIDA (build de prueba)", () => {
   }
 });
 
+// Estado «terminada» (P34 b; microcopy v1.5 §8.6.1; LEG-125 y LEG-127). Para repetir: `envio_gratis_desde` y
+// `envio_gratis_terminada` con fecha (hoy, hoy − 30 o hoy − 31), `ENVIO_GRATIS_PRUEBA=si npm run build` y
+// `ENVIO_GRATIS_PRUEBA=si npx playwright test`. Sin ENVIO_GRATIS_PRUEBA y sin el numeral publicado, la sección de
+// /envios/ no existe: lo vigila la prueba del enlace (QA-012).
+test.describe("envío gratis por comunas: TERMINADA", () => {
+  test.skip(!TERMINADA, "Requiere envio_gratis_desde y envio_gratis_terminada con fecha");
+
+  const AVISO = `El envío gratis en siete comunas de Bucaramanga terminó el ${fechaEnLetras(ESTADO.terminada)}. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.`;
+
+  test("paso Envío con Bucaramanga: sin campo Comuna; 1 kg $8.800, resumen y mensaje sin «gratis» ni «Comuna»", async ({ page }) => {
+    await pasoEnvio(page, KG1);
+    await destino(page, "Bucaramanga");
+    await expect(page.getByTestId("campo-comuna")).toHaveCount(0);
+    await expect(page.locator("#comuna")).toHaveCount(0);
+    await expect(envio(page)).toContainText("$8.800");
+    await expect(total(page)).toHaveText(/^Total\s*\$102\.800$/);
+    await expect(page.locator("main")).not.toContainText(/gratis|comuna/i);
+    await completarDatos(page);
+    await irAResumen(page);
+    await expect(page.locator("main")).not.toContainText(/gratis|comuna/i);
+    const texto = await mensaje(page);
+    expect(texto).toContain("Envío (Bucaramanga · zona 1): $8.800");
+    expect(texto).toContain("Total: $102.800");
+    expect(texto).not.toMatch(/gratis|comuna/i);
+  });
+
+  test("6 kg a Bucaramanga: «Por cotizar», «Total sin envío» y mensaje sin «gratis»", async ({ page }) => {
+    await pasoEnvio(page, KG6);
+    await destino(page, "Bucaramanga");
+    await expect(page.locator("#comuna")).toHaveCount(0);
+    await expect(envio(page)).toContainText("Por cotizar");
+    await expect(total(page)).toHaveText(/^Total sin envío/);
+    await completarDatos(page);
+    await irAResumen(page);
+    const texto = await mensaje(page);
+    expect(texto).toContain("Quedo atento al valor del envío para confirmar mi pedido.");
+    expect(texto).not.toMatch(/gratis|comuna/i);
+  });
+
+  test("inicio: aviso de terminación en el lugar del anuncio, con la fecha en letras y «Ver condiciones» (30 días)", async ({ page }) => {
+    await page.goto("/");
+    const linea = page.getByTestId("anuncio-envio-gratis-inicio");
+    if (!ESTADO.avisoVisible) {
+      await expect(linea).toHaveCount(0);
+      await expect(page.locator("body")).not.toContainText(/gratis/i);
+      return;
+    }
+    await expect(linea).toHaveText(`${AVISO} Ver condiciones`);
+    await expect(linea.getByRole("link", { name: "Ver condiciones" })).toHaveAttribute("href", "/envios/#envio-gratis");
+    expect(await clasesProhibidas(page, "[data-testid=anuncio-envio-gratis-inicio]")).toEqual([]);
+    // «gratis» solo en el aviso.
+    const resto = await page.evaluate(() => {
+      const b = document.body.cloneNode(true) as HTMLElement;
+      b.querySelectorAll("[data-testid=anuncio-envio-gratis-inicio], script, style, template").forEach((e) => e.remove());
+      return b.textContent ?? "";
+    });
+    expect(resto).not.toMatch(/gratis|comuna/i);
+  });
+
+  test("cajón: aviso de terminación bajo «Se calcula al elegir tu ciudad» y «Ver condiciones» lleva a /envios/#envio-gratis", async ({ page }) => {
+    await sembrar(page, KG1);
+    await page.goto("/cafes/");
+    await page.getByRole("button", { name: /^Pedido/ }).click();
+    const cajon = page.getByRole("dialog", { name: "Tu pedido" });
+    await expect(cajon).toBeVisible();
+    if (!ESTADO.avisoVisible) {
+      await expect(cajon.getByTestId("anuncio-envio-gratis")).toHaveCount(0);
+      await expect(cajon).not.toContainText(/gratis/i);
+      return;
+    }
+    await expect(cajon.getByTestId("anuncio-envio-gratis")).toHaveText(`${AVISO} Ver condiciones`);
+    await cajon.getByRole("link", { name: "Ver condiciones" }).click();
+    await expect(page).toHaveURL(/\/envios\/#envio-gratis$/);
+    await expect(page.getByRole("dialog", { name: "Tu pedido" })).toHaveCount(0);
+  });
+
+  test("el enlace «Ver condiciones» del aviso lleva a una sección que existe (QA-012)", async ({ page }) => {
+    test.skip(!ESTADO.avisoVisible, "Sin aviso (pasaron los 30 días) no hay enlace");
+    await page.goto("/envios/#envio-gratis");
+    await expect(page.locator("#envio-gratis")).toHaveCount(1);
+    await expect(page.locator("#envio-gratis")).toBeInViewport();
+  });
+
+  test("/envios/: título, aviso, «Estas fueron sus condiciones:» y el numeral; sin lista de comunas, nota de tabla ni salvedades", async ({ page }) => {
+    await page.goto("/envios/#envio-gratis");
+    const seccion = page.getByTestId("seccion-envio-gratis");
+    if (ESTADO.prueba) {
+      // Con ENVIO_GRATIS_PRUEBA el numeral sale del borrador de legal (nota E); en el despliegue, del publicado.
+      await expect(page.locator("#envio-gratis")).toHaveText("Envío gratis en comunas de Bucaramanga");
+      const parrafos = seccion.locator("p");
+      await expect(parrafos.nth(0)).toHaveText(AVISO);
+      await expect(parrafos.nth(1)).toHaveText("Estas fueron sus condiciones:");
+      await expect(parrafos.nth(2)).toContainText("El envío es gratis para los pedidos que entregamos en una dirección de estas comunas de Bucaramanga:");
+      await expect(seccion).toContainText("Vigencia: rige desde el");
+      await expect(seccion.getByRole("link", { name: "envíos, devoluciones, retracto y garantía" })).toHaveAttribute("href", "/legal/envios-devoluciones/");
+      expect(await clasesProhibidas(page, "[data-testid=seccion-envio-gratis]")).toEqual([]);
+    }
+    await expect(page.getByTestId("lista-comunas")).toHaveCount(0);
+    await expect(page.getByTestId("nota-envio-gratis-tabla")).toHaveCount(0);
+    await expect(page.getByTestId("leyenda-iva")).not.toContainText(/gratis|comunas/i);
+    // Fuera de la sección, /envios/ es el de la promoción apagada (§5.8): ni «gratis» ni «comuna».
+    const resto = await page.evaluate(() => {
+      const m = document.querySelector("main")!.cloneNode(true) as HTMLElement;
+      m.querySelectorAll("[data-testid=seccion-envio-gratis], script, style, template").forEach((e) => e.remove());
+      return m.textContent ?? "";
+    });
+    expect(resto).not.toMatch(/gratis|comuna/i);
+    const cabeza = await page.evaluate(() => [...document.querySelectorAll("script[type='application/ld+json'], meta")].map((e) => e.outerHTML).join("\n"));
+    expect(cabeza).not.toMatch(/gratis|comuna|shippingRate|OfferShippingDetails/i);
+  });
+
+  test("«gratis» no aparece fuera del aviso y de la sección: catálogo, ficha, provincia, pedido y vendedor", async ({ page }) => {
+    for (const ruta of ["/cafes/", `/cafes/${CM}/`, "/provincias/guanenta/", "/pedido/", "/legal/vendedor/"]) {
+      const r = await page.goto(ruta);
+      if (r?.status() === 404) continue;
+      await expect(page.locator("body"), ruta).not.toContainText(/gratis|comuna/i);
+    }
+  });
+
+  for (const ancho of [360, 1280]) {
+    test(`axe a ${ancho} px en inicio, cajón y /envios/#envio-gratis`, async ({ page }) => {
+      await page.setViewportSize({ width: ancho, height: ancho === 360 ? 740 : 900 });
+      await page.goto("/");
+      if (ESTADO.avisoVisible) await page.getByTestId("anuncio-envio-gratis-inicio").scrollIntoViewIfNeeded();
+      expect(await graves(page)).toEqual([]);
+      await sembrar(page, KG1);
+      await page.goto("/cafes/");
+      await page.getByRole("button", { name: /^Pedido/ }).click();
+      await expect(page.getByRole("dialog", { name: "Tu pedido" })).toBeVisible();
+      expect(await graves(page)).toEqual([]);
+      await page.goto("/envios/#envio-gratis");
+      expect(await graves(page)).toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    });
+  }
+});
+
 test.describe("envío gratis por comunas: APAGADA (repositorio)", () => {
-  test.skip(ENCENDIDA, "Solo con envio_gratis_desde vacía");
+  test.skip(!APAGADA, "Solo con envio_gratis_desde vacía (o programada)");
 
   test("Bucaramanga no muestra el campo; la comuna no existe en el formulario ni en los totales", async ({ page }) => {
     await pasoEnvio(page, KG6);

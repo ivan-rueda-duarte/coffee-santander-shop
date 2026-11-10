@@ -49,6 +49,27 @@ export function fechaEnLetras(iso: string): string {
   return `${d} de ${MESES[m - 1]} de ${a}`;
 }
 
+/** Hoy en Colombia (ISO yyyy-mm-dd), igual que src/infrastructure/entorno.ts: el build decide la vigencia con esta fecha. */
+export function hoyEnColombia(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+
+/**
+ * Estado del envío gratis por comunas en el build que sirve out/, leído de data/config.csv (microcopy §8.6.1):
+ * - apagada: sin `envio_gratis_desde`; programada: `desde` en el futuro;
+ * - vigente: empezó y sin `envio_gratis_terminada` (solo se construye con ENVIO_GRATIS_PRUEBA=si mientras no estén los documentos v2);
+ * - terminada: con `envio_gratis_terminada`; `avisoVisible` si hoy ≤ terminada + 30 días.
+ */
+export function estadoEnvioGratisE2E(): { tipo: "apagada" | "programada" | "vigente" | "terminada"; terminada: string; avisoVisible: boolean; prueba: boolean } {
+  const desde = leerConfig("envio_gratis_desde");
+  const terminada = leerConfig("envio_gratis_terminada");
+  const prueba = process.env.ENVIO_GRATIS_PRUEBA === "si";
+  const hoy = hoyEnColombia();
+  const dias = (a: string, b: string) => (Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000;
+  const tipo = !desde ? "apagada" : terminada ? "terminada" : hoy < desde ? "programada" : "vigente";
+  return { tipo, terminada, avisoVisible: tipo === "terminada" && dias(terminada, hoy) <= 30, prueba };
+}
+
 /** Textos exactos de las casillas (microcopy §4.3 y §5.1) con versión y fecha de data/config.csv. */
 export function textosCasillas() {
   const politica = `Política de Tratamiento de Datos versión ${leerConfig("version_politica_datos")} del ${fechaEnLetras(leerConfig("fecha_politica_datos"))}`;

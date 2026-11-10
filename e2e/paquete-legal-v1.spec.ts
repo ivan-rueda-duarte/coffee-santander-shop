@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { AVISO_RETRACTO, fechaEnLetras, leerConfig, textosCasillas } from "./ayudas";
+import { AVISO_RETRACTO, estadoEnvioGratisE2E, fechaEnLetras, leerConfig, textosCasillas } from "./ayudas";
 
 // Ronda QA 2026-11-06 «paquete legal v1» (docs/qa/2026-11-06-paquete-legal-v1.md).
 // Verificación independiente de la entrega de docs/legal/revisiones/2026-11-06-paquete-v1.md contra
@@ -392,7 +392,9 @@ test("/envios/: frase de plazos exacta, metadatos, enlace final y sin textos ret
   await page.goto("/envios/");
   await expect(page.getByText("El estimado es lo que suele tardar. El máximo es el plazo que nos comprometemos a cumplir. Los dos se cuentan en días hábiles desde que aceptas el total en el chat y, si pagas por transferencia Bre-B, desde que recibimos el pago. Si no entregamos en el máximo, puedes cancelar y te devolvemos todo en 15 días calendario.", { exact: true })).toBeVisible();
   // Con el build de prueba del envío gratis (ENVIO_GRATIS_PRUEBA=si), microcopy §8.5 agrega la salvedad de las comunas.
-  const salvedad = leerConfig("envio_gratis_desde") && process.env.ENVIO_GRATIS_PRUEBA === "si" ? " Salvo en las siete comunas de Bucaramanga con envío gratis." : "";
+  // Terminada (§8.6.1), la salvedad desaparece: solo con la promoción vigente.
+  const eg = estadoEnvioGratisE2E();
+  const salvedad = eg.tipo === "vigente" && eg.prueba ? " Salvo en las siete comunas de Bucaramanga con envío gratis." : "";
   await expect(page.getByTestId("leyenda-iva")).toHaveText(`Tarifas en pesos colombianos, con IVA del 5 % incluido. Más de 5 kg, en cualquier zona, se cotiza aparte.${salvedad} Nunca cobramos primero y ajustamos después.`);
   await expect(page.getByTestId("retracto-envios")).toHaveText(`${AVISO_RETRACTO} Más en envíos, devoluciones, retracto y garantía.`);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", "Cómo calculamos el envío de tu pedido: zonas, tarifas por peso con IVA incluido y plazos de entrega desde Bucaramanga.");
