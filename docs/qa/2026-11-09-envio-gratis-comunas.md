@@ -151,8 +151,8 @@ Veredicto: **APTO CON OBSERVACIONES** con la promoción apagada (como queda la r
 
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
-| QA-011 | Baja | Legal / `/envios/` | Tras «Estas fueron sus condiciones:» el numeral sigue en presente («Estas son las condiciones:», «No tiene fecha de terminación…») | legal-cumplimiento (texto); luego desarrollador-fullstack | Corregido — pendiente verificación |
-| QA-012 | Media | Datos / estado «terminada» | Con la promoción terminada y el numeral no publicado, «Ver condiciones» del aviso lleva a un ancla que no existe; `npm run datos` solo avisa | desarrollador-fullstack (con decisión de legal-cumplimiento) | Corregido — pendiente verificación |
+| QA-011 | Baja | Legal / `/envios/` | Tras «Estas fueron sus condiciones:» el numeral sigue en presente («Estas son las condiciones:», «No tiene fecha de terminación…») | legal-cumplimiento (texto); luego desarrollador-fullstack | Cerrado (2026-11-11) |
+| QA-012 | Media | Datos / estado «terminada» | Con la promoción terminada y el numeral no publicado, «Ver condiciones» del aviso lleva a un ancla que no existe; `npm run datos` solo avisa | desarrollador-fullstack (con decisión de legal-cumplimiento) | Cerrado (2026-11-11) |
 
 ### QA-011 — Condiciones de la promoción terminada en presente y con dos introducciones seguidas
 - Severidad: Baja
@@ -185,3 +185,15 @@ Sin cambios: la v1 no tenía envío gratis.
 - `e2e/envio-gratis-comunas.spec.ts`: modos por estado; bloque nuevo «TERMINADA» (9 pruebas: checkout 1 kg y 6 kg con mensaje, inicio, cajón, enlace a la sección (QA-012), `/envios/`, «gratis» fuera del aviso, axe a 360 y 1280). «APAGADA» corre también con la promoción programada.
 - `e2e/paquete-legal-v1.spec.ts:394`: la salvedad solo con la promoción vigente.
 - Para repetir el estado terminada: `envio_gratis_desde` y `envio_gratis_terminada` con fecha, `ENVIO_GRATIS_PRUEBA=si npm run build`, `npx serve out -l 4173 -n`, `ENVIO_GRATIS_PRUEBA=si npx playwright test`. Después, restaurar `config.csv` y reconstruir.
+
+## Ronda 3 — verificación acotada de QA-011 y QA-012 (2026-11-11, HEAD 3c89188)
+
+Config temporal `envio_gratis_desde,2026-11-06` y `envio_gratis_terminada,2026-11-11` (restaurada después).
+
+- QA-012, sin `ENVIO_GRATIS_PRUEBA`: `npm run datos` y `npm run build` salen con exit 1 y el mensaje exacto de microcopy v1.6 §8.6.1 (fechas ISO 2026-11-11 y 2026-12-11). **Cerrado.**
+- QA-012, terminada 2026-10-10 (más de 30 días) sin numeral: exit 0. Línea por consola: «Aviso, envío gratis: «Envíos, devoluciones, retracto y garantía» no publica el numeral del envío gratis; /envios/ no tendrá la sección #envio-gratis.» y «Pasaron los 30 días del aviso: no sale en portada ni cajón…». Observación: §8.6.1 dice «sin numeral no hay aviso ni sección, y no hay error»; el aviso por consola es solo informativo y no bloquea. Discrepancia menor, no pidió «ni aviso» de forma expresa.
+- QA-011, un solo `ENVIO_GRATIS_PRUEBA=si npm run build`: en `/envios/#envio-gratis` el título y el párrafo 1 (aviso sin enlace «Ver condiciones») y el párrafo 2 (nota de vigencia) coinciden letra por letra con §8.6.1 (fechas «6 de noviembre de 2026» y «11 de noviembre de 2026»); el numeral 13 va en un único `<blockquote>` (borde `line`, fondo `surface-sunken`, sin color de alerta); «Estas fueron sus condiciones» ya no aparece (0). Pasan los 9 de `-g TERMINADA` (incluye axe a 360 y 1280: 0 serias/críticas). Capturas: `docs/qa/capturas/qa011-envios-terminada-360.png` y `-1280.png`; aspecto legible, sin superposición. **Cerrado.**
+- Observación: no se pudo comparar el blockquote con `/legal/envios-devoluciones/` porque ese documento aún no publica el numeral 13 (el build de prueba usa el borrador de la nota E); la identidad se debe volver a comprobar cuando legal lo publique.
+- Promoción apagada: lint 0, typecheck 0, `npm test` 28 archivos / 503 pruebas pasan, `npm run datos` y build exit 0; `rg -i "Envío gratis|comuna"` en `*.html`/`*.txt` de `out/`: sin coincidencias.
+
+Veredicto: **APTO CON OBSERVACIONES** (QA-011 y QA-012 cerrados; sin defectos abiertos de esta rama).
