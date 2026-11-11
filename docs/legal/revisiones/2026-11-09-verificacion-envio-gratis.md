@@ -1,6 +1,8 @@
 # Revisión LEG-120 a LEG-128: Verificación del envío gratis por comunas implementado (2026-11-09)
 
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.3 — 2026-11-09.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.4 — 2026-11-11.
+
+**Versión 0.4 (2026-11-11, QA-011 y QA-012 de `docs/qa/2026-11-09-envio-gratis-comunas.md`, ronda 2).** Solo el estado «terminada». Ver «Hallazgos v0.4» y «Entrega v0.4» al final.
 
 **Versión 0.3 (2026-11-09).** D-24 cerrado con un dato del dueño, comunicado por el coordinador: horario de atención de lunes a viernes, de 7:00 a. m. a 5:00 p. m., hora de Colombia. El dato queda en el numeral 13 (nota E de envíos). Se agregan las precisiones de LEG-130 y la recomendación de publicar el horario en «Información del vendedor» versión 2. La entrega de la v0.2 no cambia, salvo por el punto 7 (abajo).
 
@@ -185,3 +187,24 @@ Sustituye el punto 6 de la entrega v0.1. Los puntos 1 a 5 de la v0.1 ya están i
 - Ley 4 de 1913, art. 62 (cómputo de días; si el sábado es día hábil; LEG-130).
 - Ley 1480 de 2011, arts. 23, 29, 33 (inc. 2 y 3) y 34 (leídos en compilación no oficial; letra oficial en SUIN-Juriscol pendiente).
 - Ley 1581 de 2012, art. 4 lit. b, y Decreto 1377 de 2013, art. 4 (recolección limitada), con su numeración en el Decreto 1074 de 2015.
+
+## Hallazgos v0.4 (2026-11-11)
+
+| # | Severidad | Ubicación | Texto o práctica | Riesgo y norma | Corrección propuesta |
+|---|---|---|---|---|---|
+| LEG-131 | Baja | `/envios/#envio-gratis`, estado «terminada» (QA-011) | Aviso «… terminó el {fecha}…», luego «Estas fueron sus condiciones:» y el numeral 13 en presente («Estas son las condiciones:», «No tiene fecha de terminación: sigue vigente…») | La página dice a la vez que la promoción terminó y que sigue vigente; la duda se interpreta a favor del cliente (Ley 1480, arts. 23, 29 y 34) | Se descarta la versión en pasado (dos textos de la misma condición) y quitar solo la introducción (la viñeta «Vigencia» seguiría en presente). Se adopta una **nota de vigencia terminada** antes del numeral, que se muestra sin cambios en un bloque citado (microcopy v1.6 §8.6.1) |
+| LEG-132 | Media | `tools/validar-datos.ts`; aviso de portada y cajón (QA-012) | Con la promoción terminada y el numeral 13 no publicado, `npm run datos` solo avisa y «Ver condiciones» lleva a un ancla que no existe | El aviso promete «las mismas condiciones» y no se pueden leer (arts. 23 y 33) | **Error** (exit 1) mientras el aviso esté visible y falte el numeral; no se acepta un aviso sin enlace. Legal no retira el numeral antes de terminar el aviso (nota E de envíos) |
+
+**Dictamen v0.4.** Sin cambio para la rama con la promoción apagada (Conforme con observaciones) ni para el lanzamiento (No conforme, LEG-024/066). **Usar el estado «terminada» en un despliegue real: No conforme** hasta que estén implementados y verificados LEG-131 y LEG-132; con ellos, Conforme con observaciones.
+
+## Entrega para desarrollador-fullstack (v0.4)
+
+Sustituye la viñeta `/envios/` del punto 3 de la entrega v0.2.
+
+1. **`/envios/`, sección `id="envio-gratis"`, estado «terminada» (LEG-131):** título `Envío gratis en comunas de Bucaramanga`; primer párrafo, el texto del aviso sin el enlace «Ver condiciones»; segundo párrafo, la nota de vigencia terminada de microcopy v1.6 §8.6.1, letra por letra; después, el numeral 13 publicado sin cambios, con su título, en un bloque citado. Se retira `Estas fueron sus condiciones:`.
+2. **`npm run datos` (LEG-132):** el aviso actual pasa a error (exit 1) cuando `hoy ≤ envio_gratis_terminada + 30` y el numeral 13 no está en el texto publicado, con el mensaje exacto de §8.6.1. Pasados los 30 días, sin error.
+3. **Pruebas:** ajustar la prueba de `/envios/` del bloque «TERMINADA» al texto nuevo; la prueba «Ver condiciones» (QA-012) se mantiene y se agrega la del exit 1.
+
+**Para `disenador-marca`:** el bloque citado del numeral (cita o caja con borde, sin color de alerta).
+
+**Para `qa-pruebas`:** cerrar QA-011 con la nota letra por letra y el numeral idéntico al de `/legal/envios-devoluciones/`; cerrar QA-012 con el exit 1 y su mensaje.

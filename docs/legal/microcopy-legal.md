@@ -1,10 +1,12 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.5 — 2026-11-09.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.6 — 2026-11-11.
 
 # Microcopy legal
 
 Textos exactos del sitio que tienen fundamento legal. El desarrollador los copia sin cambios; `{}` son variables que pone el código y salen de `data/config.csv` o de los CSV de datos. Cada texto distingue **exige la norma** y **se recomienda**.
 
 Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran; **§8** envío gratis en comunas de Bucaramanga.
+
+Cambios de la v1.6 (2026-11-11, QA-011 y QA-012; LEG-131 y LEG-132): §8.6.1, en `/envios/` con la promoción terminada se retira `Estas fueron sus condiciones:` y se agrega una nota de vigencia terminada antes del numeral 13, que se sigue mostrando sin cambios en un bloque citado; si el numeral no está publicado mientras el aviso es visible, `npm run datos` falla.
 
 Cambios de la v1.5 (2026-11-09, respuestas del dueño P33, P33 bis, P34 b y P35; LEG-118, LEG-125, LEG-127 y LEG-129): §8.1 con el tope de la validación Bre-B y el horario de atención (D-24, cerrado; LEG-130); §8.6.1 reescrita para la terminación inmediata: clave `envio_gratis_terminada`, estado «terminada», aviso sin fecha previa. Se retiran el aviso previo y `envio_gratis_hasta`.
 
@@ -451,10 +453,18 @@ Exige la norma que las condiciones de tiempo, modo y lugar estén en la publicid
 |---|---|
 | Portada (bajo «Cómo pedir») y cajón del carrito, donde estuvo el anuncio | `El envío gratis en siete comunas de Bucaramanga terminó el {envio_gratis_terminada en letras}. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.` + enlace ` Ver condiciones` (a `/envios/#envio-gratis`) |
 | `/envios/`, sección `id="envio-gratis"`, título | `Envío gratis en comunas de Bucaramanga` |
-| `/envios/`, primer párrafo de la sección | El mismo texto del aviso, seguido de `Estas fueron sus condiciones:` y del numeral 13 publicado, letra por letra (sin la lista visual de comunas) |
+| `/envios/`, primer párrafo de la sección | El mismo texto del aviso, **sin** el enlace «Ver condiciones» (las condiciones están debajo) |
+| `/envios/`, segundo párrafo (nota de vigencia terminada; v1.6, LEG-131) | `Rigió desde el {envio_gratis_desde en letras} y ya no rige para pedidos nuevos. Abajo está el numeral 13 de «Envíos, devoluciones, retracto y garantía», tal como sigue publicado: donde dice que la promoción sigue vigente, entiende que terminó el {envio_gratis_terminada en letras}. Sus condiciones se siguen aplicando, completas, a los pedidos cuyo mensaje de WhatsApp ya decía «envío gratis», también en su entrega, su retracto y su garantía.` |
+| `/envios/`, después de la nota | El numeral 13 publicado, **letra por letra y sin cambios**, con su título `13. Envío gratis en comunas de Bucaramanga`, dentro de un bloque citado que lo distinga del texto de la página (cita o caja con borde; lo define `disenador-marca`, sin color de alerta). Sin la lista visual de comunas y sin la nota de la fila Bucaramanga. **Se retira** `Estas fueron sus condiciones:` |
 | Redes o WhatsApp (si se difundió por ahí), el mismo día | `Terminó el envío gratis en siete comunas de Bucaramanga el {fecha en letras}. Si tu pedido ya decía «envío gratis», lo respetamos con las mismas condiciones.` |
 
-Pasados los 30 días, el aviso puede retirarse en un despliegue posterior; la sección de `/envios/` se retira cuando legal publique la versión sin el numeral 13.
+**Por qué una nota y no una versión en pasado del numeral (v1.6, LEG-131; QA-011).** El numeral 13 es parte del documento publicado en `/legal/envios-devoluciones/` y rige los pedidos que lo tuvieron. Si `/envios/` mostrara una versión en pasado, el sitio publicaría dos textos distintos de la misma condición, y la duda se resolvería a favor del cliente (Ley 1480, art. 34). Quitar solo la introducción duplicada no basta: la viñeta «Vigencia» seguiría diciendo «sigue vigente». La nota no cambia el numeral; dice que la terminación prevista en su viñeta «Vigencia» ya ocurrió (esta sección es la publicación «en este sitio» que esa viñeta exige) y conserva el compromiso con los pedidos que decían «envío gratis» (arts. 29 y 33 inc. 3). **Exige la norma:** que el aviso no contradiga las condiciones publicadas y que estas sigan visibles mientras rijan para algún pedido. **Se recomienda:** el bloque citado y la frase «donde dice que la promoción sigue vigente…».
+
+Pasados los 30 días, el aviso puede retirarse en un despliegue posterior; la sección de `/envios/` (con la nota) se retira cuando legal publique la versión sin el numeral 13.
+
+**Numeral retirado con el aviso aún visible (v1.6, LEG-132; QA-012): error en `npm run datos`, no aviso sin enlace.** El aviso promete respetar los pedidos «con las mismas condiciones»; si esas condiciones no están publicadas, el aviso remite a algo que el cliente no puede leer (arts. 23 y 33). Por eso, mientras el aviso de terminación esté visible (`hoy ≤ envio_gratis_terminada + 30 días`), el numeral 13 publicado es obligatorio y `npm run datos` sale con exit 1 si falta. Un aviso sin enlace no se acepta. Legal se obliga a no publicar una versión sin el numeral 13 antes de que termine ese plazo (nota E de envíos). Pasados los 30 días, sin numeral no hay aviso ni sección, y no hay error. Mensaje exacto del error:
+
+`envio_gratis_terminada ({fecha}) muestra el aviso de terminación hasta el {fecha + 30 días}, pero el numeral 13 «Envío gratis en comunas de Bucaramanga» no está en el texto publicado de «Envíos, devoluciones, retracto y garantía»: el enlace «Ver condiciones» quedaría sin destino. Publica el numeral (legal) o, si la fecha está mal, corrige o vacía envio_gratis_terminada.`
 
 **Por qué «si tu pedido ya decía envío gratis».** El sitio es estático: la promoción se apaga cuando el dueño despliega, no en el momento en que da la orden. Lo que el sitio mostró obliga (arts. 29 y 33). Por eso se respeta todo pedido cuyo mensaje de WhatsApp diga `$0 (envío gratis, sujeto a verificar la dirección)`, aunque llegue después de la orden. Con este criterio, el aviso, el numeral 13 y la práctica dicen lo mismo, y es verificable en el chat.
 
