@@ -13,6 +13,7 @@ import {
   DIAS_AVISO_TERMINACION,
   ENLACE_PLAZO_ZONA1,
   errorNumeralTerminacion,
+  notaVigenciaTerminada,
   erroresTerminacion,
   estadoEnvioGratis,
   finEnvioGratis,
@@ -203,7 +204,10 @@ describe("estado «terminada» (P34 b; microcopy §8.6.1; LEG-125 y LEG-127)", (
   });
   it("aviso de terminación, letra por letra (§8.6.1), con la fecha en letras", () => {
     expect(avisoTerminacion({ terminada: "2026-11-09" })).toBe("El envío gratis en siete comunas de Bucaramanga terminó el 9 de noviembre de 2026. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.");
-    expect(TEXTOS_ENVIO_GRATIS.introCondicionesTerminada).toBe("Estas fueron sus condiciones:");
+    expect(TEXTOS_ENVIO_GRATIS.tituloNumeral).toBe("13. Envío gratis en comunas de Bucaramanga");
+  });
+  it("nota de vigencia terminada, letra por letra (§8.6.1 v1.6, LEG-131)", () => {
+    expect(notaVigenciaTerminada({ desde: "2026-11-06", terminada: "2026-11-09" })).toBe("Rigió desde el 6 de noviembre de 2026 y ya no rige para pedidos nuevos. Abajo está el numeral 13 de «Envíos, devoluciones, retracto y garantía», tal como sigue publicado: donde dice que la promoción sigue vigente, entiende que terminó el 9 de noviembre de 2026. Sus condiciones se siguen aplicando, completas, a los pedidos cuyo mensaje de WhatsApp ya decía «envío gratis», también en su entrega, su retracto y su garantía.");
   });
   it("cálculo normal en estado terminada: la comuna se ignora, tarifa de zona 1 y por cotizar con más de 5 kg", () => {
     const reglas = { ...REGLAS, envioGratis: terminadaEl(HOY) };
@@ -259,9 +263,7 @@ describe("numeral publicado mientras el aviso de terminación esté visible (QA-
   const promo = (desde: string, terminada: string | null) => ({ ...PROMO, desde, terminada });
   it("terminada, aviso visible y numeral no publicado: error que nombra la fecha y el enlace", () => {
     const e = errorNumeralTerminacion(promo("2026-11-06", "2026-11-09"), "2026-11-09", false);
-    expect(e).toHaveLength(1);
-    expect(e[0]).toContain("2026-11-09");
-    expect(e[0]).toContain("/envios/#envio-gratis");
+    expect(e).toEqual(["envio_gratis_terminada (2026-11-09) muestra el aviso de terminación hasta el 2026-12-09, pero el numeral 13 «Envío gratis en comunas de Bucaramanga» no está en el texto publicado de «Envíos, devoluciones, retracto y garantía»: el enlace «Ver condiciones» quedaría sin destino. Publica el numeral (legal) o, si la fecha está mal, corrige o vacía envio_gratis_terminada."]);
   });
   it("último día del aviso (30) también falla; el día 31 solo avisa", () => {
     expect(errorNumeralTerminacion(promo("2026-10-01", "2026-10-10"), "2026-11-09", false)).toHaveLength(1);

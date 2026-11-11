@@ -60,14 +60,14 @@ export function hoyEnColombia(): string {
  * - vigente: empezó y sin `envio_gratis_terminada` (solo se construye con ENVIO_GRATIS_PRUEBA=si mientras no estén los documentos v2);
  * - terminada: con `envio_gratis_terminada`; `avisoVisible` si hoy ≤ terminada + 30 días.
  */
-export function estadoEnvioGratisE2E(): { tipo: "apagada" | "programada" | "vigente" | "terminada"; terminada: string; avisoVisible: boolean; prueba: boolean } {
+export function estadoEnvioGratisE2E(): { tipo: "apagada" | "programada" | "vigente" | "terminada"; desde: string; terminada: string; avisoVisible: boolean; prueba: boolean } {
   const desde = leerConfig("envio_gratis_desde");
   const terminada = leerConfig("envio_gratis_terminada");
   const prueba = process.env.ENVIO_GRATIS_PRUEBA === "si";
   const hoy = hoyEnColombia();
   const dias = (a: string, b: string) => (Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000;
   const tipo = !desde ? "apagada" : terminada ? "terminada" : hoy < desde ? "programada" : "vigente";
-  return { tipo, terminada, avisoVisible: tipo === "terminada" && dias(terminada, hoy) <= 30, prueba };
+  return { tipo, desde, terminada, avisoVisible: tipo === "terminada" && dias(terminada, hoy) <= 30, prueba };
 }
 
 /** Textos exactos de las casillas (microcopy §4.3 y §5.1) con versión y fecha de data/config.csv. */

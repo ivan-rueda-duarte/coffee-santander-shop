@@ -3,7 +3,7 @@ import Link from "next/link";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { slugify } from "@/domain/comun/slug";
 import { coberturaPorZona } from "@/domain/envio/envio";
-import { ANCLA_ENVIO_GRATIS, avisoTerminacion, comunasAlfabeticas, ENLACE_PLAZO_ZONA1, partirEnlace, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
+import { ANCLA_ENVIO_GRATIS, avisoTerminacion, comunasAlfabeticas, ENLACE_PLAZO_ZONA1, notaVigenciaTerminada, partirEnlace, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
 import type { BloqueEstructurado } from "@/domain/marca/reglas-texto";
 import { textoPlazoPagina } from "@/domain/envio/plazos";
 import { EMPAQUE_G, type TarifaEnvio } from "@/domain/envio/tipos";
@@ -136,25 +136,34 @@ export default async function PaginaEnvios() {
             {fin && (
               <>
                 <p className="body mt-2 max-w-2xl" data-testid="aviso-terminacion-envios">{avisoTerminacion(fin)}</p>
-                <p className="body mt-4 max-w-2xl text-ink-muted">{TEXTOS_ENVIO_GRATIS.introCondicionesTerminada}</p>
+                <p className="body mt-4 max-w-2xl" data-testid="nota-vigencia-terminada">{notaVigenciaTerminada(fin)}</p>
               </>
             )}
-            {agrupar(condiciones).map((b, i) =>
-              b.tipo === "parrafo" ? (
-                <div key={i}>
-                  <p className="body mt-2 max-w-2xl text-ink-muted">{b.texto}</p>
-                  {i === 0 && promo && (
-                    <ul className="body mt-4 grid max-w-2xl gap-x-6 gap-y-1 rounded-lg border border-line bg-surface px-5 py-4 text-ink sm:grid-cols-2 md:grid-cols-3" aria-label="Comunas con envío gratis" data-testid="lista-comunas">
-                      {comunasAlfabeticas(promo).map((c) => <li key={c}>{c}</li>)}
-                    </ul>
-                  )}
-                </div>
-              ) : (
-                <ul key={i} className="body mt-4 max-w-2xl list-disc space-y-2 pl-5">
-                  {b.items.map((item) => <li key={item}>{item}</li>)}
-                </ul>
-              ),
-            )}
+            {/* Terminada (§8.6.1 v1.6): el numeral 13 publicado, sin cambios, en un bloque citado con borde. */}
+            {(() => {
+              const cuerpo = agrupar(condiciones).map((b, i) =>
+                b.tipo === "parrafo" ? (
+                  <div key={i}>
+                    <p className="body mt-2 max-w-2xl text-ink-muted">{b.texto}</p>
+                    {i === 0 && promo && (
+                      <ul className="body mt-4 grid max-w-2xl gap-x-6 gap-y-1 rounded-lg border border-line bg-surface px-5 py-4 text-ink sm:grid-cols-2 md:grid-cols-3" aria-label="Comunas con envío gratis" data-testid="lista-comunas">
+                        {comunasAlfabeticas(promo).map((c) => <li key={c}>{c}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                ) : (
+                  <ul key={i} className="body mt-4 max-w-2xl list-disc space-y-2 pl-5">
+                    {b.items.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                ),
+              );
+              return fin ? (
+                <blockquote className="mt-6 max-w-2xl rounded-lg border-l-4 border-line bg-surface-sunken px-5 py-4" data-testid="numeral-terminada">
+                  <h3 className="body font-bold text-ink-title">{TEXTOS_ENVIO_GRATIS.tituloNumeral}</h3>
+                  {cuerpo}
+                </blockquote>
+              ) : cuerpo;
+            })()}
             <p className="body mt-4 max-w-2xl">
               Más en{" "}
               <Link className="font-semibold underline underline-offset-4" href="/legal/envios-devoluciones/">envíos, devoluciones, retracto y garantía</Link>.

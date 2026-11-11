@@ -32,7 +32,8 @@ export const TEXTOS_ENVIO_GRATIS = {
   anuncio: "Envío gratis en siete comunas de Bucaramanga.",
   enlaceAnuncio: "Ver condiciones",
   /** §8.6.1: en /envios/, tras el aviso de terminación y antes del numeral. */
-  introCondicionesTerminada: "Estas fueron sus condiciones:",
+  /** §8.6.1 v1.6 (LEG-131): título del numeral publicado, dentro del bloque citado de /envios/ con la promoción terminada. */
+  tituloNumeral: "13. Envío gratis en comunas de Bucaramanga",
   /** §8.5 */
   tituloSeccion: "Envío gratis en comunas de Bucaramanga",
   notaTabla: "Gratis en siete comunas, con cualquier peso (ver condiciones).",
@@ -107,6 +108,11 @@ export function finEnvioGratis(p: PromocionEnvioGratis | null, hoy: string): Fin
   return e.tipo === "terminada" ? e.fin : null;
 }
 
+function sumarDias(iso: string, dias: number): string {
+  const [a, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(a, m - 1, d + dias)).toISOString().slice(0, 10);
+}
+
 /**
  * Errores de `npm run datos` que dependen del día del build (P34 b, §8.6.1): `envio_gratis_terminada` no puede ser
  * posterior al build, porque no hay aviso previo con fecha. Los que no dependen del día (anterior a `desde`, sin
@@ -127,7 +133,7 @@ export function errorNumeralTerminacion(p: PromocionEnvioGratis | null, hoy: str
   const e = estadoEnvioGratis(p, hoy);
   if (e.tipo !== "terminada" || !e.fin.avisoVisible || numeralPublicado) return [];
   return [
-    `Envío gratis (envio_gratis_terminada ${e.fin.terminada}): el aviso de terminación sigue visible en portada y cajón hasta 30 días después y enlaza a /envios/#${ANCLA_ENVIO_GRATIS}, pero «Envíos, devoluciones, retracto y garantía» no publica el numeral del envío gratis, así que ese enlace quedaría roto. Publica el numeral (legal-cumplimiento) o vacía envio_gratis_terminada y envio_gratis_desde en data/config.csv.`,
+    `envio_gratis_terminada (${e.fin.terminada}) muestra el aviso de terminación hasta el ${sumarDias(e.fin.terminada, DIAS_AVISO_TERMINACION)}, pero el numeral 13 «${TEXTOS_ENVIO_GRATIS.tituloSeccion}» no está en el texto publicado de «Envíos, devoluciones, retracto y garantía»: el enlace «Ver condiciones» quedaría sin destino. Publica el numeral (legal) o, si la fecha está mal, corrige o vacía envio_gratis_terminada.`,
   ];
 }
 
@@ -155,6 +161,12 @@ export function lineaPromocionNoVigente(p: PromocionEnvioGratis | null, hoy: str
  */
 export function avisoTerminacion(fin: Pick<FinEnvioGratis, "terminada">): string {
   return `El envío gratis en siete comunas de Bucaramanga terminó el ${fechaEnLetras(fin.terminada)}. Si tu pedido por WhatsApp ya decía «envío gratis», lo respetamos con las mismas condiciones.`;
+}
+
+/** Nota de vigencia terminada de /envios/ (microcopy §8.6.1 v1.6, LEG-131), antes del numeral 13 publicado. */
+export function notaVigenciaTerminada(fin: Pick<FinEnvioGratis, "desde" | "terminada">): string {
+  const terminada = fechaEnLetras(fin.terminada);
+  return `Rigió desde el ${fechaEnLetras(fin.desde)} y ya no rige para pedidos nuevos. Abajo está el numeral 13 de «Envíos, devoluciones, retracto y garantía», tal como sigue publicado: donde dice que la promoción sigue vigente, entiende que terminó el ${terminada}. Sus condiciones se siguen aplicando, completas, a los pedidos cuyo mensaje de WhatsApp ya decía «envío gratis», también en su entrega, su retracto y su garantía.`;
 }
 
 /** Comunas en orden alfabético, para el selector (diseño §1). */

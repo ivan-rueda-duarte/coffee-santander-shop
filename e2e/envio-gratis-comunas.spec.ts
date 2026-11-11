@@ -585,7 +585,7 @@ test.describe("envío gratis por comunas: TERMINADA", () => {
     await expect(page.locator("#envio-gratis")).toBeInViewport();
   });
 
-  test("/envios/: título, aviso, «Estas fueron sus condiciones:» y el numeral; sin lista de comunas, nota de tabla ni salvedades", async ({ page }) => {
+  test("/envios/: título, aviso, nota de vigencia (QA-011) y el numeral 13 en un bloque citado; sin lista de comunas, nota de tabla ni salvedades", async ({ page }) => {
     await page.goto("/envios/#envio-gratis");
     const seccion = page.getByTestId("seccion-envio-gratis");
     if (ESTADO.prueba) {
@@ -593,8 +593,12 @@ test.describe("envío gratis por comunas: TERMINADA", () => {
       await expect(page.locator("#envio-gratis")).toHaveText("Envío gratis en comunas de Bucaramanga");
       const parrafos = seccion.locator("p");
       await expect(parrafos.nth(0)).toHaveText(AVISO);
-      await expect(parrafos.nth(1)).toHaveText("Estas fueron sus condiciones:");
-      await expect(parrafos.nth(2)).toContainText("El envío es gratis para los pedidos que entregamos en una dirección de estas comunas de Bucaramanga:");
+      await expect(parrafos.nth(1)).toHaveText(`Rigió desde el ${fechaEnLetras(ESTADO.desde)} y ya no rige para pedidos nuevos. Abajo está el numeral 13 de «Envíos, devoluciones, retracto y garantía», tal como sigue publicado: donde dice que la promoción sigue vigente, entiende que terminó el ${fechaEnLetras(ESTADO.terminada)}. Sus condiciones se siguen aplicando, completas, a los pedidos cuyo mensaje de WhatsApp ya decía «envío gratis», también en su entrega, su retracto y su garantía.`);
+      await expect(seccion).not.toContainText("Estas fueron sus condiciones");
+      const cita = seccion.locator("blockquote");
+      await expect(cita).toHaveCount(1);
+      await expect(cita.getByRole("heading", { name: "13. Envío gratis en comunas de Bucaramanga" })).toBeVisible();
+      await expect(cita.locator("p").first()).toContainText("El envío es gratis para los pedidos que entregamos en una dirección de estas comunas de Bucaramanga:");
       await expect(seccion).toContainText("Vigencia: rige desde el");
       await expect(seccion.getByRole("link", { name: "envíos, devoluciones, retracto y garantía" })).toHaveAttribute("href", "/legal/envios-devoluciones/");
       expect(await clasesProhibidas(page, "[data-testid=seccion-envio-gratis]")).toEqual([]);
