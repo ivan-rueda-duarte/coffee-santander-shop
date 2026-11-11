@@ -152,7 +152,7 @@ Veredicto: **APTO CON OBSERVACIONES** con la promoción apagada (como queda la r
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
 | QA-011 | Baja | Legal / `/envios/` | Tras «Estas fueron sus condiciones:» el numeral sigue en presente («Estas son las condiciones:», «No tiene fecha de terminación…») | legal-cumplimiento (texto); luego desarrollador-fullstack | Abierto |
-| QA-012 | Media | Datos / estado «terminada» | Con la promoción terminada y el numeral no publicado, «Ver condiciones» del aviso lleva a un ancla que no existe; `npm run datos` solo avisa | desarrollador-fullstack (con decisión de legal-cumplimiento) | Abierto |
+| QA-012 | Media | Datos / estado «terminada» | Con la promoción terminada y el numeral no publicado, «Ver condiciones» del aviso lleva a un ancla que no existe; `npm run datos` solo avisa | desarrollador-fullstack (con decisión de legal-cumplimiento) | Corregido — pendiente verificación |
 
 ### QA-011 — Condiciones de la promoción terminada en presente y con dos introducciones seguidas
 - Severidad: Baja
@@ -166,7 +166,7 @@ Veredicto: **APTO CON OBSERVACIONES** con la promoción apagada (como queda la r
 
 ### QA-012 — «Ver condiciones» del aviso de terminación sin destino si el numeral no está publicado
 - Severidad: Media
-- Estado: Abierto
+- Estado: Corregido — pendiente verificación
 - Entorno: Chromium, rama `feat/envio-gratis-comunas`, `dc10290`; `envio_gratis_desde,2026-11-06`, `envio_gratis_terminada,2026-11-09`, `npm run build` **sin** `ENVIO_GRATIS_PRUEBA` (como sería en el despliegue mientras el numeral 13 no esté en el texto publicado de «Envíos, devoluciones, retracto y garantía»).
 - Pasos para reproducir: 1. Preparar ese `config.csv`. 2. `npm run datos` → exit 0 con «Aviso, envío gratis: … /envios/ no tendrá la sección #envio-gratis y el enlace «Ver condiciones» del aviso de portada y cajón no llevará a las condiciones». 3. `npm run build` (pasa). 4. En inicio o en el cajón, «Ver condiciones».
 - Resultado esperado: el aviso de terminación promete respetar los pedidos «con las mismas condiciones» y enlaza a ellas: si las condiciones no están publicadas, el build no debe salir así (o el aviso no debe enlazar a la nada). Puede ocurrir en la práctica si legal retira el numeral en una versión nueva antes de cumplirse los 30 días del aviso, o si el dueño llena `envio_gratis_terminada` por error.
@@ -174,6 +174,7 @@ Veredicto: **APTO CON OBSERVACIONES** con la promoción apagada (como queda la r
 - Evidencia: `npx playwright test e2e/envio-gratis-comunas.spec.ts -g TERMINADA` contra ese build: «el enlace «Ver condiciones» del aviso lleva a una sección que existe (QA-012)» falla con `expect(locator("#envio-gratis")).toHaveCount(1)`, recibido 0. Traza: `test-results/…QA-012…/trace.zip` (regenerable con los pasos).
 - Criterio de cierre: con esa configuración, o `npm run datos` sale con exit 1 y un mensaje claro, o la prueba anterior pasa.
 - Responsable sugerido: desarrollador-fullstack (convertir el aviso de `tools/validar-datos.ts` en error mientras `avisoVisible`, o no enlazar), con la decisión de legal-cumplimiento sobre qué se publica si el numeral ya se retiró.
+- Corrección: commit `fix(datos): … (QA-012)` en `feat/envio-gratis-comunas`. Causa raíz: `tools/validar-datos.ts` trataba el numeral ausente como aviso incluso con el aviso de terminación visible (≤ 30 días), que enlaza a `#envio-gratis`. Ahora `errorNumeralTerminacion` (`src/domain/envio/envio-gratis.ts`, con pruebas) hace fallar `npm run datos` y el build (exit 1) en esa ventana; pasados los 30 días solo avisa; `ENVIO_GRATIS_PRUEBA=si` sigue permitiendo builds de prueba. Pendiente de verificar por QA: build real sin `ENVIO_GRATIS_PRUEBA` debe fallar con ese config.
 
 ## Paridad v1
 Sin cambios: la v1 no tenía envío gratis.

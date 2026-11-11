@@ -12,6 +12,7 @@ import {
   comunasAlfabeticas,
   DIAS_AVISO_TERMINACION,
   ENLACE_PLAZO_ZONA1,
+  errorNumeralTerminacion,
   erroresTerminacion,
   estadoEnvioGratis,
   finEnvioGratis,
@@ -251,5 +252,25 @@ describe("línea de npm run datos con la promoción fuera de vigencia (QA-010: p
     expect(lineaPromocionNoVigente(promo("2026-10-01", "2026-10-09"), "2026-11-09")).toBe(
       "Envío gratis por comunas: terminada el 2026-10-09, no rige hoy (2026-11-09); sin campo «Comuna» ni $0. Pasaron los 30 días del aviso: no sale en portada ni cajón; la sección /envios/#envio-gratis sigue mientras el numeral esté publicado.",
     );
+  });
+});
+
+describe("numeral publicado mientras el aviso de terminación esté visible (QA-012)", () => {
+  const promo = (desde: string, terminada: string | null) => ({ ...PROMO, desde, terminada });
+  it("terminada, aviso visible y numeral no publicado: error que nombra la fecha y el enlace", () => {
+    const e = errorNumeralTerminacion(promo("2026-11-06", "2026-11-09"), "2026-11-09", false);
+    expect(e).toHaveLength(1);
+    expect(e[0]).toContain("2026-11-09");
+    expect(e[0]).toContain("/envios/#envio-gratis");
+  });
+  it("último día del aviso (30) también falla; el día 31 solo avisa", () => {
+    expect(errorNumeralTerminacion(promo("2026-10-01", "2026-10-10"), "2026-11-09", false)).toHaveLength(1);
+    expect(errorNumeralTerminacion(promo("2026-10-01", "2026-10-09"), "2026-11-09", false)).toEqual([]);
+  });
+  it("con el numeral publicado, apagada, programada o vigente: sin error", () => {
+    expect(errorNumeralTerminacion(promo("2026-11-06", "2026-11-09"), "2026-11-09", true)).toEqual([]);
+    expect(errorNumeralTerminacion(null, "2026-11-09", false)).toEqual([]);
+    expect(errorNumeralTerminacion(promo("2026-11-12", null), "2026-11-09", false)).toEqual([]);
+    expect(errorNumeralTerminacion(promo("2026-11-06", null), "2026-11-09", false)).toEqual([]);
   });
 });

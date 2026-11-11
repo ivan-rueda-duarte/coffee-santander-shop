@@ -120,6 +120,18 @@ export function erroresTerminacion(p: PromocionEnvioGratis | null, hoy: string):
 }
 
 /**
+ * QA-012: mientras el aviso de terminación esté visible (portada y cajón), enlaza a /envios/#envio-gratis.
+ * Si el numeral no está publicado esa ancla no existe: el build debe fallar. Fuera de esa ventana solo se avisa.
+ */
+export function errorNumeralTerminacion(p: PromocionEnvioGratis | null, hoy: string, numeralPublicado: boolean): string[] {
+  const e = estadoEnvioGratis(p, hoy);
+  if (e.tipo !== "terminada" || !e.fin.avisoVisible || numeralPublicado) return [];
+  return [
+    `Envío gratis (envio_gratis_terminada ${e.fin.terminada}): el aviso de terminación sigue visible en portada y cajón hasta 30 días después y enlaza a /envios/#${ANCLA_ENVIO_GRATIS}, pero «Envíos, devoluciones, retracto y garantía» no publica el numeral del envío gratis, así que ese enlace quedaría roto. Publica el numeral (legal-cumplimiento) o vacía envio_gratis_terminada y envio_gratis_desde en data/config.csv.`,
+  ];
+}
+
+/**
  * Línea de `npm run datos` cuando la promoción existe pero no rige `hoy` (QA-010): distingue «programada»
  * (`desde` en el futuro) de «terminada» (`envio_gratis_terminada`). null si rige o no existe.
  */
