@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lineasTextoConsumidor, MARCADORES_PROHIBIDOS, parsearTextoLegal, problemasTextoLegal } from "./texto-legal";
+import { lineasTextoConsumidor, MARCADORES_PROHIBIDOS, parsearTextoLegal, problemasTextoLegal, sustituirValores, valoresTextoLegal } from "./texto-legal";
 
 const DOC = `> BORRADOR — Versión 1.0 — 2026-11-06.
 
@@ -84,5 +84,24 @@ describe("problemasTextoLegal", () => {
     expect(problemasTextoLegal(parsearTextoLegal("«Versión 1 · vigente desde 2026-11-06»\n## Texto para el consumidor\nsolo párrafo"), ESPERADO)).toEqual([
       "el texto para el consumidor no tiene subtítulos (###).",
     ]);
+  });
+});
+
+describe("valores entre llaves (LEG-142)", () => {
+  const legal = { versionTerminos: "1.0", fechaTerminos: "2026-11-17", versionPoliticaDatos: "1.0", fechaPoliticaDatos: "2026-11-17" };
+  const conLlaves = DOC.replace("Un párrafo.", "Rige desde el {fecha_politica_datos} (versión {version_politica_datos}); términos {version_terminos} del {fecha_terminos}.");
+  it("sustituye versión y fecha de config.csv, con la fecha en letras", () => {
+    const t = parsearTextoLegal(conLlaves, valoresTextoLegal(legal));
+    expect(t.bloques[1]).toEqual({ tipo: "parrafo", texto: "Rige desde el 17 de noviembre de 2026 (versión 1.0); términos 1.0 del 17 de noviembre de 2026." });
+    expect(problemasTextoLegal(t, ESPERADO)).toEqual([]);
+  });
+  it("una llave sin sustituir (desconocida o sin valores) impide publicar", () => {
+    expect(problemasTextoLegal(parsearTextoLegal(conLlaves), ESPERADO).join("\n")).toContain("contiene «{»");
+    const otra = parsearTextoLegal(DOC.replace("Un párrafo.", "Dato {razon_social}."), valoresTextoLegal(legal));
+    expect(problemasTextoLegal(otra, ESPERADO).join("\n")).toContain("contiene «{»");
+    expect(sustituirValores("{x} y {version_terminos}", { version_terminos: "1.0" })).toBe("{x} y 1.0");
+  });
+  it("acepta la versión «1.0» en el rótulo", () => {
+    expect(parsearTextoLegal("«Versión 1.0 · vigente desde 2026-11-17»").rotulo).toEqual({ version: "1.0", vigenteDesde: "2026-11-17" });
   });
 });

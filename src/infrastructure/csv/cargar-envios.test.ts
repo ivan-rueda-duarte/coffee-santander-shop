@@ -26,11 +26,11 @@ departamento,Amazonas,,5,
 `;
 
 const PLAZOS = `zona,plazo_estimado,plazo_maximo
-1,Mismo día o siguiente día hábil,1 día hábil
-2,1 a 3 días hábiles,3 días hábiles
-3,1 a 3 días hábiles,3 días hábiles
-4,2 a 6 días hábiles,6 días hábiles
-5,5 a 12 días hábiles,por cotizar
+1,el mismo día o el siguiente día hábil,3 días hábiles
+2,de 1 a 3 días hábiles,6 días hábiles
+3,de 1 a 3 días hábiles,6 días hábiles
+4,de 2 a 6 días hábiles,10 días hábiles
+5,de 5 a 12 días hábiles,se informa al cotizar; máximo 30 días calendario
 `;
 
 function errores(tarifas: string, zonas: string): string[] {

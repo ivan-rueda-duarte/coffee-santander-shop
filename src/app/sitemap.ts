@@ -4,7 +4,8 @@ import { cargarCatalogo, URL_SITIO } from "./_datos/catalogo";
 
 export const dynamic = "force-static";
 
-const LEGALES = ["terminos", "privacidad", "envios-devoluciones", "vendedor"];
+// D3 está en /envios/ (LEG-141); /legal/envios-devoluciones/ solo remite allí y no se indexa.
+const LEGALES = ["terminos", "privacidad", "vendedor"];
 
 /** Un sitemap exige URLs absolutas: sin NEXT_PUBLIC_SITE_URL queda vacío. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

@@ -49,10 +49,10 @@ export interface ReglaZona {
 /** Una fila de data/plazos_envio.csv. `maximo` es null en la zona 5 («por cotizar»). */
 export interface PlazoEnvio {
   zona: Zona;
-  /** «1 a 3 días hábiles». */
+  /** «de 1 a 3 días hábiles». */
   estimado: string;
-  /** «3 días hábiles»; null = se informa al cotizar (nunca más de 30 días calendario). */
-  maximo: string | null;
+  /** «6 días hábiles»; en la zona 5, «se informa al cotizar; máximo 30 días calendario». Se publica tal cual. */
+  maximo: string;
 }
 
 /**

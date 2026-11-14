@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { AVISO_RETRACTO, textosCasillas } from "./ayudas";
+import { AVISO_RETRACTO, constanciaMensaje, TEXTO_PAGO_FORMULARIO, textosCasillas } from "./ayudas";
 
 async function agregarCasaMartinez(page: Page) {
   await page.goto("/cafes/cafe-casa-martinez/");
@@ -18,7 +18,6 @@ async function llenarEnvio(page: Page) {
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
   await page.getByLabel("Barrio").fill("Cabecera");
   await page.getByLabel(/Indicaciones/).fill("Dejar en portería");
-  await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
 }
 
 test.describe("pedido", () => {
@@ -30,7 +29,7 @@ test.describe("pedido", () => {
     const cajon = page.getByRole("dialog", { name: "Tu pedido" });
     await expect(cajon).toContainText("Café Casa Martínez");
     await expect(cajon).toContainText("$47.000");
-    await cajon.getByRole("link", { name: /Continuar con el pedido/ }).click();
+    await cajon.getByRole("link", { name: /Revisar el pedido/ }).click();
 
     // 1. Carrito
     await expect(page).toHaveURL(/\/pedido\/$/);
@@ -39,32 +38,36 @@ test.describe("pedido", () => {
 
     // 2. Envío: errores claros por campo
     await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeFocused();
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
     await expect(page.getByRole("alert").filter({ hasText: "datos por corregir" })).toBeVisible();
     await expect(page.getByText("Escribe tu nombre.")).toBeVisible();
     await expect(page.getByLabel("Nombre completo")).toBeFocused();
     await llenarEnvio(page);
     await page.getByLabel("Celular").fill("12345");
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    // LEG-144: sin campo de forma de pago; texto fijo de D5 §6.3.
+    await expect(page.getByRole("radio", { name: /Bre-B|contraentrega/i })).toHaveCount(0);
+    await expect(page.getByTestId("texto-pago")).toContainText(TEXTO_PAGO_FORMULARIO);
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
     await expect(page.getByText(/celular colombiano de 10 dígitos/)).toBeVisible();
     await page.getByLabel("Celular").fill("300 123 4567");
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
 
     // 3. Resumen: las casillas vienen sin marcar
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
-    await expect(page.getByText("La forma de pago se confirma por WhatsApp antes de que pagues")).toBeVisible();
-    // Microcopy §5.3 (paquete legal v1): el retracto de 5 días hábiles se informa antes de las casillas, solo en el resumen.
+    await expect(page.getByText("La forma de pago se confirma por WhatsApp antes de que pagues")).toHaveCount(0);
+    await expect(page.getByTestId("resumen-pago")).toHaveText("Pago: transferencia o Bre-B");
+    // D5 §6.3: el retracto de 5 días hábiles se informa antes de las casillas.
     await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
     const autorizacion = page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ });
     const terminos = page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ });
     await expect(autorizacion).not.toBeChecked();
     await expect(terminos).not.toBeChecked();
-    // Textos exactos de docs/legal/microcopy-legal.md §4.3 y §5.1 (paquete v1); versión y fecha salen de data/config.csv.
+    // Textos exactos de D2 «Textos de las casillas» (paquete del abogado v1.0); versión y fecha salen de data/config.csv.
     const casillas = textosCasillas();
     await expect(autorizacion).toHaveAccessibleName(casillas.autorizacion);
     await expect(terminos).toHaveAccessibleName(casillas.terminos);
     // El botón queda deshabilitado mientras falte una casilla (§4.3).
-    const preparar = page.getByRole("button", { name: "Preparar pedido para WhatsApp" });
+    const preparar = page.getByRole("button", { name: "Enviar por WhatsApp" });
     await expect(preparar).toBeDisabled();
     await autorizacion.check();
     await expect(preparar).toBeDisabled();
@@ -79,17 +82,19 @@ test.describe("pedido", () => {
     expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto).toContain("• Café Casa Martínez (Guanentá) — Molido — 500 g × 1 = $47.000");
-    expect(texto.startsWith("¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.")).toBe(true);
+    // D5 §6.4 con número DS generado en el navegador (P39 = a, LEG-150).
+    expect(texto).toMatch(/^¡Hola, De Santander! Envío mi solicitud de compra N\.° DS-\d{6}-\d{4}-[A-Z2-9]{4} para que me confirmen el total con el envío\./);
     expect(texto).toContain("Subtotal de productos: $47.000 (IVA del 5 % incluido)");
-    expect(texto).toMatch(/\n\nAcepto los Términos y condiciones versión \S+ y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión \S+ del \d+ de \w+ de \d{4}\.$/);
-    expect(texto).not.toMatch(/DS-|finalizar/i);
-    expect(texto).toContain("Envío (Bucaramanga · zona 1): $8.800");
+    expect(texto.endsWith(`\n\n${constanciaMensaje()}`)).toBe(true);
+    expect(texto).not.toMatch(/finalizar|promociones/i);
+    expect(texto).toContain("Envío: zona 1, $8.800 (IVA incluido)");
     expect(texto).toContain("Nombre: Ana Rueda");
     expect(texto).toContain("Celular: 300 123 4567");
-    expect(texto).toContain("Ciudad: Bucaramanga, Santander");
+    expect(texto).toContain("Departamento y municipio: Santander, Bucaramanga");
     expect(texto).toContain("Dirección: Calle 45 # 12-30 · Barrio: Cabecera");
     expect(texto).toContain("Indicaciones: Dejar en portería");
-    expect(texto).toContain("Forma de pago: Transferencia Bre-B");
+    expect(texto).toContain("\nPago: transferencia o Bre-B\n");
+    expect(texto).not.toMatch(/contraentrega|Forma de pago/i);
     await expect(enlace).toHaveAttribute("target", "_blank");
     await expect(page.locator("#mensaje-pedido")).toHaveText(texto);
 
@@ -167,31 +172,31 @@ test.describe("pedido", () => {
     // Número sin tipo y código postal de otro departamento.
     await page.getByLabel("Número de documento").fill("1.098.765.432");
     await page.getByLabel("Código postal").fill("110111");
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
     await expect(page.getByText("Elige el tipo de documento.")).toBeVisible();
     await expect(page.getByText("Este código no corresponde a Santander. Revísalo en el visor de 4-72.")).toBeVisible();
 
     await page.getByLabel("Tipo de documento").selectOption("CC");
     await expect(page.getByLabel("Número de documento")).toHaveAttribute("inputmode", "numeric");
     await page.getByLabel("Código postal").fill("680001");
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
 
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByText("Documento: CC 1098765432")).toBeVisible();
     await expect(page.getByText("Código postal: 680001")).toBeVisible();
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
 
     const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto).toContain("Documento: CC 1098765432");
-    expect(texto).toContain("Ciudad: Bucaramanga, Santander\nCódigo postal: 680001");
+    expect(texto).toContain("Dirección: Calle 45 # 12-30 · Barrio: Cabecera\nCódigo postal: 680001");
     expect(texto).not.toContain("Cédula");
 
     const almacenado = await page.evaluate(() => Object.keys(localStorage).map((k) => `${k}=${localStorage.getItem(k)}`).join("\n"));
     expect(almacenado).toContain("desantander.carrito.v2");
-    for (const dato of ["1098765432", "1.098.765.432", "680001", "110111", "numeroDocumento", "tipoDocumento", "codigoPostal"]) expect(almacenado).not.toContain(dato);
+    for (const dato of ["1098765432", "1.098.765.432", "680001", "110111", "numeroDocumento", "tipoDocumento", "codigoPostal", "formaPago", "municipio", "Bucaramanga", "DS-"]) expect(almacenado).not.toContain(dato);
   });
 
   test("sin pedido, /pedido/ explica que está vacío y recargar el resumen vuelve al envío", async ({ page }) => {

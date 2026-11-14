@@ -6,7 +6,7 @@ import type { VersionesLegales } from "../pedido/tienda";
 import { bloqueDeLinea } from "./texto-legal";
 
 // Condiciones del envío gratis publicadas en /envios/ (microcopy §8.5): el numeral «Envío gratis en comunas de
-// Bucaramanga» de «Envíos, devoluciones, retracto y garantía» versión 2, letra por letra. Y el control que impide
+// Bucaramanga» de «Envíos, devoluciones, retracto y garantía» (numeral 13 de la versión 1.0), letra por letra. Y el control que impide
 // encender la promoción antes de publicar los documentos versión 2 (LEG-106).
 
 /** Marcador del borrador (nota E de envíos) que legal reemplaza por la fecha real el día de la publicación. */
@@ -17,12 +17,23 @@ export const SALVEDAD_V2 = "La única salvedad es el envío gratis en comunas de
 
 const esTituloDelNumeral = (texto: string) => texto.replace(/^\d+\.\s+/, "") === TEXTOS_ENVIO_GRATIS.tituloSeccion;
 
-/** Bloques del numeral (sin su título) hasta el siguiente título; null si el texto no lo tiene. */
+/** Párrafo final del documento («Normas citadas: …»): no es parte del numeral aunque no lleve título (LEG-167). */
+export const INICIO_NORMAS_CITADAS = "Normas citadas";
+
+/**
+ * Bloques del numeral (sin su título) hasta el siguiente título o hasta el párrafo «Normas citadas», que cierra
+ * el documento; null si el texto no lo tiene.
+ */
 export function numeralEnvioGratis(bloques: readonly BloqueEstructurado[]): BloqueEstructurado[] | null {
   const inicio = bloques.findIndex((b) => b.tipo === "titulo" && esTituloDelNumeral(b.texto));
   if (inicio === -1) return null;
-  const fin = bloques.findIndex((b, i) => i > inicio && b.tipo === "titulo");
+  const fin = bloques.findIndex((b, i) => i > inicio && (b.tipo === "titulo" || (b.tipo === "parrafo" && b.texto.startsWith(INICIO_NORMAS_CITADAS))));
   return bloques.slice(inicio + 1, fin === -1 ? undefined : fin);
+}
+
+/** ¿Es el título del numeral del envío gratis («13. Envío gratis en comunas de Bucaramanga»)? */
+export function esTituloEnvioGratis(texto: string): boolean {
+  return esTituloDelNumeral(texto);
 }
 
 /**

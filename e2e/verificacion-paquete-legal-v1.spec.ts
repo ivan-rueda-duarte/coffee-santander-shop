@@ -59,12 +59,12 @@ async function irAlResumen(page: Page, departamento: string, municipio: string, 
   await page.getByLabel("Departamento").selectOption(departamento);
   await page.getByLabel("Municipio").selectOption(municipio);
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-  await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
-  await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
-const AYUDA_DOS = "Para preparar tu pedido, marca las dos casillas: la autorización de tus datos y los términos y condiciones.";
+// Orden de D5 §6.3 (casilla 1 términos, casilla 2 datos; LEG-145).
+const AYUDA_DOS = "Para preparar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
 const AYUDA_DATOS = "Para preparar tu pedido, falta que autorices el tratamiento de tus datos.";
 const AYUDA_TERMINOS = "Para preparar tu pedido, falta que aceptes los términos y condiciones.";
 const ERROR_DATOS = "Debes autorizar el tratamiento de tus datos para continuar.";
@@ -86,9 +86,9 @@ const enlacePedido = (page: Page) => page.locator('a[href*="wa.me/"][href*="text
 // ---------------------------------------------------------------------------------------------------------
 
 test.describe("QA-006 verificación: botón con aria-disabled, microayuda y errores (microcopy §5.9 v1.1)", () => {
-  test("con 0 casillas: Tab llega al botón, Espacio no avanza, errores exactos, aria-invalid y foco a la primera", async ({ page }) => {
+  test("con 0 casillas: Tab llega al botón, Espacio no avanza, errores exactos, aria-invalid y foco a la primera (términos)", async ({ page }) => {
     await irAlResumen(page, "Santander", "Bucaramanga");
-    const boton = page.getByRole("button", { name: "Preparar pedido para WhatsApp" });
+    const boton = page.getByRole("button", { name: "Enviar por WhatsApp" });
     const aut = page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ });
     const ter = page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ });
     await expect(boton).not.toHaveAttribute("disabled", /.*/);
@@ -101,11 +101,11 @@ test.describe("QA-006 verificación: botón con aria-disabled, microayuda y erro
     await expect(page.getByText(ERROR_TERMINOS)).toHaveCount(0);
     await expect(aut).not.toHaveAttribute("aria-invalid", /.*/);
 
-    // Teclado real: desde la casilla de términos, Tab llega al botón.
-    await ter.focus();
+    // Teclado real: desde la casilla de datos, Tab llega al botón (pasando por las de promociones, que no bloquean).
+    await aut.focus();
     expect(await tabHastaBoton(page, boton), "Tab no llega al botón").toBeGreaterThan(0);
     await page.keyboard.press("Space");
-    await expect(aut).toBeFocused();
+    await expect(ter).toBeFocused();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(enlacePedido(page)).toHaveCount(0);
     await expect(aut).not.toBeChecked();
@@ -122,7 +122,7 @@ test.describe("QA-006 verificación: botón con aria-disabled, microayuda y erro
 
   test("con 1 casilla (solo datos): microayuda de términos, al pulsar solo el error de términos y foco en términos", async ({ page }) => {
     await irAlResumen(page, "Santander", "Bucaramanga");
-    const boton = page.getByRole("button", { name: "Preparar pedido para WhatsApp" });
+    const boton = page.getByRole("button", { name: "Enviar por WhatsApp" });
     const aut = page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ });
     const ter = page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ });
     await aut.check();
@@ -148,7 +148,7 @@ test.describe("QA-006 verificación: botón con aria-disabled, microayuda y erro
 
   test("con 1 casilla (solo términos): microayuda de datos, al pulsar solo el error de datos y foco en datos", async ({ page }) => {
     await irAlResumen(page, "Santander", "Bucaramanga");
-    const boton = page.getByRole("button", { name: "Preparar pedido para WhatsApp" });
+    const boton = page.getByRole("button", { name: "Enviar por WhatsApp" });
     const aut = page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ });
     const ter = page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ });
     await ter.check();
@@ -169,7 +169,7 @@ test.describe("QA-006 verificación: botón con aria-disabled, microayuda y erro
     test(`a ${vp.width} px: contraste ≥ 4,5:1 del botón aria-disabled y de la microayuda; axe sin serias con errores visibles`, async ({ page }) => {
       await page.setViewportSize(vp);
       await irAlResumen(page, "Santander", "Bucaramanga");
-      const boton = page.getByRole("button", { name: "Preparar pedido para WhatsApp" });
+      const boton = page.getByRole("button", { name: "Enviar por WhatsApp" });
       const cb = await contraste(boton);
       expect(cb.ratio, `botón ${cb.texto} sobre ${cb.fondo}`).toBeGreaterThanOrEqual(4.5);
       const ca = await contraste(page.getByTestId("ayuda-preparar"));
@@ -194,7 +194,8 @@ test.describe("QA-006 verificación: botón con aria-disabled, microayuda y erro
 // QA-007
 // ---------------------------------------------------------------------------------------------------------
 
-const LEGALES = ["/legal/terminos/", "/legal/privacidad/", "/legal/envios-devoluciones/", "/legal/vendedor/"];
+// D3 se publica en /envios/ (LEG-141).
+const LEGALES = ["/legal/terminos/", "/legal/privacidad/", "/envios/", "/legal/vendedor/"];
 
 test.describe("QA-007 verificación: páginas legales", () => {
   for (const vp of [{ width: 320, height: 740 }, { width: 360, height: 740 }]) {
@@ -205,6 +206,8 @@ test.describe("QA-007 verificación: páginas legales", () => {
         expect(await sinDesborde(page), ruta).toBe(true);
         const anchos = await page.evaluate(() =>
           [...document.querySelectorAll("main *")]
+            // La tabla de tarifas de /envios/ se desplaza dentro de su región (overflow-x), no desborda la página.
+            .filter((e) => !e.parentElement?.closest('[role="region"]'))
             .filter((e) => e.getBoundingClientRect().right > window.innerWidth + 0.5)
             .map((e) => `${e.tagName}.${e.className}`.slice(0, 80)),
         );
@@ -221,7 +224,7 @@ test.describe("QA-007 verificación: páginas legales", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     for (const ruta of LEGALES.slice(0, 3)) {
       await page.goto(ruta);
-      const m = await page.locator("article .body-l").evaluate((el) => {
+      const m = await page.locator("article .body-l").first().evaluate((el) => {
         const s = getComputedStyle(el);
         const sonda = document.createElement("span");
         sonda.style.font = s.font;
@@ -300,10 +303,10 @@ function archivosHtml(dir: string): string[] {
   });
 }
 
-test("QA-008 verificación: paso 3 exacto y ningún «bre-b» en minúscula en out/", async ({ page }) => {
+test("QA-008 verificación: paso 3 exacto (LEG-165) y ningún «bre-b» en minúscula en out/", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(/^Despachamos desde .+ Pagas con /)).toHaveText(
-    "Despachamos desde Bucaramanga a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con efectivo contraentrega o transferencia Bre-B.",
+  await expect(page.getByText(/^Despachamos desde .+ Pagas por /)).toHaveText(
+    "Despachamos desde Bucaramanga a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas por transferencia bancaria o por Bre-B después de aceptar el total.",
   );
   // Texto visible de todas las páginas generadas (los ids de ancla como «#11-si-pagaste-por-bre-b…» son slugs, no texto).
   const rutas = archivosHtml("out").filter((f) => f.endsWith("index.html")).map((f) => f.slice(3, -"index.html".length) || "/");
@@ -340,7 +343,7 @@ test.describe("/envios/ verificación: aclaraciones en small y columna Zona sin 
     test(`a ${vp.width} px`, async ({ page }) => {
       await page.setViewportSize(vp);
       await page.goto("/envios/");
-      for (const id of ["leyenda-iva", "comision-incluida"]) {
+      for (const id of ["leyenda-iva"]) { // «comision-incluida» retirado con la contraentrega (2026-11-12)
         const el = page.getByTestId(id);
         await expect(el).toHaveClass(/\bsmall\b/);
         await expect(el).toHaveCSS("font-size", "14px");
@@ -405,7 +408,7 @@ test.describe("regresión del estilo 37ae67c", () => {
     test(`a ${vp.width} px: pie con enlaces legales de ≥ 28 px de alto, filete, sin desborde y axe`, async ({ page }) => {
       await page.setViewportSize(vp);
       await page.goto("/");
-      const altos = await page.locator("footer a[href*='/legal/']").evaluateAll((as) => as.map((a) => a.getBoundingClientRect().height));
+      const altos = await page.locator("footer ul a").evaluateAll((as) => as.map((a) => a.getBoundingClientRect().height));
       expect(altos).toHaveLength(4);
       for (const h of altos) expect(h).toBeGreaterThanOrEqual(28);
       await expect(page.getByTestId("pie-vendedor")).toHaveCSS("border-top-width", "1px");
@@ -423,7 +426,7 @@ test.describe("regresión del estilo 37ae67c", () => {
       const fila = page.locator("main").getByTestId("linea-envio");
       await expect(fila).toHaveCSS("flex-direction", vp.width < 640 ? "column" : "row");
       const dd = fila.locator("dd");
-      await expect(dd).toHaveText("Por cotizar · te confirmamos el valor por WhatsApp antes de que pagues");
+      await expect(dd).toHaveText("por cotizar · te confirmamos el valor por WhatsApp antes de que pagues");
       await expect(dd).toHaveCSS("text-align", vp.width < 640 ? "start" : "right");
       const g = await fila.evaluate((f) => {
         const r = f.getBoundingClientRect();

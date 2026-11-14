@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ConfigTienda } from "@/domain/pedido/tienda";
+import { TEXTOS_PAGO, type ConfigTienda } from "@/domain/pedido/tienda";
 import { leyendaIvaPie } from "@/domain/pedido/iva";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { Franja, Textura } from "../marca/superficies";
@@ -8,9 +8,14 @@ import { Marca } from "./encabezado";
 const LEGALES = [
   { href: "/legal/terminos/", texto: "Términos y condiciones" },
   { href: "/legal/privacidad/", texto: "Tratamiento de datos" },
-  { href: "/legal/envios-devoluciones/", texto: "Envíos, devoluciones, retracto y garantía" },
+  // D3 se publica en /envios/ (LEG-141).
+  { href: "/envios/", texto: "Envíos, devoluciones, retracto y garantía" },
   { href: "/legal/vendedor/", texto: "Información del vendedor" },
 ];
+
+/** D5 §6.1, texto exacto. */
+export const TEXTO_PIE_ENVIOS =
+  "Enviamos a todo Colombia desde Bucaramanga. Ves el valor del envío en tu carrito; en algunos destinos y en pedidos de más de 5 kg te lo confirmamos por WhatsApp antes de que pagues.";
 
 export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
   const v = tienda.vendedor;
@@ -36,7 +41,8 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
             <div>
               <dt className="overline text-eyebrow">Envíos</dt>
               <dd className="mt-1 text-ink-muted">
-                {tienda.notaEnvio}{" "}
+                {/* D5 §6.1, «Pie, envíos» (texto fijo; nota_envio se retiró de config.csv, LEG-151). */}
+                {TEXTO_PIE_ENVIOS}{" "}
                 <Link href="/envios/" className="font-semibold text-ink underline underline-offset-4">
                   Zonas, tarifas y plazos
                 </Link>
@@ -44,7 +50,7 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
             </div>
             <div>
               <dt className="overline text-eyebrow">Pagos</dt>
-              <dd className="mt-1 text-ink-muted">{tienda.formasPago.join(" · ")}</dd>
+              <dd className="mt-1 text-ink-muted">{TEXTOS_PAGO.pie}</dd>
             </div>
           </dl>
 
@@ -59,12 +65,12 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
                 </li>
               ))}
             </ul>
-            {/* Vendedor (Ley 1480, art. 50 lit. a; microcopy §5.4): cada línea solo si el dato existe. Sin representante ni matrícula (LEG-085). */}
+            {/* Vendedor (Ley 1480, art. 50 lit. a; D4): cada línea solo si el dato existe. Sin representante ni matrícula (LEG-085).
+                Sin dirección de notificación judicial: decisión del dueño (P38 = b, 2026-11-14); va solo en /legal/vendedor/. */}
             {v.razonSocial && (
               <address className="mt-5 space-y-1 border-t border-line pt-4 text-ink-muted not-italic [overflow-wrap:anywhere]" data-testid="pie-vendedor">
                 <p>{v.nit ? `${v.razonSocial} · NIT ${v.nit}` : v.razonSocial}</p>
                 {v.domicilio && <p>Domicilio: {v.domicilio}</p>}
-                {v.direccionNotificacion && <p>Notificaciones judiciales: {v.direccionNotificacion}</p>}
                 {v.correoContacto && (
                   <p>
                     Correo de atención y de notificación judicial:{" "}

@@ -102,7 +102,7 @@ export interface OpcionesEsquemaEnvio {
  * @param codigosDepartamento nombre del departamento → código DIVIPOLA de 2 dígitos («Santander» → «68»).
  *   Lo pasa quien llama para que el dominio no dependa de la tabla DIVIPOLA.
  */
-export function crearEsquemaEnvio(formasPago: readonly string[], codigosDepartamento: Readonly<Record<string, string>>, opciones: OpcionesEsquemaEnvio = {}) {
+export function crearEsquemaEnvio(codigosDepartamento: Readonly<Record<string, string>>, opciones: OpcionesEsquemaEnvio = {}) {
   const documentoObligatorio = opciones.documentoObligatorio ?? DOCUMENTO_OBLIGATORIO !== false;
   return z
     .object({
@@ -126,10 +126,8 @@ export function crearEsquemaEnvio(formasPago: readonly string[], codigosDepartam
       direccion: textoRequerido("la dirección", 5, 120),
       barrio: textoOpcional(60),
       comuna: z.string().optional(),
+      // Sin campo de forma de pago (LEG-144): se paga por transferencia o Bre-B, texto fijo (D5 §6.3).
       indicaciones: textoOpcional(MAX_INDICACIONES),
-      formaPago: z
-        .string({ error: "Elige una forma de pago." })
-        .refine((v) => formasPago.includes(v), { error: "Elige una forma de pago." }),
     })
     .superRefine((v, ctx) => {
       const tipo = v.tipoDocumento;
@@ -157,9 +155,10 @@ export function crearEsquemaEnvio(formasPago: readonly string[], codigosDepartam
 
 export type DatosEnvio = z.output<ReturnType<typeof crearEsquemaEnvio>>;
 
+/** Casillas 1 (términos) y 2 (datos), obligatorias (D5 §6.3). Las de promociones (3 y 4) son opcionales y no se validan. */
 export const esquemaConsentimientos = z.object({
-  autorizacionDatos: z.literal(true, { error: "Debes autorizar el tratamiento de tus datos para continuar." }),
   aceptaTerminos: z.literal(true, { error: "Debes aceptar los términos para continuar." }),
+  autorizacionDatos: z.literal(true, { error: "Debes autorizar el tratamiento de tus datos para continuar." }),
 });
 
 export type ResultadoValidacion<T> = { ok: true; datos: T } | { ok: false; errores: Record<string, string> };

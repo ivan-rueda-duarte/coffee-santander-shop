@@ -1,4 +1,6 @@
+import { fechaEnLetras } from "../comun/fecha";
 import type { BloqueEstructurado } from "../marca/reglas-texto";
+import type { VersionesLegales } from "../pedido/tienda";
 
 // Texto público de los documentos legales (docs/legal/*.md, sección «## Texto para el consumidor»).
 // El sitio lo publica letra por letra (LEG-084): aquí solo se reconoce la estructura (subtítulos, párrafos
@@ -21,8 +23,29 @@ export interface TextoLegal {
 
 const ROTULO = /«Versión (\S+) · vigente desde (\d{4}-\d{2}-\d{2})»/;
 
-/** Marcadores que nunca pueden llegar al sitio: trabajo interno de legal, comentarios y corchetes. */
-export const MARCADORES_PROHIBIDOS = ["TODO(", "DECISIÓN", "VERIFICAR", "<!--", "[", "]"] as const;
+/**
+ * Marcadores que nunca pueden llegar al sitio: trabajo interno de legal, comentarios, corchetes y llaves.
+ * Las llaves se revisan después de sustituir los valores de config.csv (LEG-142): una que quede es un dato sin poner.
+ */
+export const MARCADORES_PROHIBIDOS = ["TODO(", "DECISIÓN", "VERIFICAR", "<!--", "[", "]", "{", "}"] as const;
+
+/** Valores entre llaves que el paquete del abogado deja al código (sección 0: «los pone el código desde los CSV»). */
+export type ValoresTextoLegal = Readonly<Record<string, string>>;
+
+/** {version_terminos}, {fecha_terminos}, {version_politica_datos} y {fecha_politica_datos}; fechas en letras. */
+export function valoresTextoLegal(legal: VersionesLegales): ValoresTextoLegal {
+  return {
+    version_terminos: legal.versionTerminos,
+    fecha_terminos: fechaEnLetras(legal.fechaTerminos),
+    version_politica_datos: legal.versionPoliticaDatos,
+    fecha_politica_datos: fechaEnLetras(legal.fechaPoliticaDatos),
+  };
+}
+
+/** Reemplaza cada {clave} conocida; las desconocidas se dejan para que `problemasTextoLegal` las rechace. */
+export function sustituirValores(texto: string, valores: ValoresTextoLegal): string {
+  return texto.replace(/\{([a-z_]+)\}/g, (llave, clave: string) => (Object.hasOwn(valores, clave) ? valores[clave] : llave));
+}
 
 /** Líneas de la sección «## Texto para el consumidor», hasta el siguiente «## » o «---». Vacío si no existe. */
 export function lineasTextoConsumidor(md: string): string[] {
@@ -48,12 +71,14 @@ export function bloqueDeLinea(linea: string): BloqueEstructurado | null {
   return { tipo: "parrafo", texto: linea };
 }
 
-/** Estructura publicable de un documento legal en Markdown. */
-export function parsearTextoLegal(md: string): TextoLegal {
+/** Estructura publicable de un documento legal en Markdown, con los valores entre llaves ya sustituidos. */
+export function parsearTextoLegal(md: string, valores: ValoresTextoLegal = {}): TextoLegal {
   const r = ROTULO.exec(md);
   return {
     rotulo: r ? { version: r[1], vigenteDesde: r[2] } : null,
-    bloques: lineasTextoConsumidor(md).map(bloqueDeLinea).filter((b): b is BloqueEstructurado => b !== null),
+    bloques: lineasTextoConsumidor(md)
+      .map((l) => bloqueDeLinea(sustituirValores(l, valores)))
+      .filter((b): b is BloqueEstructurado => b !== null),
   };
 }
 

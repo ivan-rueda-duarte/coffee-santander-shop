@@ -2,10 +2,9 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { AVISO_RETRACTO } from "./ayudas";
 
-// Microcopy §5.3 (paquete legal v1, LEG-081): aviso de retracto de 5 días hábiles en el resumen, texto exacto, solo ahí.
-// Microcopy §5.8: /envios/ publica «Plazos de entrega» (estimado y máximo por zona), cierra con la línea de 30 días y la llamada nombra la zona 5.
+// D5 §6.3 (paquete del abogado v1.0): aviso de retracto de 5 días hábiles en el resumen, texto exacto.
+// /envios/ publica D3 completo (LEG-141): plazos, retracto y 30 días los dice el documento, no textos paralelos (LEG-164).
 
-const PLAZO_LEGAL = "Si no publicamos un plazo máximo para tu zona, entregamos en máximo 30 días calendario, como manda la ley.";
 const PREGUNTA_ZONA5 = "¿Tu destino es de zona 5 o pides más de 5 kg?";
 const VIEWPORTS = [
   { width: 320, height: 740 },
@@ -29,8 +28,7 @@ async function irAlResumen(page: Page, departamento: string, municipio: string) 
   await page.getByLabel("Departamento").selectOption(departamento);
   await page.getByLabel("Municipio").selectOption(municipio);
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-  await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
-  await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
@@ -48,6 +46,8 @@ async function retractoFueraDeEnlaces(page: Page) {
     while ((n = walker.nextNode())) {
       if (!/retract/i.test(n.textContent ?? "")) continue;
       if ((n.parentElement as HTMLElement).closest("a")) continue;
+      // El aviso de privacidad del formulario (D2) nombra el retracto entre las finalidades.
+      if ((n.parentElement as HTMLElement).closest('[data-testid="aviso-privacidad"]')) continue;
       resultado.push((n.textContent ?? "").trim());
     }
     return resultado;
@@ -65,14 +65,14 @@ test.describe("aviso de retracto en el resumen", () => {
       await expect(aviso).toHaveText(AVISO_RETRACTO);
       // Va antes de las casillas de autorización y después del total.
       const yAviso = (await aviso.boundingBox())!.y;
-      const yCasillas = (await page.getByRole("group", { name: "Autorizaciones" }).boundingBox())!.y;
+      const yCasillas = (await page.getByRole("group", { name: "Autorizaciones obligatorias" }).boundingBox())!.y;
       const yTotal = (await page.getByTestId("linea-total").boundingBox())!.y;
       expect(yTotal).toBeLessThan(yAviso);
       expect(yAviso).toBeLessThan(yCasillas);
-      // Con tarifa no hay aviso de «por cotizar»; el plazo es el de la zona 1 (microcopy §5.6).
+      // Con tarifa no hay aviso de «por cotizar»; el plazo es el de la zona 1 (D5 §6.3, LEG-143).
       await expect(page.getByTestId("aviso-por-cotizar")).toHaveCount(0);
-      await expect(page.getByTestId("linea-plazo")).toHaveText("Entrega estimada: Mismo día o siguiente día hábil. Plazo máximo: 1 día hábil.");
-      await expect(page.getByTestId("leyenda-iva").first()).toContainText(/Precios (con IVA del \d+ % incluido \(art\. 468-1 del Estatuto Tributario\)|en pesos colombianos con todos los impuestos incluidos)\./);
+      await expect(page.getByTestId("linea-plazo")).toHaveText("Entrega estimada: el mismo día o el siguiente día hábil. Plazo máximo: 3 días hábiles, contado desde el día hábil siguiente a tu pago.");
+      await expect(page.getByTestId("leyenda-iva").first()).toContainText(/^(Precio con IVA del \d+ % incluido|Precios en pesos colombianos con todos los impuestos incluidos)\.$/);
       await expect(page.getByTestId("nota-precio-total")).toContainText("Los precios incluyen todos los impuestos y el envío se muestra por separado (art. 50 de la Ley 1480 de 2011).");
       // «retracto» solo aparece en el aviso (y en los nombres de los enlaces legales).
       expect(await retractoFueraDeEnlaces(page)).toEqual([AVISO_RETRACTO]);
@@ -107,10 +107,9 @@ test.describe("aviso de retracto en el resumen", () => {
     await page.getByLabel("Departamento").selectOption("Santander");
     await page.getByLabel("Municipio").selectOption("Bucaramanga");
     await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-    await page.getByRole("radio", { name: "Efectivo contraentrega" }).check({ force: true });
-    // Microcopy §1.7: ayuda de contraentrega al elegir esa forma de pago.
-    await expect(page.getByTestId("ayuda-contraentrega")).toHaveText("Pagas al recibir. La tarifa de envío ya incluye la comisión de recaudo; no hay recargos.");
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    // Contraentrega retirada (2026-11-12): sin ayuda de comisión de recaudo.
+    await expect(page.getByTestId("ayuda-contraentrega")).toHaveCount(0);
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
     await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
     await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
   });
@@ -144,12 +143,11 @@ test.describe("aviso de retracto en el resumen", () => {
     await page.getByLabel("Departamento").selectOption("Santander");
     await page.getByLabel("Municipio").selectOption("Bucaramanga");
     await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-    await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
     await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
     await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
     await expect(page.getByTestId("aviso-retracto")).toHaveCount(0);
     const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
@@ -165,47 +163,27 @@ test.describe("aviso de retracto en el resumen", () => {
       const enlaces = page.locator("footer a").filter({ hasText: /retracto/i });
       await expect(enlaces).toHaveCount(1);
       await expect(enlaces).toHaveText("Envíos, devoluciones, retracto y garantía");
-      await expect(enlaces).toHaveAttribute("href", "/legal/envios-devoluciones/");
+      await expect(enlaces).toHaveAttribute("href", "/envios/");
     }
   });
 });
 
-test.describe("/envios/: plazos de entrega, línea de 30 días y pregunta de zona 5", () => {
+test.describe("/envios/: D3 1.0 con plazos y pregunta de zona 5", () => {
   for (const vp of VIEWPORTS) {
-    test(`a ${vp.width} px: plazo-legal al cierre de «Plazos de entrega», pregunta de zona 5, sin textos retirados, axe y sin desborde`, async ({ page }) => {
+    test(`a ${vp.width} px: plazos de D3 §6, máximo de 30 días, pregunta de zona 5, sin textos retirados, axe y sin desborde`, async ({ page }) => {
       await page.setViewportSize(vp);
       await page.goto("/envios/");
       await page.waitForLoadState("networkidle");
-      const plazo = page.getByTestId("plazo-legal");
-      await expect(plazo).toHaveCount(1);
-      await expect(plazo).toBeVisible();
-      await expect(plazo).toHaveText(PLAZO_LEGAL);
-      // Cierra la sección: va después de la lista de zonas y antes del siguiente h2.
-      const yDl = (await page.locator("dl").first().boundingBox())!;
-      const yPlazo = (await plazo.boundingBox())!.y;
-      const ySiguienteH2 = (await page.getByRole("heading", { name: "Si no hay reparto a domicilio" }).boundingBox())!.y;
-      expect(yDl.y + yDl.height).toBeLessThanOrEqual(yPlazo + 1);
-      expect(yPlazo).toBeLessThan(ySiguienteH2);
-      // Dentro de la sección «Plazos de entrega» (el h2 anterior más cercano).
-      expect(await plazo.evaluate((el) => {
-        let n: Element | null = el;
-        while ((n = n.previousElementSibling)) if (n.tagName === "H2") return n.textContent;
-        return null;
-      })).toBe("Plazos de entrega");
-
+      await expect(page.getByRole("heading", { name: "6. Plazos de entrega" })).toBeVisible();
+      await expect(page.getByText(/Se cuentan desde el día hábil siguiente a aquel en que recibimos tu pago\./)).toBeVisible();
+      await expect(page.getByText(/el máximo se informa al cotizar y no supera treinta \(30\) días calendario/)).toBeVisible();
+      for (const id of ["plazo-legal", "retracto-envios"]) await expect(page.getByTestId(id)).toHaveCount(0);
       const pregunta = page.getByText(PREGUNTA_ZONA5, { exact: true });
       await expect(pregunta).toHaveCount(1);
       await expect(pregunta).toBeVisible();
       const texto = (await page.locator("body").innerText()).replace(/\s+/g, " ");
       expect(texto).not.toContain("¿Tu destino no aparece");
       expect(texto).not.toMatch(/Plazos orientativos|Son una referencia, no una fecha de entrega/);
-      // Las cinco zonas con estimado y máximo (microcopy §5.8); la zona 5 con el máximo al cotizar.
-      for (const z of [1, 2, 3, 4, 5]) await expect(page.locator("dt", { hasText: `Zona ${z}` })).toBeVisible();
-      expect(texto).toMatch(/Máximo: \d+ días? hábil/);
-      expect(texto).toContain("Máximo: se informa al cotizar; nunca más de 30 días calendario.");
-      // Sección «Retracto» con el mismo texto del resumen y enlace al documento legal.
-      await expect(page.getByTestId("retracto-envios")).toContainText(AVISO_RETRACTO);
-      // Botón de WhatsApp al número de la tienda.
       await expect(page.getByRole("link", { name: "Escribir por WhatsApp" })).toHaveAttribute("href", "https://wa.me/573001129874");
       await expect(page.getByText("Escríbenos al +57 300 112 9874 y te cotizamos.")).toBeVisible();
       expect(await sinDesborde(page)).toBe(true);

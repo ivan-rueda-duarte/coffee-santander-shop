@@ -7,7 +7,6 @@ import { obtenerCatalogo } from "./obtener-catalogo";
 import { obtenerFichaCafe } from "./obtener-ficha-cafe";
 import { prepararPedido, type EntradaPedido } from "./preparar-pedido";
 
-const PAGOS = ["Efectivo contraentrega", "Transferencia Bre-B"];
 const catalogo: Catalogo = {
   provincias: [...PROVINCIAS_PRUEBA, { slug: "soto", nombre: "Soto", nombreCorto: "Soto", colorHex: "#bdd9b6", descripcion: null, orden: 4 }],
   municipios: [
@@ -22,8 +21,7 @@ const catalogo: Catalogo = {
     nombre: "De Santander",
     whatsapp: "573001129874",
     ciudadDespacho: "Bucaramanga",
-    notaEnvio: "Enviamos a todo Colombia.",
-    formasPago: PAGOS,
+    mediosPago: ["transferencia", "bre-b"],
     maxCantidad: 20,
     ivaTarifa: 5,
     legal: LEGAL_PRUEBA,
@@ -100,7 +98,6 @@ const envioValido = {
   departamento: "Santander",
   municipio: "Bucaramanga",
   direccion: "Calle 45 # 12-30",
-  formaPago: "Transferencia Bre-B",
 };
 const entrada = (cambios: Partial<EntradaPedido> = {}): EntradaPedido => ({
   lineas: [
@@ -110,6 +107,8 @@ const entrada = (cambios: Partial<EntradaPedido> = {}): EntradaPedido => ({
   envio: envioValido,
   autorizacionDatos: true,
   aceptaTerminos: true,
+  promociones: { whatsapp: false, correo: false },
+  numeroSolicitud: "DS-261117-1432-K7QM",
   ...cambios,
 });
 
@@ -131,11 +130,11 @@ describe("prepararPedido", () => {
     if (!r.ok) return;
     expect(r.pedido.totales.subtotalCop).toBe(125000);
     expect(r.pedido.totales.bolsas).toBe(3);
-    expect(r.pedido.texto).toContain("• Café Málaga (García Rovira) — Grano entero — 500 g × 2 = $100.000");
+    expect(r.pedido.texto).toContain("• Café Málaga (García Rovira) — Grano — 500 g × 2 = $100.000");
     expect(r.pedido.texto).toContain("• Café Oiba (Comunera) — Molido — 250 g × 1 = $25.000");
-    expect(r.pedido.texto).toContain("Subtotal de productos: $125.000 (IVA del 5 % incluido)\nEnvío (Bucaramanga · zona 1): $11.600\nTotal: $136.600");
-    expect(r.pedido.texto.startsWith("¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.")).toBe(true);
-    expect(r.pedido.texto.endsWith("Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026.")).toBe(true);
+    expect(r.pedido.texto).toContain("Subtotal de productos: $125.000 (IVA del 5 % incluido)\nEnvío: zona 1, $11.600 (IVA incluido)\nTotal: $136.600");
+    expect(r.pedido.texto.startsWith("¡Hola, De Santander! Envío mi solicitud de compra N.° DS-261117-1432-K7QM para que me confirmen el total con el envío.")).toBe(true);
+    expect(r.pedido.texto.endsWith("Acepto los Términos v1 y autorizo el tratamiento de mis datos según la Política v1 del 6 de noviembre de 2026.")).toBe(true);
     expect(r.pedido.envio).toMatchObject({ tipo: "tarifa", zona: 1, pesoFacturableG: 1330, valorCop: 11600 });
     expect(r.pedido.totalCop).toBe(136600);
     expect(r.pedido.enlace.startsWith("https://wa.me/573001129874?text=")).toBe(true);
@@ -146,21 +145,21 @@ describe("prepararPedido", () => {
     const bogota = { ...envioValido, departamento: "Bogotá, D.C.", municipio: "Bogotá, D.C." };
     const dos250 = [{ cafeSlug: OIBA.slug, gramos: 250, molienda: "grano" as const, cantidad: 2 }];
     const r = preparar(catalogo, entrada({ lineas: dos250, envio: bogota }));
-    expect(r.ok && r.pedido.texto).toContain("Subtotal de productos: $50.000 (IVA del 5 % incluido)\nEnvío (Bogotá · zona 3): $18.000\nTotal: $68.000");
+    expect(r.ok && r.pedido.texto).toContain("Subtotal de productos: $50.000 (IVA del 5 % incluido)\nEnvío: zona 3, $18.000 (IVA incluido)\nTotal: $68.000");
     expect(r.ok && r.pedido.totalCop).toBe(68000);
   });
   it("en zona especial el envío va por cotizar y el total no lo incluye", () => {
     const leticia = { ...envioValido, departamento: "Amazonas", municipio: "Leticia" };
     const r = preparar(catalogo, entrada({ envio: leticia }));
-    expect(r.ok && r.pedido.texto).toContain("Subtotal de productos: $125.000 (IVA del 5 % incluido)\nEnvío: POR COTIZAR (zona especial)\nTotal sin envío: $125.000");
-    // La constancia va después de la línea de «por cotizar» (microcopy §5.2).
-    expect(r.ok && r.pedido.texto).toMatch(/Quedo atento al valor del envío para confirmar mi pedido\.\n\nAcepto los Términos y condiciones versión 1/);
+    expect(r.ok && r.pedido.texto).toContain("Subtotal de productos: $125.000 (IVA del 5 % incluido)\nEnvío: POR COTIZAR (zona 5 o más de 5 kg)\nTotal sin envío: $125.000");
+    // D5 §6.4: «Quedo atento…» va al final, después de la constancia.
+    expect(r.ok && r.pedido.texto).toMatch(/Acepto los Términos v1 .*\nQuedo atento al valor del envío para confirmar mi pedido\.$/);
     expect(r.ok && r.pedido.envio).toMatchObject({ tipo: "por_cotizar", motivo: "zona_especial" });
     expect(r.ok && r.pedido.totalCop).toBe(125000);
   });
   it("de más de 5 kg va por cotizar aunque la zona tenga tarifa", () => {
     const r = preparar(catalogo, entrada({ lineas: [{ cafeSlug: SOCORRO.slug, gramos: 500, molienda: "grano", cantidad: 11 }] }));
-    expect(r.ok && r.pedido.texto).toContain("Envío: POR COTIZAR (más de 5 kg)");
+    expect(r.ok && r.pedido.texto).toContain("Envío: POR COTIZAR (zona 5 o más de 5 kg)");
   });
   it("con envío gratis y una comuna de la lista: $0, «Comuna:» y la tarifa alternativa", () => {
     const conPromo = { ...catalogo, envios: REGLAS_CON_PROMOCION };
@@ -169,7 +168,7 @@ describe("prepararPedido", () => {
     if (!r.ok) return;
     expect(r.pedido.envio).toMatchObject({ tipo: "gratis", comuna: "Centro", alternativa: { tipo: "tarifa", valorCop: 11600 } });
     expect(r.pedido.totalCop).toBe(125000);
-    expect(r.pedido.texto).toContain("Envío (Bucaramanga · zona 1 · Centro): $0 (envío gratis, sujeto a verificar la dirección)\nTotal: $125.000");
+    expect(r.pedido.texto).toContain("Envío: zona 1 · Centro, $0 (envío gratis, sujeto a verificar la dirección)\nTotal: $125.000");
     expect(r.pedido.texto).toContain("Comuna: Centro");
     expect(r.pedido.texto).toContain("el envío es de $11.600 y el total queda en $136.600; espero su confirmación.");
   });
@@ -225,9 +224,25 @@ describe("prepararPedido", () => {
     if (r.ok) return;
     expect(Object.keys(r.errores).sort()).toEqual(["aceptaTerminos", "autorizacionDatos", "celular", "nombre"]);
   });
-  it("una forma de pago fuera de la lista del catálogo es un error", () => {
-    const r = preparar(catalogo, entrada({ envio: { ...envioValido, formaPago: "Cheque" } }));
-    expect(r).toMatchObject({ ok: false, errores: { formaPago: "Elige una forma de pago." } });
+  it("sin campo de forma de pago: el mensaje dice «Pago: transferencia o Bre-B» y nunca contraentrega (LEG-144)", () => {
+    const r = preparar(catalogo, entrada({ envio: { ...envioValido, formaPago: "Efectivo contraentrega" } }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.pedido.texto).toContain("\nPago: transferencia o Bre-B\n");
+    expect(r.pedido.texto).not.toMatch(/contraentrega|efectivo|Forma de pago/i);
+  });
+  it("lleva el número DS generado en el navegador y la línea de promociones solo con las casillas marcadas (LEG-145, LEG-150)", () => {
+    const sin = preparar(catalogo, entrada());
+    expect(sin.ok && sin.pedido.texto.startsWith("¡Hola, De Santander! Envío mi solicitud de compra N.° DS-261117-1432-K7QM para que me confirmen el total con el envío.")).toBe(true);
+    expect(sin.ok && sin.pedido.texto).not.toContain("promociones");
+    const correoSinCorreo = preparar(catalogo, entrada({ promociones: { whatsapp: false, correo: true } }));
+    expect(correoSinCorreo.ok && correoSinCorreo.pedido.texto).not.toContain("promociones");
+    const ambas = preparar(catalogo, entrada({ envio: { ...envioValido, correo: "ana@correo.co" }, promociones: { whatsapp: true, correo: true } }));
+    expect(ambas.ok && ambas.pedido.texto).toContain("Autorizo recibir promociones por WhatsApp y correo.");
+  });
+  it("las casillas de promociones no bloquean: sin ellas el pedido sale igual", () => {
+    expect(preparar(catalogo, entrada({ promociones: { whatsapp: false, correo: false } })).ok).toBe(true);
+    expect(preparar(catalogo, entrada({ aceptaTerminos: false, promociones: { whatsapp: true, correo: true } })).ok).toBe(false);
   });
   it("avisa cuando las indicaciones se resumen", () => {
     const largo = { ...envioValido, indicaciones: "y".repeat(300) };

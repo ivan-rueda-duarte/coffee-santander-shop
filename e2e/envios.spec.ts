@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { constanciaMensaje } from "./ayudas";
 
 // Envío por zonas (docs/ENVIOS.md). Los límites de escalón incluyen el empaque de 80 g:
 // ≤ 1.080 g → 1 kg, ≤ 2.080 g → 2 kg, ≤ 5.080 g → 5 kg, más → por cotizar.
@@ -46,12 +47,11 @@ async function completarYFinalizar(page: Page) {
   await page.getByLabel("Nombre completo").fill("Ana Rueda");
   await page.getByLabel("Celular").fill("300 123 4567");
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-  await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
-  await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-  await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+  await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
   await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
   const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
@@ -76,7 +76,7 @@ test.describe("envío por zonas: con tarifa", () => {
     await expect(page.getByTestId("linea-subtotal")).toContainText("$60.000");
     await expect(totalDe(page)).toHaveText(/^Total\s*\$78\.000$/);
     const texto = await completarYFinalizar(page);
-    expect(texto).toContain("Envío (Bogotá · zona 3): $18.000");
+    expect(texto).toContain("Envío: zona 3, $18.000 (IVA incluido)");
     expect(texto).toContain("Total: $78.000");
     expect(texto).not.toContain("POR COTIZAR");
     expect(texto).not.toContain("Quedo atento");
@@ -86,7 +86,7 @@ test.describe("envío por zonas: con tarifa", () => {
     await pasoEnvio(page, [{ gramos: 500, cantidad: 2 }], "Bogotá, D.C.", "Bogotá, D.C.");
     await expect(envioDe(page)).toContainText("$18.000");
     const texto = await completarYFinalizar(page);
-    expect(texto).toContain("Envío (Bogotá · zona 3): $18.000");
+    expect(texto).toContain("Envío: zona 3, $18.000 (IVA incluido)");
     expect(texto).toContain("Total: $112.000");
   });
 
@@ -141,46 +141,45 @@ test.describe("envío por zonas: con tarifa", () => {
 test.describe("envío por zonas: por cotizar", () => {
   test("Leticia (zona 5): sin valor de envío, «Total sin envío», aviso y mensaje con cierre", async ({ page }) => {
     await pasoEnvio(page, [{ gramos: 250, cantidad: 2 }], "Amazonas", "Leticia");
-    await expect(envioDe(page)).toContainText("Por cotizar");
+    await expect(envioDe(page)).toContainText("por cotizar · te confirmamos el valor por WhatsApp antes de que pagues");
     await expect(totalDe(page)).toContainText("Total sin envío");
     await expect(totalDe(page)).toContainText("$60.000");
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Dirección").fill("Calle 1 # 2-3");
-    await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toHaveText("Este valor no incluye el envío. Te lo informamos por WhatsApp y tú decides si lo aceptas antes de pagar.");
     await expect(page.getByTestId("aviso-retracto")).toContainText("Puedes retractarte dentro de los 5 días hábiles");
-    // Microcopy §5.6: plazo de la zona 5 bajo la línea de envío.
-    await expect(page.getByTestId("linea-plazo")).toHaveText("Entrega estimada: 5 a 12 días hábiles, en la oficina de la transportadora. Plazo máximo: se informa al cotizar; nunca más de 30 días calendario.");
+    // D5 §6.3 (LEG-143): plazo de la zona 5 bajo la línea de envío.
+    await expect(page.getByTestId("linea-plazo")).toHaveText("Entrega estimada: de 5 a 12 días hábiles. Plazo máximo: se informa al cotizar; máximo 30 días calendario, contado desde el día hábil siguiente a tu pago.");
     await expect(totalDe(page)).toContainText("Total sin envío");
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
     await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme cuando aceptas ese valor.");
     await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme");
     const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto.length).toBeLessThan(2000);
-    expect(texto).toContain("Envío: POR COTIZAR (zona especial)");
+    expect(texto).toContain("Envío: POR COTIZAR (zona 5 o más de 5 kg)");
     expect(texto).toContain("Total sin envío: $60.000");
     expect(texto).not.toMatch(/^Total: /m);
-    // Microcopy §5.5: la línea de «por cotizar» va antes de la constancia, que cierra el mensaje.
-    expect(texto).toMatch(/Quedo atento al valor del envío para confirmar mi pedido\.\n\nAcepto los Términos y condiciones versión \S+ y autorizo .+\.$/);
+    // D5 §6.4: «Quedo atento…» cierra el mensaje, después de la constancia.
+    expect(texto.endsWith(`${constanciaMensaje()}\nQuedo atento al valor del envío para confirmar mi pedido.`)).toBe(true);
   });
 
   test("más de 5 kg (11 × 500 g = 5.580 g) → por cotizar en cualquier zona, motivo «más de 5 kg»", async ({ page }) => {
     const texto = await pedirHasta(page, [{ gramos: 500, cantidad: 11 }], "Bogotá, D.C.", "Bogotá, D.C.");
-    expect(texto).toContain("Envío: POR COTIZAR (más de 5 kg)");
+    expect(texto).toContain("Envío: POR COTIZAR (zona 5 o más de 5 kg)");
     expect(texto).toContain("Total sin envío: $517.000");
-    expect(texto).toMatch(/Quedo atento al valor del envío para confirmar mi pedido\.\n\nAcepto los Términos y condiciones versión \S+ y autorizo .+\.$/);
+    expect(texto.endsWith(`${constanciaMensaje()}\nQuedo atento al valor del envío para confirmar mi pedido.`)).toBe(true);
   });
 
   test("máximo permitido (20 × 500 g) en Bucaramanga también es por cotizar", async ({ page }) => {
     await pasoEnvio(page, [{ gramos: 500, cantidad: 20 }], "Santander", "Bucaramanga");
-    await expect(envioDe(page)).toContainText("Por cotizar");
+    await expect(envioDe(page)).toContainText("por cotizar · te confirmamos el valor por WhatsApp antes de que pagues");
     await expect(totalDe(page)).toContainText("Total sin envío");
   });
 
@@ -189,15 +188,14 @@ test.describe("envío por zonas: por cotizar", () => {
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Dirección").fill("Calle 1 # 2-3");
-    await page.getByRole("radio", { name: "Efectivo contraentrega" }).check({ force: true });
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toHaveCount(0);
     await expect(totalDe(page)).not.toContainText("sin envío");
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-    await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
-    await expect(page.getByTestId("texto-confirmacion")).toContainText("Te respondemos para confirmarlo");
+    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
+    await expect(page.getByTestId("texto-confirmacion")).toHaveText("Pulsa «Enviar por WhatsApp» y manda el mensaje. Con él nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.");
     await expect(page.getByTestId("texto-confirmacion")).not.toContainText("Tu pedido queda en firme");
     await expect(page.getByTestId("texto-confirmacion")).not.toContainText("queda en firme");
   });
@@ -219,44 +217,54 @@ test.describe("página /envios/ y enlaces", () => {
     }
   });
 
-  test("plazos de entrega desde data/plazos_envio.csv, línea de 30 días, comisión incluida, retracto y llamada de zona 5 (microcopy §5.8)", async ({ page }) => {
-    const plazos = readFileSync("data/plazos_envio.csv", "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
+  test("/envios/ publica D3 1.0 con la tabla después del numeral 3, plazos 3/6/6/10 y el numeral 13 con su ancla (LEG-141, LEG-143, LEG-167)", async ({ page }) => {
     await page.goto("/envios/");
-    await expect(page.getByRole("heading", { name: "Plazos de entrega" })).toBeVisible();
-    await expect(page.getByText("El estimado es lo que suele tardar. El máximo es el plazo que nos comprometemos a cumplir.")).toBeVisible();
-    for (const [zona, estimado, maximo] of plazos) {
-      const fila = page.getByTestId(`plazo-zona-${zona}`);
-      await expect(fila).toContainText(`Zona ${zona}`);
-      await expect(fila).toContainText(
-        maximo === "por cotizar" ? `Estimado: ${estimado}, en la oficina de la transportadora. Máximo: se informa al cotizar; nunca más de 30 días calendario.` : `Estimado: ${estimado}. Máximo: ${maximo}.`,
-      );
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Envíos, devoluciones, retracto y garantía");
+    await expect(page.getByTestId("rotulo-legal")).toHaveText("Versión 1.0 · vigente desde el 17 de noviembre de 2026");
+    // La tabla de tarifas y municipios va entre el numeral 3 y el 4.
+    const orden = await page.evaluate(() => {
+      const h = [...document.querySelectorAll("h2")].map((e) => e.textContent ?? "");
+      const tabla = document.querySelector('[data-testid="bloque-tarifas"]')!;
+      const n3 = [...document.querySelectorAll("h2")].find((e) => e.textContent?.startsWith("3. "))!;
+      const n4 = [...document.querySelectorAll("h2")].find((e) => e.textContent?.startsWith("4. "))!;
+      return { h, despuesDe3: Boolean(n3.compareDocumentPosition(tabla) & Node.DOCUMENT_POSITION_FOLLOWING), antesDe4: Boolean(n4.compareDocumentPosition(tabla) & Node.DOCUMENT_POSITION_PRECEDING) };
+    });
+    expect(orden.despuesDe3 && orden.antesDe4).toBe(true);
+    for (const t of ["Zona 1: estimado, el mismo día o el siguiente día hábil; máximo, tres (3) días hábiles.", "Zona 2: estimado, de 1 a 3 días hábiles; máximo, seis (6) días hábiles.", "Zona 4: estimado, de 2 a 6 días hábiles; máximo, diez (10) días hábiles."]) {
+      await expect(page.getByText(t, { exact: false })).toBeVisible();
     }
-    await expect(page.getByTestId("plazo-legal")).toHaveText("Si no publicamos un plazo máximo para tu zona, entregamos en máximo 30 días calendario, como manda la ley.");
+    await expect(page.locator("#envio-gratis")).toHaveText("13. Envío gratis en comunas de Bucaramanga");
+    await expect(page.getByText(/^Normas citadas:/)).toHaveCount(1);
     await expect(page.getByTestId("leyenda-iva")).toContainText(/Tarifas en pesos colombianos, con (IVA del \d+ % incluido|todos los impuestos incluidos)\./);
-    await expect(page.getByTestId("comision-incluida")).toHaveText("Si pagas contraentrega, la tarifa de envío de tu zona ya incluye la comisión de recaudo de la transportadora; no cobramos recargos adicionales.");
-    await expect(page.getByRole("heading", { name: "Retracto" })).toBeVisible();
-    await expect(page.getByTestId("retracto-envios")).toContainText("Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega");
-    await expect(page.getByTestId("retracto-envios").getByRole("link", { name: "envíos, devoluciones, retracto y garantía" })).toHaveAttribute("href", "/legal/envios-devoluciones/");
+    // Textos paralelos retirados (LEG-164).
+    for (const id of ["plazo-legal", "retracto-envios", "parrafo-inicial-envios", "comision-incluida"]) await expect(page.getByTestId(id)).toHaveCount(0);
     await expect(page.getByText("¿Tu destino es de zona 5 o pides más de 5 kg?")).toBeVisible();
-    await expect(page.getByText("¿Tu destino no aparece")).toHaveCount(0);
     const texto = (await page.locator("body").innerText()).replace(/\s+/g, " ");
-    expect(texto).not.toMatch(/Plazos orientativos|Son una referencia|sin IVA/i);
+    expect(texto).not.toMatch(/Plazos orientativos|Son una referencia|sin IVA|\{|\}/i);
   });
 
-  test("enlaces del pie, del carrito y del resumen a /envios/ y /legal/envios-devoluciones/ responden 200", async ({ page }) => {
+  test("los plazos de data/plazos_envio.csv son los de D3 §6 (LEG-143)", () => {
+    const plazos = readFileSync("data/plazos_envio.csv", "utf8").trim().split("\n").slice(1).map((l) => l.split(","));
+    expect(plazos.map((p) => p[2])).toEqual(["3 días hábiles", "6 días hábiles", "6 días hábiles", "10 días hábiles", "se informa al cotizar; máximo 30 días calendario"]);
+  });
+
+  test("/legal/envios-devoluciones/ remite a /envios/ y no se indexa", async ({ page }) => {
+    await page.goto("/legal/envios-devoluciones/");
+    await expect(page.getByTestId("remision-envios").getByRole("link", { name: "Envíos" })).toHaveAttribute("href", "/envios/");
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  });
+
+  test("enlaces del pie, del carrito y del resumen a /envios/ responden 200; ninguno a /legal/envios-devoluciones/", async ({ page }) => {
     await page.goto("/");
     const pie = page.locator("footer");
-    for (const href of ["/envios/", "/legal/envios-devoluciones/"]) {
-      const enlace = pie.locator(`a[href="${href}"]`).first();
-      await expect(enlace, `pie → ${href}`).toBeVisible();
-      expect((await page.request.get(href)).status(), href).toBe(200);
-    }
+    await expect(pie.locator('a[href="/envios/"]').filter({ hasText: "Envíos, devoluciones, retracto y garantía" })).toBeVisible();
+    await expect(pie.locator('a[href="/legal/envios-devoluciones/"]')).toHaveCount(0);
+    expect((await page.request.get("/envios/")).status()).toBe(200);
     await pasoEnvio(page, [{ gramos: 250, cantidad: 2 }], "Santander", "Bucaramanga");
     await expect(page.locator('a[href="/envios/"]').filter({ hasText: "Cómo calculamos el envío" }).first()).toBeVisible();
     await completarResumen(page);
-    for (const href of ["/envios/", "/legal/envios-devoluciones/"]) {
-      await expect(page.locator(`main a[href="${href}"], #contenido a[href="${href}"]`).first()).toBeVisible();
-    }
+    await expect(page.getByTestId("nota-precio-total").locator('a[href="/envios/"]')).toBeVisible();
+    await expect(page.locator('main a[href="/legal/envios-devoluciones/"]')).toHaveCount(0);
   });
 });
 
@@ -264,8 +272,7 @@ async function completarResumen(page: Page) {
   await page.getByLabel("Nombre completo").fill("Ana Rueda");
   await page.getByLabel("Celular").fill("300 123 4567");
   await page.getByLabel("Dirección").fill("Calle 1 # 2-3");
-  await page.getByRole("radio", { name: "Efectivo contraentrega" }).check({ force: true });
-  await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
@@ -301,7 +308,7 @@ for (const vp of VIEWPORTS) {
       expect(await sinDesborde(page)).toBe(true);
       await page.screenshot({ path: `docs/qa/capturas/envio-bogota-${vp.nombre}.png`, fullPage: true });
       await elegirDestino(page, "Amazonas", "Leticia");
-      await expect(envioDe(page)).toContainText("Por cotizar");
+      await expect(envioDe(page)).toContainText("por cotizar · te confirmamos el valor por WhatsApp antes de que pagues");
       expect(await graves(page)).toEqual([]);
       expect(await sinDesborde(page)).toBe(true);
       await page.screenshot({ path: `docs/qa/capturas/envio-leticia-${vp.nombre}.png`, fullPage: true });
@@ -314,7 +321,7 @@ for (const vp of VIEWPORTS) {
       await page.screenshot({ path: `docs/qa/capturas/resumen-bogota-${vp.nombre}.png`, fullPage: true });
       await page.getByRole("button", { name: "Volver", exact: true }).click();
       await elegirDestino(page, "Amazonas", "Leticia");
-      await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+      await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
       await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
       expect(await graves(page)).toEqual([]);
       expect(await sinDesborde(page)).toBe(true);

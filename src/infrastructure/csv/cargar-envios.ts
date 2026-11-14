@@ -23,12 +23,13 @@ export interface VigenciaEnvioGratis {
 }
 
 const POR_COTIZAR = "por_cotizar";
-/** En plazos_envio.csv el máximo de la zona 5 se escribe así (con espacio, como se lee). */
-const PLAZO_POR_COTIZAR = "por cotizar";
+/** En plazos_envio.csv el máximo de la zona 5 dice que se informa al cotizar (paquete del abogado v1.0, §7.2). */
+const PALABRA_COTIZAR = "cotizar";
 
 /**
- * Lee data/plazos_envio.csv: una fila por zona (1 a 5) con plazo estimado y máximo. La zona 5 dice "por cotizar"
- * en el máximo; las demás deben publicar un máximo real (Ley 1480, art. 50 lit. h).
+ * Lee data/plazos_envio.csv: una fila por zona (1 a 5) con plazo estimado y máximo, como textos que el sitio
+ * publica tal cual (D5 §6.2 y §6.3). La zona 5 dice en el máximo que se informa al cotizar («se informa al
+ * cotizar; máximo 30 días calendario»); las demás deben publicar un máximo real (Ley 1480, art. 50 lit. h).
  */
 function cargarPlazos(leer: LeerArchivo, errores: Errores): PlazoEnvio[] {
   const plazos: PlazoEnvio[] = [];
@@ -37,13 +38,13 @@ function cargarPlazos(leer: LeerArchivo, errores: Errores): PlazoEnvio[] {
     const f = new LectorFila(ARCHIVO_PLAZOS, fila, errores);
     const zona = f.entero("zona", { min: 1, max: 5 });
     const estimado = f.texto("plazo_estimado", true);
-    const maximoCrudo = f.texto("plazo_maximo", true);
-    if (zona === null || !estimado || !maximoCrudo) return;
+    const maximo = f.texto("plazo_maximo", true);
+    if (zona === null || !estimado || !maximo) return;
     zonas.push({ valor: String(zona), linea: f.linea });
-    const porCotizar = normalizar(maximoCrudo) === PLAZO_POR_COTIZAR;
-    if (zona === ZONA_ESPECIAL && !porCotizar) f.error("plazo_maximo", `en la zona ${ZONA_ESPECIAL} debe decir "${PLAZO_POR_COTIZAR}": el máximo se informa al cotizar.`);
+    const porCotizar = normalizar(maximo).includes(PALABRA_COTIZAR);
+    if (zona === ZONA_ESPECIAL && !porCotizar) f.error("plazo_maximo", `en la zona ${ZONA_ESPECIAL} debe decir que se informa al cotizar (por ejemplo "se informa al cotizar; máximo 30 días calendario").`);
     if (zona !== ZONA_ESPECIAL && porCotizar) f.error("plazo_maximo", `la zona ${zona} tiene tarifa publicada y necesita un plazo máximo (por ejemplo "3 días hábiles").`);
-    plazos.push({ zona: zona as Zona, estimado, maximo: porCotizar ? null : maximoCrudo });
+    plazos.push({ zona: zona as Zona, estimado, maximo });
   });
   verificarUnicos(ARCHIVO_PLAZOS, "zona", zonas, errores);
   for (const zona of ZONAS) {

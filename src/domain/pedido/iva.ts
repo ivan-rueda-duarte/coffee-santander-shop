@@ -1,11 +1,9 @@
 // Leyendas de IVA (docs/legal/microcopy-legal.md §1.4). La tarifa sale de data/config.csv (`iva_tarifa`);
 // si no hay tarifa publicada se usa la alternativa prudente de LEG-082: «con todos los impuestos incluidos».
 
-/** Ficha (bajo el precio), carrito y resumen (bajo el subtotal). */
+/** Ficha y tarjeta (bajo el precio), carrito y resumen (bajo el subtotal). Texto exacto de D5 §6.2. */
 export function leyendaIva(ivaTarifa: number | null): string {
-  return ivaTarifa === null
-    ? "Precios en pesos colombianos con todos los impuestos incluidos."
-    : `Precios con IVA del ${ivaTarifa} % incluido (art. 468-1 del Estatuto Tributario).`;
+  return ivaTarifa === null ? "Precios en pesos colombianos con todos los impuestos incluidos." : `Precio con IVA del ${ivaTarifa} % incluido.`;
 }
 
 /** Sufijo de la línea «Subtotal de productos» del mensaje de WhatsApp. */

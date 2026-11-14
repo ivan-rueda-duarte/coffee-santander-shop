@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
-import { fechaEnLetras } from "@/domain/comun/fecha";
-import { normalizar } from "@/domain/comun/slug";
+import { avisoPrivacidad, casillaDatos, casillaPromocionesCorreo, casillaPromocionesWhatsapp, casillaTerminos } from "@/domain/legal/consentimientos";
+import { generarNumeroSolicitud, LARGO_SUFIJO } from "@/domain/pedido/numero-solicitud";
 import { crearEsquemaEnvio, esquemaConsentimientos, SIGLA_DOCUMENTO, validar, type DatosEnvio } from "@/domain/pedido/envio";
 import { calcularEnvio } from "@/domain/envio/envio";
 import { anuncioEnvio } from "@/domain/envio/envio-gratis";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
-import { lineaVendedor } from "@/domain/pedido/tienda";
+import { lineaVendedor, TEXTOS_PAGO } from "@/domain/pedido/tienda";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 import { useAvisos } from "../layout/avisos";
 import { useCarrito } from "../carrito/carrito-provider";
@@ -19,7 +19,7 @@ import { TotalesPedido } from "../carrito/totales-pedido";
 import { Boton, BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
 import { IconoCopiar, IconoFlecha, IconoFlechaAtras, IconoWhatsapp } from "../marca/iconos";
-import { CODIGOS_DEPARTAMENTO, DEPARTAMENTOS, ENVIO_VACIO, FormularioEnvio, type ValoresEnvio } from "./formulario-envio";
+import { CODIGOS_DEPARTAMENTO, ENVIO_VACIO, FormularioEnvio, type ValoresEnvio } from "./formulario-envio";
 
 const PASOS = [
   { id: "carrito", titulo: "Carrito" },
@@ -49,24 +49,19 @@ function AnuncioEnvio({ frase }: { frase: string }) {
   );
 }
 
-/** Si la persona venía de la v1 con una ciudad escrita a mano, se propone si coincide con un solo municipio. */
-function adivinarMunicipio(ciudad: string | undefined): Pick<ValoresEnvio, "departamento" | "municipio"> | null {
-  if (!ciudad) return null;
-  const buscada = normalizar(ciudad);
-  const coincidencias = DEPARTAMENTOS.flatMap((d) => d.municipios.filter((m) => normalizar(m.nombre) === buscada).map((m) => ({ departamento: d.nombre, municipio: m.nombre })));
-  return coincidencias.length === 1 ? coincidencias[0] : null;
-}
-
 function Contenido() {
   const router = useRouter();
   const params = useSearchParams();
   const { catalogo } = useCatalogo();
-  const { lineas, totales, listo, preferencias, guardarPreferencias, vaciar } = useCarrito();
+  const { lineas, totales, listo, vaciar } = useCarrito();
   const { avisar } = useAvisos();
   const tienda = catalogo.tienda;
   // Versión y fecha de los documentos aceptados: siempre de data/config.csv, nunca fijas en el código (LEG-088).
   const { legal } = tienda;
-  const vendedor = lineaVendedor(tienda.vendedor, formatearWhatsapp(tienda.whatsapp));
+  const vendedor = lineaVendedor(tienda.vendedor);
+  // Textos de las casillas y del aviso de privacidad (D2; LEG-145): «De Santander SAS» es razon_social en data/config.csv.
+  const razonSocial = tienda.vendedor.razonSocial ?? tienda.nombre;
+  const aviso = avisoPrivacidad(tienda.vendedor, formatearWhatsapp(tienda.whatsapp));
 
   const pedido = params.get("paso");
   const paso: Paso = esPaso(pedido) ? pedido : "carrito";
@@ -76,20 +71,14 @@ function Contenido() {
   const [envioValido, setEnvioValido] = useState(false);
   // Datos ya normalizados (documento sin puntos, etc.) para el resumen. Solo en memoria.
   const [datosEnvio, setDatosEnvio] = useState<DatosEnvio | null>(null);
+  // Las cuatro casillas sin marcar; ninguna se guarda en el navegador ni en la URL (LEG-145).
   const [autorizacion, setAutorizacion] = useState(false);
   const [terminos, setTerminos] = useState(false);
+  const [promoWhatsapp, setPromoWhatsapp] = useState(false);
+  const [promoCorreo, setPromoCorreo] = useState(false);
   const [erroresResumen, setErroresResumen] = useState<{ errores: Record<string, string>; lineas: string[] } | null>(null);
   const [resultado, setResultado] = useState<PedidoListo | null>(null);
   const titulo = useRef<HTMLHeadingElement>(null);
-
-  // Propone forma de pago y municipio guardados (de este navegador o de la v1) una sola vez.
-  const [precargado, setPrecargado] = useState(false);
-  if (listo && !precargado) {
-    setPrecargado(true);
-    const lugar = adivinarMunicipio(preferencias.municipio);
-    const formaPago = preferencias.formaPago && tienda.formasPago.includes(preferencias.formaPago) ? preferencias.formaPago : "";
-    if (lugar || formaPago) setValores((v) => ({ ...v, ...lugar, formaPago }));
-  }
 
   const irA = (p: Paso) => router.push(p === "carrito" ? "/pedido/" : `/pedido/?paso=${p}`);
 
@@ -107,7 +96,7 @@ function Contenido() {
   }, [paso]);
 
   const envioGratis = catalogo.envios.envioGratis;
-  const esquema = useMemo(() => crearEsquemaEnvio(tienda.formasPago, CODIGOS_DEPARTAMENTO, { envioGratis }), [tienda.formasPago, envioGratis]);
+  const esquema = useMemo(() => crearEsquemaEnvio(CODIGOS_DEPARTAMENTO, { envioGratis }), [envioGratis]);
 
   const continuarEnvio = () => {
     const r = validar(esquema, valores);
@@ -121,14 +110,15 @@ function Contenido() {
     setErrores({});
     setEnvioValido(true);
     setDatosEnvio(r.datos);
-    guardarPreferencias({ formaPago: r.datos.formaPago, municipio: r.datos.municipio });
+    // Casilla 4: solo existe con correo; si lo borró, se desmarca (LEG-145). Nada del formulario se guarda (LEG-149).
+    if (!r.datos.correo) setPromoCorreo(false);
     irA("resumen");
   };
 
   // Microcopy §5.9 (v1.1; LEG-101, LEG-102; QA-006): el botón sigue enfocable con aria-disabled y una microayuda dice qué falta.
   const faltanCasillas = !autorizacion || !terminos;
   const microayuda = !autorizacion && !terminos
-    ? "Para preparar tu pedido, marca las dos casillas: la autorización de tus datos y los términos y condiciones."
+    ? "Para preparar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos."
     : !autorizacion
       ? "Para preparar tu pedido, falta que autorices el tratamiento de tus datos."
       : !terminos
@@ -143,10 +133,13 @@ function Contenido() {
     if (!consentimientos.ok) {
       // No se arma el mensaje ni el enlace wa.me y las casillas no se marcan solas: se muestran los errores y el foco va a la primera sin marcar.
       setErroresResumen({ errores: consentimientos.errores, lineas: [] });
-      requestAnimationFrame(() => document.getElementById(!autorizacion ? "c-aut" : "c-ter")?.focus());
+      requestAnimationFrame(() => document.getElementById(!terminos ? "c-ter" : "c-aut")?.focus());
       return;
     }
-    const r = prepararPedido(catalogo, { lineas, envio: valores, autorizacionDatos: autorizacion, aceptaTerminos: terminos }, CODIGOS_DEPARTAMENTO);
+    // P39 = a (LEG-150): número DS generado aquí, en el navegador, al pulsar; solo viaja en el mensaje.
+    const numeroSolicitud = generarNumeroSolicitud(new Date(), crypto.getRandomValues(new Uint8Array(LARGO_SUFIJO)));
+    const promociones = { whatsapp: promoWhatsapp, correo: promoCorreo && Boolean(datosEnvio?.correo) };
+    const r = prepararPedido(catalogo, { lineas, envio: valores, autorizacionDatos: autorizacion, aceptaTerminos: terminos, promociones, numeroSolicitud }, CODIGOS_DEPARTAMENTO);
     if (!r.ok) {
       setErroresResumen({ errores: r.errores, lineas: r.lineas });
       return;
@@ -252,7 +245,15 @@ function Contenido() {
               continuarEnvio();
             }}
           >
-            <FormularioEnvio valores={valores} errores={errores} formasPago={tienda.formasPago} envioGratis={envioGratis} alCambiar={(c) => { setValores((v) => ({ ...v, ...c })); setEnvioValido(false); }} />
+            <FormularioEnvio valores={valores} errores={errores} envioGratis={envioGratis} alCambiar={(c) => { setValores((v) => ({ ...v, ...c })); setEnvioValido(false); }} />
+            {/* Aviso de privacidad al pie del formulario (D2, texto exacto; LEG-145). */}
+            {aviso && (
+              <p className="small mt-6 text-ink-muted" data-testid="aviso-privacidad">
+                {aviso[0]}
+                <Link className="underline underline-offset-4" href={aviso[1]} target="_blank" rel="noopener noreferrer">{aviso[1]}</Link>
+                {aviso[2]}
+              </p>
+            )}
             {/* Sin aria-live en la caja: releería todo el bloque en cada cambio. Anuncia una sola frase (diseño §2). */}
             <div className="mt-8 rounded-lg bg-surface-raised p-5">
               <TotalesPedido totales={totales} destino={destino} />
@@ -263,7 +264,7 @@ function Contenido() {
                 <IconoFlechaAtras className="ds-btn__icon" /> Volver al carrito
               </Boton>
               <Boton type="submit" tamano="lg">
-                Revisar el pedido <IconoFlecha className="ds-btn__icon" />
+                Finalizar el pedido <IconoFlecha className="ds-btn__icon" />
               </Boton>
             </div>
           </form>
@@ -279,13 +280,13 @@ function Contenido() {
             ))}
           </ul>
           <div className="mt-4">{resumenTotales}</div>
-          {/* Textos exactos de docs/legal/microcopy-legal.md §1.3 y §5.3 (paquete legal v1). El retracto solo se informa aquí. */}
+          {/* Microcopy §1.3, sin «La forma de pago se confirma…» (LEG-144). D3 está en /envios/ (LEG-141). */}
           <p className="caption mt-3 text-ink-muted" data-testid="nota-precio-total">
-            Los precios incluyen todos los impuestos y el envío se muestra por separado (art. 50 de la Ley 1480 de 2011). La forma de pago se confirma por WhatsApp antes de que pagues. Más en{" "}
-            <Link className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos: zonas, tarifas y plazos</Link> y en{" "}
-            <Link className="underline underline-offset-4" href="/legal/envios-devoluciones/" target="_blank" rel="noopener noreferrer">envíos, devoluciones, retracto y garantía</Link>.
+            Los precios incluyen todos los impuestos y el envío se muestra por separado (art. 50 de la Ley 1480 de 2011). Más en{" "}
+            <Link className="underline underline-offset-4" href="/envios/" target="_blank" rel="noopener noreferrer">envíos, devoluciones, retracto y garantía</Link>.
           </p>
-          <p className="small mt-3 text-ink" data-testid="aviso-retracto">Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega, salvo si el empaque está abierto. El transporte de la devolución corre por tu cuenta. Te devolvemos el dinero en máximo 15 días calendario, por el medio de pago que prefieras.</p>
+          {/* D5 §6.3, «Resumen, retracto», texto exacto. */}
+          <p className="small mt-3 text-ink" data-testid="aviso-retracto">Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega, salvo si el empaque está abierto o el sello roto. El transporte de la devolución corre por tu cuenta. Te devolvemos el dinero en máximo 15 días calendario, por el medio que prefieras.</p>
 
           <div className="mt-6 rounded-lg border border-line p-5 text-sm">
             <div className="flex items-start justify-between gap-4">
@@ -301,41 +302,50 @@ function Contenido() {
             {/* Diseño §4: solo con una comuna de la lista (con «Otra comuna o no la sé» queda vacía). */}
             {datosEnvio?.comuna && <p className="text-ink-muted" data-testid="resumen-comuna">Comuna: {datosEnvio.comuna}</p>}
             {datosEnvio?.codigoPostal && <p className="text-ink-muted">Código postal: {datosEnvio.codigoPostal}</p>}
-            <p className="text-ink-muted">Pago: {valores.formaPago}</p>
+            <p className="text-ink-muted" data-testid="resumen-pago">{TEXTOS_PAGO.mensaje}</p>
           </div>
 
-          <fieldset className="mt-6 space-y-3">
-            <legend className="sr-only">Autorizaciones</legend>
-            <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
-              <span>
-                {/* Texto exacto de docs/legal/microcopy-legal.md §4.3 (paquete legal v1, P21 = a). «De Santander» es nombre_tienda en data/config.csv. */}
-                Autorizo a {tienda.nombre} a tratar mis datos personales para gestionar mi pedido, conforme a la{" "}
-                <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">
-                  Política de Tratamiento de Datos versión {legal.versionPoliticaDatos} del {fechaEnLetras(legal.fechaPoliticaDatos)}
-                </Link>
-                , que leí.
-              </span>
-            </label>
-            {errorAutorizacion && <p id="e-aut" role="alert" className="text-sm font-semibold text-danger">{errorAutorizacion}</p>}
+          {/* Cuatro casillas sin marcar, en el orden de D5 §6.3 (LEG-145): 1 y 2 obligatorias; 3 y 4 opcionales, nunca bloquean. */}
+          <fieldset className="mt-6 space-y-3" data-testid="casillas-obligatorias">
+            <legend className="sr-only">Autorizaciones obligatorias</legend>
             <label className="flex cursor-pointer items-start gap-3 text-sm">
               <input id="c-ter" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorTerminos ? true : undefined} aria-describedby={errorTerminos ? "e-ter" : undefined} />
               <span>
-                {/* Texto exacto de microcopy §5.1. */}
-                Leí y acepto los{" "}
-                <Link className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">
-                  Términos y condiciones versión {legal.versionTerminos} del {fechaEnLetras(legal.fechaTerminos)}
-                </Link>
-                .
+                {casillaTerminos(legal)[0]}
+                <Link className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">{casillaTerminos(legal)[1]}</Link>
+                {casillaTerminos(legal)[2]}
               </span>
             </label>
             {errorTerminos && <p id="e-ter" role="alert" className="text-sm font-semibold text-danger">{errorTerminos}</p>}
+            <label className="flex cursor-pointer items-start gap-3 text-sm">
+              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
+              <span>
+                {casillaDatos(legal, razonSocial)[0]}
+                <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">{casillaDatos(legal, razonSocial)[1]}</Link>
+                {casillaDatos(legal, razonSocial)[2]}
+              </span>
+            </label>
+            {errorAutorizacion && <p id="e-aut" role="alert" className="text-sm font-semibold text-danger">{errorAutorizacion}</p>}
+          </fieldset>
+          {/* Promociones: opcionales, separadas de las obligatorias (LEG-145; separación visual pendiente de diseño). */}
+          <fieldset className="mt-5 space-y-3 border-t border-line pt-5" data-testid="casillas-promociones">
+            <legend className="sr-only">Promociones (opcional)</legend>
+            <label className="flex cursor-pointer items-start gap-3 text-sm">
+              <input id="c-promo-wa" type="checkbox" checked={promoWhatsapp} onChange={(e) => setPromoWhatsapp(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" />
+              <span>{casillaPromocionesWhatsapp(razonSocial)}</span>
+            </label>
+            {datosEnvio?.correo && tienda.vendedor.correoContacto && (
+              <label className="flex cursor-pointer items-start gap-3 text-sm">
+                <input id="c-promo-correo" type="checkbox" checked={promoCorreo} onChange={(e) => setPromoCorreo(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" />
+                <span>{casillaPromocionesCorreo(razonSocial, tienda.vendedor.correoContacto)}</span>
+              </label>
+            )}
           </fieldset>
 
-          {/* Vendedor (Ley 1480, art. 50 lit. a; microcopy §5.4): solo los datos que existen en data/config.csv. */}
+          {/* Vendedor (D5 §6.3): «Te vende De Santander SAS · NIT … · Información del vendedor». */}
           {vendedor && (
             <p className="caption mt-4 text-ink-muted" data-testid="linea-vendedor">
-              {vendedor}{" "}
+              {vendedor} ·{" "}
               <Link className="underline underline-offset-4" href="/legal/vendedor/" target="_blank" rel="noopener noreferrer">Información del vendedor</Link>
             </p>
           )}
@@ -363,7 +373,7 @@ function Contenido() {
               aria-disabled={faltanCasillas ? true : undefined}
               aria-describedby={microayuda ? "ayuda-preparar" : undefined}
             >
-              Preparar pedido para WhatsApp
+              Enviar por WhatsApp
             </Boton>
           </div>
         </section>
@@ -374,11 +384,11 @@ function Contenido() {
           <h1 id="t-confirmacion" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido está listo para enviar por WhatsApp</h1>
           {resultado.envio.tipo === "por_cotizar" ? (
             <p className="body mt-3" data-testid="texto-confirmacion">
-              Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.
+              Pulsa «Enviar por WhatsApp» y manda el mensaje. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.
             </p>
           ) : (
             <p className="body mt-3" data-testid="texto-confirmacion">
-              Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos para confirmarlo y acordar la forma de pago.
+              Pulsa «Enviar por WhatsApp» y manda el mensaje. Con él nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.
             </p>
           )}
           {resultado.indicacionesResumidas && <p className="caption mt-2 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}

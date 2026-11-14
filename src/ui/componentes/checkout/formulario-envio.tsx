@@ -5,6 +5,7 @@ import { useMemo, type ReactNode, type SelectHTMLAttributes } from "react";
 import { ANCLA_ENVIO_GRATIS, aplicaAlMunicipio, ayudaCampoComuna, ayudaComunaElegida, comunaCubierta, comunasAlfabeticas, OPCION_OTRA_COMUNA, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
 import type { PromocionEnvioGratis } from "@/domain/envio/tipos";
 import { DOCUMENTO_OBLIGATORIO, MAX_DOCUMENTO, MAX_INDICACIONES, TIPOS_DOCUMENTO, type FinalidadDocumento, type TipoDocumento } from "@/domain/pedido/envio";
+import { TEXTOS_PAGO } from "@/domain/pedido/tienda";
 import divipolaCrudo from "@/data/divipola.json";
 import { IconoChevron } from "../marca/iconos";
 
@@ -31,9 +32,6 @@ const AYUDA_DOCUMENTO: Record<"opcional" | FinalidadDocumento, string> = {
   factura: "Lo necesitamos para la factura electrónica de tu compra.",
 };
 const VISOR_CODIGO_POSTAL = "https://visor.codigopostal.gov.co/472/visor/";
-/** Ayuda de «Efectivo contraentrega» (microcopy §1.7, LEG-092): la comisión de recaudo va dentro de la tarifa. */
-const AYUDA_CONTRAENTREGA = "Pagas al recibir. La tarifa de envío ya incluye la comisión de recaudo; no hay recargos.";
-const esContraentrega = (formaPago: string) => /contraentrega/i.test(formaPago);
 
 /** Lo que escribe la persona, sin validar (todo texto). */
 export interface ValoresEnvio {
@@ -50,7 +48,6 @@ export interface ValoresEnvio {
   /** "" (sin elegir), OPCION_OTRA_COMUNA o una comuna de la promoción. Solo en memoria: ni navegador, ni URL, ni analítica. */
   comuna: string;
   indicaciones: string;
-  formaPago: string;
 }
 
 export const ENVIO_VACIO: ValoresEnvio = {
@@ -66,7 +63,6 @@ export const ENVIO_VACIO: ValoresEnvio = {
   barrio: "",
   comuna: "",
   indicaciones: "",
-  formaPago: "",
 };
 
 const entrada = "mt-1 w-full rounded-md border border-line-strong bg-surface-raised px-3 py-3 text-base text-ink placeholder:text-ink-muted/70 aria-[invalid=true]:border-danger";
@@ -119,13 +115,11 @@ function Campo({ id, etiqueta, error, ayuda, ayudaFija, opcional, children }: { 
 export function FormularioEnvio({
   valores,
   errores,
-  formasPago,
   envioGratis,
   alCambiar,
 }: {
   valores: ValoresEnvio;
   errores: Record<string, string>;
-  formasPago: readonly string[];
   /** Promoción de envío gratis vigente (data/), o null: sin ella el campo «Comuna» no existe. */
   envioGratis: PromocionEnvioGratis | null;
   alCambiar: (cambios: Partial<ValoresEnvio>) => void;
@@ -241,6 +235,10 @@ export function FormularioEnvio({
               <option value={OPCION_OTRA_COMUNA}>{TEXTOS_ENVIO_GRATIS.otraComuna}</option>
             </SelectSuperpuesto>
           </Campo>
+          <details className="caption mt-1 text-ink-muted" data-testid="como-consultar-comuna">
+            <summary className="cursor-pointer underline underline-offset-4">Cómo consulto de qué comuna soy</summary>
+            <span className="mt-1 block">Escríbenos tu dirección por WhatsApp y te decimos a qué comuna pertenece.</span>
+          </details>
         </div>
       )}
       <Campo
@@ -278,22 +276,11 @@ export function FormularioEnvio({
         </Campo>
       </div>
 
-      <fieldset className="sm:col-span-2" aria-describedby={errores.formaPago ? "formaPago-error" : esContraentrega(valores.formaPago) ? "formaPago-ayuda" : undefined}>
-        <legend className="text-sm font-bold">Forma de pago</legend>
-        <p className="caption text-ink-muted">Confirmamos el pago por WhatsApp. En esta página no se paga.</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {formasPago.map((p) => (
-            <label key={p} className="cursor-pointer">
-              <input type="radio" name="formaPago" value={p} checked={valores.formaPago === p} onChange={() => alCambiar({ formaPago: p })} className="peer sr-only" id={p === formasPago[0] ? "formaPago" : undefined} />
-              <span className="ds-tag ds-tag--outline min-h-11 text-sm font-semibold peer-checked:!border-monte-900 peer-checked:!bg-monte-900 peer-checked:!text-pergamino-50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">{p}</span>
-            </label>
-          ))}
-        </div>
-        {esContraentrega(valores.formaPago) && (
-          <p id="formaPago-ayuda" className="caption mt-2 text-ink-muted" data-testid="ayuda-contraentrega">{AYUDA_CONTRAENTREGA}</p>
-        )}
-        {errores.formaPago && <p id="formaPago-error" className="mt-1 text-sm font-semibold text-danger">{errores.formaPago}</p>}
-      </fieldset>
+      {/* LEG-144: la forma de pago ya no es un campo (solo transferencia o Bre-B). Texto exacto de D5 §6.3. */}
+      <div className="sm:col-span-2" data-testid="texto-pago">
+        <p className="text-sm font-bold">Pago</p>
+        <p className="caption text-ink-muted">{TEXTOS_PAGO.formulario}</p>
+      </div>
     </div>
   );
 }

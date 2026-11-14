@@ -11,7 +11,6 @@ import {
   comunaCubierta,
   comunasAlfabeticas,
   DIAS_AVISO_TERMINACION,
-  ENLACE_PLAZO_ZONA1,
   errorNumeralTerminacion,
   notaVigenciaTerminada,
   erroresTerminacion,
@@ -21,7 +20,6 @@ import {
   lineaVerificacionMensaje,
   notaVerificacionResumen,
   OPCION_OTRA_COMUNA,
-  partirEnlace,
   promocionActiva,
   promocionVigente,
   TEXTOS_ENVIO_GRATIS,
@@ -148,8 +146,8 @@ describe("textos del envío gratis (microcopy §8)", () => {
     expect(lineaVerificacionMensaje(r, 500000)).toBe("Si mi dirección no está en esa comuna, quedo atento al valor del envío para confirmar mi pedido.");
   });
   it("plazos y anuncios exactos", () => {
-    expect(TEXTOS_ENVIO_GRATIS.plazoResumen).toBe("Entrega estimada: mismo día o siguiente día hábil. Plazo máximo: 1 día hábil desde que validamos tu pedido y te damos el aprobado por el chat.");
-    expect(TEXTOS_ENVIO_GRATIS.plazoMensaje).toBe("Plazo de entrega: máximo 1 día hábil desde que validen mi pedido y me den el aprobado por el chat.");
+    expect(TEXTOS_ENVIO_GRATIS.plazoResumen).toBe("Entrega estimada: el mismo día o el siguiente día hábil. Plazo máximo: 1 día hábil desde que validamos tu pago y te damos el aprobado por el chat.");
+    expect(TEXTOS_ENVIO_GRATIS.plazoMensaje).toBe("Plazo de entrega: máximo 1 día hábil desde que validen mi pago y me den el aprobado por el chat.");
     expect(TEXTOS_ENVIO_GRATIS.anuncio).toBe("Envío gratis en siete comunas de Bucaramanga.");
   });
   it("ningún texto usa los anuncios prohibidos (LEG-107)", () => {
@@ -163,21 +161,10 @@ describe("textos del envío gratis (microcopy §8)", () => {
   });
 });
 
-describe("textos de /envios/ con la promoción (microcopy §8.5 v1.4)", () => {
-  it("dd de la zona 1 con el cómputo del plazo y «ver condiciones» enlazable (LEG-123)", () => {
-    expect(TEXTOS_ENVIO_GRATIS.plazoZona1).toBe(
-      " Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso, contado desde que validamos tu pedido y te damos el aprobado por el chat (ver condiciones).",
-    );
-    expect(partirEnlace(TEXTOS_ENVIO_GRATIS.plazoZona1, ENLACE_PLAZO_ZONA1)).toEqual([
-      " Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso, contado desde que validamos tu pedido y te damos el aprobado por el chat (",
-      "ver condiciones",
-      ").",
-    ]);
-    expect(partirEnlace("sin enlace", ENLACE_PLAZO_ZONA1)).toBeNull();
-  });
-  it("párrafo inicial y caja final (LEG-121, LEG-122)", () => {
-    expect(TEXTOS_ENVIO_GRATIS.parrafoEnvios).toBe(" En siete comunas de Bucaramanga el envío es gratis con cualquier peso, si verificamos por el chat que tu dirección está en una de ellas.");
-    expect(TEXTOS_ENVIO_GRATIS.cajaCotizar).toBe(" Si tu dirección está en una de las siete comunas de Bucaramanga con envío gratis, no hace falta: el envío es gratis con cualquier peso.");
+describe("textos de /envios/ con D3 completo (dictamen 2026-11-14, sección 2 bis)", () => {
+  it("se retiraron los textos paralelos de /envios/ (D3 numeral 13 ya dice plazo y «por cotizar»)", () => {
+    const claves: string[] = Object.keys(TEXTOS_ENVIO_GRATIS);
+    for (const k of ["parrafoEnvios", "plazoZona1", "plazoZona5", "cajaCotizar"]) expect(claves).not.toContain(k);
   });
 });
 

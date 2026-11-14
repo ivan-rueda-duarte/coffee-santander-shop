@@ -6,7 +6,7 @@ import { crearClienteSanity, RepositorioContenidoSanity } from "../src/infrastru
 import { ErrorDatos } from "../src/infrastructure/csv/lector";
 import { cargarCatalogoDesdeDisco } from "../src/infrastructure/csv/repositorio-catalogo-csv";
 import { DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, numeralEnvioGratisPublicado, problemasDocsLegales, revisarEnvioGratisEnDocs } from "../src/infrastructure/legal/legal-md";
-import { hoyEnColombia, modoPruebaEnvioGratis } from "../src/infrastructure/entorno";
+import { fechaDelBuild, modoPruebaEnvioGratis } from "../src/infrastructure/entorno";
 import { ANCLA_ENVIO_GRATIS, errorNumeralTerminacion, erroresTerminacion, estadoEnvioGratis, lineaPromocionNoVigente } from "../src/domain/envio/envio-gratis";
 
 // Next lee .env.local solo; este script corre fuera de Next.
@@ -35,7 +35,8 @@ async function main() {
 
   // Envío gratis por comunas (microcopy §8): no se enciende sin los documentos versión 2 publicados (LEG-106).
   const promo = catalogo.envios.envioGratis;
-  const hoy = hoyEnColombia();
+  const hoy = fechaDelBuild();
+  if (process.env.FECHA_BUILD_PRUEBA && modoPruebaEnvioGratis()) console.warn(`FECHA_BUILD_PRUEBA=${hoy}: build de PRUEBA con la fecha simulada. No se despliega.`);
   // P34 b (§8.6.1): envio_gratis_terminada no puede ser posterior al build.
   const errTerminacion = erroresTerminacion(promo, hoy);
   if (errTerminacion.length) throw new ErrorDatos(errTerminacion);
@@ -45,7 +46,7 @@ async function main() {
     console.log(lineaPromocionNoVigente(promo, hoy));
     // Terminada: el aviso enlaza a /envios/#envio-gratis, que solo existe mientras el numeral esté publicado.
     if (estado.tipo === "terminada" && !modoPruebaEnvioGratis()) {
-      const numeralPublicado = numeralEnvioGratisPublicado(leerDocsLegalesDesdeDisco());
+      const numeralPublicado = numeralEnvioGratisPublicado(leerDocsLegalesDesdeDisco(), catalogo.tienda.legal);
       // QA-012: con el aviso visible, un enlace roto no se publica; fuera de esa ventana solo se avisa.
       const errNumeral = errorNumeralTerminacion(promo, hoy, numeralPublicado);
       if (errNumeral.length) throw new ErrorDatos(errNumeral);

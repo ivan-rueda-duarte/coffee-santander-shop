@@ -151,11 +151,11 @@ export const REGLAS_ENVIO_PRUEBA: ReglasEnvio = {
     { nivel: "municipio", departamento: "Santander", municipio: "Rionegro", zona: 2 },
   ],
   plazos: [
-    { zona: 1, estimado: "Mismo día o siguiente día hábil", maximo: "1 día hábil" },
-    { zona: 2, estimado: "1 a 3 días hábiles", maximo: "3 días hábiles" },
-    { zona: 3, estimado: "1 a 3 días hábiles", maximo: "3 días hábiles" },
-    { zona: 4, estimado: "2 a 6 días hábiles", maximo: "6 días hábiles" },
-    { zona: 5, estimado: "5 a 12 días hábiles", maximo: null },
+    { zona: 1, estimado: "el mismo día o el siguiente día hábil", maximo: "3 días hábiles" },
+    { zona: 2, estimado: "de 1 a 3 días hábiles", maximo: "6 días hábiles" },
+    { zona: 3, estimado: "de 1 a 3 días hábiles", maximo: "6 días hábiles" },
+    { zona: 4, estimado: "de 2 a 6 días hábiles", maximo: "10 días hábiles" },
+    { zona: 5, estimado: "de 5 a 12 días hábiles", maximo: "se informa al cotizar; máximo 30 días calendario" },
   ],
   envioGratis: null,
 };

@@ -4,12 +4,13 @@ import { depurarLineas, MAX_POR_LINEA, type LineaCarrito } from "./carrito";
 export const CLAVE_CARRITO_V1 = "desantander.carrito.v1";
 export const CLAVE_CARRITO_V2 = "desantander.carrito.v2";
 
-/** Lo que se guarda en el navegador. No incluye datos personales: solo líneas y preferencias de entrega. */
+/**
+ * Lo que se guarda en el navegador: solo el carrito (café, tamaño, presentación y cantidad; D2 §2, LEG-149).
+ * Ni forma de pago ni municipio: si un carrito guardado los trae, se descartan al leerlo y se reescribe sin ellos.
+ */
 export interface CarritoGuardado {
   version: 2;
   lineas: LineaCarrito[];
-  formaPago?: string;
-  municipio?: string;
 }
 
 // Validación a mano (sin zod): este módulo va en el JS de todas las páginas y zod pesa ~30 KB.
@@ -30,9 +31,6 @@ function esLinea(l: unknown): l is LineaCarrito {
   );
 }
 
-/** Texto de a lo más `max` caracteres, o undefined. */
-const texto = (valor: unknown, max: number): string | undefined => (typeof valor === "string" && valor.length <= max ? valor : undefined);
-
 function leerJson(crudo: string | null): unknown {
   if (!crudo) return null;
   try {
@@ -43,7 +41,8 @@ function leerJson(crudo: string | null): unknown {
 }
 
 export function serializarCarrito(c: Omit<CarritoGuardado, "version">): string {
-  const guardado: CarritoGuardado = { version: 2, ...c };
+  // Solo las líneas, aunque quien llama pase otra cosa (LEG-149).
+  const guardado: CarritoGuardado = { version: 2, lineas: c.lineas };
   return JSON.stringify(guardado);
 }
 
@@ -57,8 +56,6 @@ export function parsearCarrito(crudo: string | null, max: number = MAX_POR_LINEA
   return {
     version: 2,
     lineas: depurarLineas(lineas, () => true, max),
-    formaPago: texto(o.formaPago, 80),
-    municipio: texto(o.municipio, 60),
   };
 }
 
@@ -93,10 +90,6 @@ export function migrarCarritoV1(
   const depuradas = depurarLineas(lineas, (l) => Number.isInteger(l.gramos) && l.gramos > 0, max);
   if (depuradas.length === 0) return null;
 
-  return {
-    version: 2,
-    lineas: depuradas,
-    formaPago: texto(o.pago, 80) || undefined,
-    municipio: texto(o.ciudad, 60) || undefined,
-  };
+  // La forma de pago y la ciudad de la v1 no se migran (LEG-149).
+  return { version: 2, lineas: depuradas };
 }

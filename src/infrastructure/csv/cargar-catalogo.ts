@@ -12,7 +12,7 @@ import {
   type Productor,
   type Provincia,
 } from "@/domain/catalogo/tipos";
-import type { ConfigTienda, DatosVendedor } from "@/domain/pedido/tienda";
+import { MEDIOS_PAGO, type ConfigTienda, type DatosVendedor } from "@/domain/pedido/tienda";
 import { Errores, LectorFila, verificarUnicos } from "./campos";
 import { ErrorDatos, type FilaCsv } from "./lector";
 import { cargarEnvios, type DatosDivipola, type VigenciaEnvioGratis } from "./cargar-envios";
@@ -211,8 +211,17 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
 
     if (activo && municipio && municipio.porVerificar) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" está en ${municipio.nombre}, cuya provincia está por verificar; no aparecerá en ninguna provincia.`);
     if (activo && puntaje !== null && !verificado) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" tiene puntaje SCA sin verificar; no se mostrará el sello ni se usará en filtros.`);
-    // Decisión del dueño (P9, LEG-089): un café activo sin notificación sanitaria se publica igual; se avisa, no se bloquea.
-    if (activo && !nsa) advertencias.push(`${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" está activo sin notificación sanitaria (columna nsa); la ficha no mostrará la fila sanitaria. Riesgo aceptado por el dueño (LEG-024/066).`);
+    // Rotulado del paquete del abogado v1.0 (§1, §7.2; LEG-146, LEG-147): el paquete pide que un café sin NSA no se
+    // publique. Decisión del dueño del 2026-11-14: Café Arreboles sigue activo; por eso se AVISA y no se bloquea.
+    // Si el dueño lo decide, este aviso pasa a error (docs/PENDIENTES.md).
+    if (activo) {
+      const faltan = ROTULADO_REQUERIDO.filter(([, v]) => !v({ nsa, titularNsa, marca: f.textoOpcional("marca"), fabricante, fabricanteExpresion })).map(([c]) => c);
+      if (faltan.length) {
+        advertencias.push(
+          `${ARCHIVO_CATALOGO}, línea ${f.linea}: "${cafe.nombre}" está activo sin ${faltan.join(", ")}; la ficha omite esas filas. El paquete del abogado v1.0 pide no publicar un café sin NSA ni rotulado completo; por decisión del dueño del 2026-11-14 solo se avisa (LEG-146, LEG-147; D-11).`,
+        );
+      }
+    }
   });
   verificarUnicos(ARCHIVO_CATALOGO, "slug", cCafe, errores);
 
@@ -229,8 +238,18 @@ export function cargarCatalogo(leer: LeerArchivo, existeFoto?: ExisteArchivoPubl
   };
 }
 
+/** Columnas de rotulado que el paquete del abogado v1.0 exige a todo café activo (D1 §3, D5 §6.2). */
+const ROTULADO_REQUERIDO: readonly [string, (r: { nsa: string | null; titularNsa: string | null; marca: string | null; fabricante: string | null; fabricanteExpresion: string | null }) => boolean][] = [
+  ["nsa", (r) => Boolean(r.nsa)],
+  ["titular_nsa", (r) => Boolean(r.titularNsa)],
+  ["marca", (r) => Boolean(r.marca)],
+  ["fabricante", (r) => Boolean(r.fabricante)],
+  ["fabricante_expresion", (r) => Boolean(r.fabricanteExpresion)],
+];
+
 const CLAVES_REQUERIDAS = [
-  "nombre_tienda", "whatsapp", "ciudad_despacho", "nota_envio", "formas_pago", "max_cantidad",
+  // `medios_pago` (paquete del abogado v1.0, §7.1): uso interno; los textos de pago son fijos (D5 §6.3, LEG-144).
+  "nombre_tienda", "whatsapp", "ciudad_despacho", "medios_pago", "max_cantidad",
   // Versión y fecha de los documentos legales: las casillas, la constancia del mensaje y las páginas las leen de aquí (LEG-088).
   "version_terminos", "fecha_terminos", "version_politica_datos", "fecha_politica_datos",
 ] as const;
@@ -271,15 +290,15 @@ function leerConfig(leer: LeerArchivo, errores: Errores): { tienda: ConfigTienda
   const nombre = obtener("nombre_tienda");
   const whatsapp = obtener("whatsapp");
   const ciudad = obtener("ciudad_despacho");
-  const nota = obtener("nota_envio");
-  const pagos = obtener("formas_pago");
+  const pagos = obtener("medios_pago");
   const max = obtener("max_cantidad");
   const numero = whatsapp?.f.texto("valor") ?? "";
   if (whatsapp && !/^\d{10,15}$/.test(numero)) {
     whatsapp.f.error("valor", `whatsapp "${numero}" debe llevar solo dígitos, con indicativo de país y sin "+" ni espacios (por ejemplo 573001129874).`);
   }
   const maxCantidad = max?.f.entero("valor", { min: 1, max: 100 }) ?? null;
-  const formasPago = pagos?.f.lista("valor", true) ?? [];
+  // Los textos fijos dicen «transferencia bancaria o Bre-B»: otro medio exige cambiar los textos legales (D1 §7).
+  const mediosPago = pagos?.f.opciones("valor", MEDIOS_PAGO, true) ?? [];
 
   const versionTerminos = obtener("version_terminos");
   const versionPolitica = obtener("version_politica_datos");
@@ -297,7 +316,7 @@ function leerConfig(leer: LeerArchivo, errores: Errores): { tienda: ConfigTienda
     );
   }
 
-  if (!nombre || !whatsapp || !ciudad || !nota || !pagos || maxCantidad === null || !versionTerminos || !versionPolitica || !fechaTerminos || !fechaPolitica) return { tienda: null, vigenciaEnvioGratis };
+  if (!nombre || !whatsapp || !ciudad || !pagos || maxCantidad === null || !versionTerminos || !versionPolitica || !fechaTerminos || !fechaPolitica) return { tienda: null, vigenciaEnvioGratis };
   const vendedor: DatosVendedor = {
     razonSocial: opcional("razon_social"),
     nit: opcional("nit"),
@@ -313,8 +332,7 @@ function leerConfig(leer: LeerArchivo, errores: Errores): { tienda: ConfigTienda
     nombre: nombre.f.texto("valor"),
     whatsapp: numero,
     ciudadDespacho: ciudad.f.texto("valor"),
-    notaEnvio: nota.f.texto("valor"),
-    formasPago,
+    mediosPago,
     maxCantidad,
     ivaTarifa,
     legal: {

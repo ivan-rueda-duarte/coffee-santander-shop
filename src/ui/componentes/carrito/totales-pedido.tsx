@@ -76,7 +76,11 @@ export function TotalesPedido({
               Envío a {nombreDestino(destino.municipio)} <span className="text-ink-muted">· zona {envio.zona}</span>
               {plazo && <span className="caption block text-ink-muted" data-testid="linea-plazo">{plazo}</span>}
             </dt>
-            <dd className="font-bold tabular-nums text-ink-title">{formatearCOP(envio.valorCop)}</dd>
+            {/* D5 §6.3: «Envío a {destino} · zona {n}: {$ valor} (IVA incluido)». */}
+            <dd className="text-right font-bold tabular-nums text-ink-title">
+              {formatearCOP(envio.valorCop)}
+              {catalogo.tienda.ivaTarifa !== null && <span className="caption block font-normal text-ink-muted">(IVA incluido)</span>}
+            </dd>
           </div>
         )}
 
@@ -106,7 +110,7 @@ export function TotalesPedido({
               Envío
               {plazo && <span className="caption block text-ink-muted sm:max-w-[14rem]" data-testid="linea-plazo">{plazo}</span>}
             </dt>
-            <dd className="font-semibold text-ink-title sm:max-w-[16rem] sm:text-right">Por cotizar · te confirmamos el valor por WhatsApp antes de que pagues</dd>
+            <dd className="font-semibold text-ink-title sm:max-w-[16rem] sm:text-right">por cotizar · te confirmamos el valor por WhatsApp antes de que pagues</dd>
           </div>
         )}
 

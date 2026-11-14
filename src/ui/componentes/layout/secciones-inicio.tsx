@@ -1,3 +1,4 @@
+import { historiaRespaldo } from "./historia-respaldo";
 import type { ContenidoHistoria, ContenidoInicio } from "@/application/puertos";
 import type { VistaCatalogo } from "@/application/casos-uso/obtener-catalogo";
 import Link from "next/link";
@@ -60,14 +61,11 @@ const textoPasos = (catalogo: VistaCatalogo, contenido: ContenidoInicio | null) 
   const { tienda } = catalogo;
   const tamanos = [...new Set(catalogo.cafes.flatMap((c) => c.presentaciones.map((p) => p.gramos)))].sort((a, b) => a - b);
   const lista = tamanos.length > 1 ? `${tamanos.slice(0, -1).join(" g, ")} g o ${tamanos[tamanos.length - 1]} g` : `${tamanos[0] ?? 250} g`;
-  // Microcopy §2 (v1.1): solo la primera letra en minúscula («Bre-B» es nombre propio) y unidas con «o»: se paga con una u otra (QA-008).
-  const pagos = tienda.formasPago.map((p) => p.charAt(0).toLowerCase() + p.slice(1));
-  const pagosTexto = pagos.length > 1 ? `${pagos.slice(0, -1).join(", ")} o ${pagos[pagos.length - 1]}` : pagos[0];
-  // Textos exactos de microcopy §2 («Cómo pedir», pasos 1 a 3).
+  // Textos de microcopy §2 («Cómo pedir», pasos 1 a 3), ajustados a D1 §3 y §7 de la 1.0 (LEG-165): sin «grano entero» ni medios del CSV.
   return [
-    { titulo: "Elige tus cafés", texto: `Cada café viene en bolsa de ${lista}, en grano entero o molido, tal como lo empaca su fabricante. El precio de cada bolsa está en su tarjeta y en su ficha.` },
+    { titulo: "Elige tus cafés", texto: `Cada café viene en bolsa de ${lista}, en grano o molido, tal como lo empaca su fabricante. El precio de cada bolsa está en su tarjeta y en su ficha.` },
     { titulo: "Envía el pedido por WhatsApp", texto: "Completas tus datos de envío y se abre WhatsApp con tu solicitud de compra ya escrita. Con ese mensaje nos pides el pedido; queda en firme cuando aceptas el total en el chat." },
-    { titulo: "Confirmamos envío y pago", texto: `Despachamos desde ${tienda.ciudadDespacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con ${pagosTexto}.` },
+    { titulo: "Confirmamos envío y pago", texto: `Despachamos desde ${tienda.ciudadDespacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas por transferencia bancaria o por Bre-B después de aceptar el total.` },
   ];
 };
 
@@ -110,23 +108,8 @@ export function ComoPedir({ catalogo, contenido }: { catalogo: VistaCatalogo; co
   );
 }
 
-/**
- * Historia de respaldo (modelo C, microcopy §2): De Santander es una tienda que vende café de otras marcas.
- * Sin pasos de proceso: «recolección manual» y «secado al sol» no tienen soporte para cafés de terceros.
- * El párrafo 2 nombra la marca y el fabricante solo si todos los cafés publicados los traen (LEG-070).
- */
-function historiaRespaldo(catalogo: VistaCatalogo): string[] {
-  const conRotulo = catalogo.cafes.length > 0 && catalogo.cafes.every((c) => c.marca && c.fabricante);
-  return [
-    `De Santander es una tienda de café de origen santandereano. Vendemos café de marcas de Santander, tostado y empacado por quien figura en cada bolsa y en cada ficha, y lo despachamos desde ${catalogo.tienda.ciudadDespacho} a todo Colombia.`,
-    conRotulo
-      ? "En cada café verás la marca, quién lo fabrica, la provincia, el municipio, la altitud, la variedad y el proceso."
-      : "En cada café verás la provincia, el municipio, la altitud, la variedad y el proceso.",
-  ];
-}
-
 export function Historia({ catalogo, contenido }: { catalogo: VistaCatalogo; contenido: ContenidoHistoria | null }) {
-  const parrafos = contenido?.texto.length ? contenido.texto : historiaRespaldo(catalogo);
+  const parrafos = contenido?.texto.length ? contenido.texto : historiaRespaldo(catalogo.cafes, catalogo.tienda.ciudadDespacho);
   // Solo con pasos reales de Sanity (cada uno cierto para todos los cafés): sin ellos no hay bloque «Del cafetal a la taza».
   const proceso = contenido?.proceso ?? [];
   // Foto de respaldo (LEG-104): texto alternativo neutro y sin crédito mientras no conste su origen.

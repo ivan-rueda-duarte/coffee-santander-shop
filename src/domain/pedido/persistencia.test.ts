@@ -7,13 +7,16 @@ describe("carrito v2", () => {
     expect(CLAVE_CARRITO_V1).toBe("desantander.carrito.v1");
     expect(CLAVE_CARRITO_V2).toBe("desantander.carrito.v2");
   });
-  it("ida y vuelta", () => {
-    const c = {
-      lineas: [{ cafeSlug: "cafe-oiba", gramos: 500, molienda: "molido" as const, cantidad: 3 }],
-      formaPago: "Transferencia Bre-B",
-      municipio: "Cali",
-    };
+  it("ida y vuelta: solo las líneas del carrito", () => {
+    const c = { lineas: [{ cafeSlug: "cafe-oiba", gramos: 500, molienda: "molido" as const, cantidad: 3 }] };
     expect(parsearCarrito(serializarCarrito(c))).toEqual({ version: 2, ...c });
+  });
+  it("no guarda forma de pago ni municipio aunque se los pasen, y los descarta al leer (LEG-149)", () => {
+    const lineas = [{ cafeSlug: "cafe-oiba", gramos: 500, molienda: "molido" as const, cantidad: 3 }];
+    const conExtras = { lineas, formaPago: "Transferencia Bre-B", municipio: "Cali" } as Parameters<typeof serializarCarrito>[0];
+    expect(JSON.parse(serializarCarrito(conExtras))).toEqual({ version: 2, lineas });
+    const viejo = JSON.stringify({ version: 2, lineas, formaPago: "Transferencia Bre-B", municipio: "Cali" });
+    expect(parsearCarrito(viejo)).toEqual({ version: 2, lineas });
   });
   it("nunca lanza: texto roto o vacío da un carrito vacío", () => {
     expect(parsearCarrito(null).lineas).toEqual([]);
@@ -33,8 +36,7 @@ describe("carrito v2", () => {
       formaPago: 12,
     });
     const c = parsearCarrito(crudo);
-    expect(c.lineas).toEqual([{ cafeSlug: "a", gramos: 250, molienda: "grano", cantidad: 20 }]);
-    expect(c.formaPago).toBeUndefined();
+    expect(c).toEqual({ version: 2, lineas: [{ cafeSlug: "a", gramos: 250, molienda: "grano", cantidad: 20 }] });
   });
 });
 
@@ -49,15 +51,13 @@ describe("migrarCarritoV1", () => {
     sent: true,
   });
 
-  it("convierte ids a slugs y molienda a enum", () => {
+  it("convierte ids a slugs y molienda a enum; no migra pago ni ciudad (LEG-149)", () => {
     expect(migrarCarritoV1(v1, ID_V1_A_SLUG)).toEqual({
       version: 2,
       lineas: [
         { cafeSlug: "cafe-barichara", gramos: 500, molienda: "grano", cantidad: 2 },
         { cafeSlug: "cafe-oiba", gramos: 250, molienda: "molido", cantidad: 1 },
       ],
-      formaPago: "Efectivo contraentrega",
-      municipio: "Bogotá",
     });
   });
   it("descarta ids o moliendas desconocidos y recorta la cantidad", () => {
@@ -73,8 +73,7 @@ describe("migrarCarritoV1", () => {
     });
     const m = migrarCarritoV1(crudo, ID_V1_A_SLUG);
     expect(m?.lineas).toEqual([{ cafeSlug: "cafe-altura-de-socorro", gramos: 250, molienda: "molido", cantidad: 20 }]);
-    expect(m?.formaPago).toBeUndefined();
-    expect(m?.municipio).toBeUndefined();
+    expect(Object.keys(m ?? {})).toEqual(["version", "lineas"]);
   });
   it("devuelve null si no hay nada que migrar", () => {
     expect(migrarCarritoV1(null, ID_V1_A_SLUG)).toBeNull();

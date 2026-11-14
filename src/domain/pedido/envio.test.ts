@@ -3,9 +3,8 @@ import { OPCION_OTRA_COMUNA } from "../envio/envio-gratis";
 import { PROMOCION_PRUEBA } from "../pruebas/fixtures";
 import { crearEsquemaEnvio, DOCUMENTO_OBLIGATORIO, errorCodigoPostal, errorDocumento, esquemaConsentimientos, formatearCelular, normalizarCelular, normalizarDocumento, validar } from "./envio";
 
-const PAGOS = ["Efectivo contraentrega", "Transferencia Bre-B"] as const;
 const CODIGOS = { Santander: "68", "Bogotá, D.C.": "11", Antioquia: "05" };
-const esquema = crearEsquemaEnvio(PAGOS, CODIGOS);
+const esquema = crearEsquemaEnvio(CODIGOS);
 const valido = {
   nombre: "  Ana Rueda ",
   celular: "+57 300-123-4567",
@@ -18,7 +17,6 @@ const valido = {
   direccion: "Calle 45 # 12-30",
   barrio: "",
   indicaciones: "",
-  formaPago: "Transferencia Bre-B",
 };
 
 describe("celular", () => {
@@ -48,7 +46,6 @@ describe("esquema de envío", () => {
         direccion: "Calle 45 # 12-30",
         barrio: undefined,
         indicaciones: undefined,
-        formaPago: "Transferencia Bre-B",
         tipoDocumento: undefined,
         numeroDocumento: undefined,
       },
@@ -60,13 +57,17 @@ describe("esquema de envío", () => {
     if (r.ok) expect(r.datos).toMatchObject({ tipoDocumento: "CC", numeroDocumento: "1098765432", codigoPostal: "680001", correo: "ana@correo.co", barrio: "Cabecera", indicaciones: "Portería" });
   });
   it("informa un mensaje por campo faltante", () => {
-    const r = validar(esquema, { ...valido, nombre: "", direccion: "x", celular: "12345", formaPago: "Cheque" });
+    const r = validar(esquema, { ...valido, nombre: "", direccion: "x", celular: "12345" });
     expect(r.ok).toBe(false);
     if (!r.ok) {
-      expect(Object.keys(r.errores).sort()).toEqual(["celular", "direccion", "formaPago", "nombre"]);
+      expect(Object.keys(r.errores).sort()).toEqual(["celular", "direccion", "nombre"]);
       expect(r.errores.celular).toMatch(/celular colombiano/);
-      expect(r.errores.formaPago).toBe("Elige una forma de pago.");
     }
+  });
+  it("no hay campo de forma de pago (LEG-144): si llega, se ignora", () => {
+    const r = validar(esquema, { ...valido, formaPago: "Efectivo contraentrega" });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.datos).not.toHaveProperty("formaPago");
   });
   it("rechaza documento y correo mal escritos", () => {
     const r = validar(esquema, { ...valido, tipoDocumento: "CC", numeroDocumento: "12", correo: "no-es-correo" });
@@ -152,7 +153,7 @@ describe("documento de identidad", () => {
     expect(errorDocumento("PAS", "AB123456")).toBeNull();
   });
   it("en modo obligatorio exige tipo y número", () => {
-    const obligatorio = crearEsquemaEnvio(PAGOS, CODIGOS, { documentoObligatorio: true });
+    const obligatorio = crearEsquemaEnvio(CODIGOS, { documentoObligatorio: true });
     const r = validar(obligatorio, valido);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errores).toEqual({ tipoDocumento: "Elige el tipo de documento.", numeroDocumento: "Escribe el número de documento." });
@@ -207,7 +208,7 @@ describe("consentimientos", () => {
 });
 
 describe("comuna (envío gratis, microcopy §8.2)", () => {
-  const conPromo = crearEsquemaEnvio(PAGOS, CODIGOS, { envioGratis: PROMOCION_PRUEBA });
+  const conPromo = crearEsquemaEnvio(CODIGOS, { envioGratis: PROMOCION_PRUEBA });
   const comunaDe = (entrada: Record<string, unknown>, e = conPromo) => {
     const r = validar(e, { ...valido, ...entrada });
     if (!r.ok) throw new Error(JSON.stringify(r.errores));

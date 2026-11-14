@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LEGAL_PRUEBA, PROMOCION_PRUEBA } from "@/domain/pruebas/fixtures";
 import { ErrorDatos } from "../csv/lector";
 import { RepositorioContenidoVacio } from "../sanity/contenido-sanity";
-import { cargarLegalDesdeDocs, condicionesEnvioGratis, condicionesEnvioGratisTerminada, conRespaldoLegal, DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, numeralEnvioGratisPublicado, problemasDocsLegales, revisarEnvioGratisEnDocs } from "./legal-md";
+import { cargarLegalDesdeDocs, condicionesEnvioGratis, condicionesEnvioGratisTerminada, conLegalDesdeDocs, DOCUMENTOS_LEGALES, leerDocsLegalesDesdeDisco, numeralEnvioGratisPublicado, problemasDocsLegales, revisarEnvioGratisEnDocs } from "./legal-md";
 import { cargarCatalogoDesdeDisco } from "../csv/repositorio-catalogo-csv";
 
 // Estas pruebas leen los documentos reales de docs/legal/ y data/config.csv: si legal deja un marcador
@@ -23,9 +23,28 @@ describe("documentos legales publicados desde docs/legal/", () => {
       expect(c.contenido.length).toBeGreaterThan(5);
       expect(c.contenido[0].tipo).toBe("titulo");
       const texto = c.contenido.map((b) => b.texto).join("\n");
-      expect(texto).not.toMatch(/TODO\(|DECISIÓN|VERIFICAR|<!--|\[|\]|BORRADOR|Notas para el abogado/);
+      expect(texto).not.toMatch(/TODO\(|DECISIÓN|VERIFICAR|<!--|\[|\]|\{|\}|BORRADOR|Notas para el abogado/);
     });
   }
+  it("la versión publicada es la 1.0 vigente desde el 2026-11-17 (paquete del abogado, §0)", () => {
+    expect(legal).toEqual({ versionTerminos: "1.0", fechaTerminos: "2026-11-17", versionPoliticaDatos: "1.0", fechaPoliticaDatos: "2026-11-17" });
+  });
+  it("D2 §13 sustituye las llaves con config.csv (LEG-142)", () => {
+    const texto = cargarLegalDesdeDocs(leer, legal, "privacidad")!.contenido.map((b) => b.texto).join("\n");
+    expect(texto).toContain("Esta política rige desde el 17 de noviembre de 2026 (versión 1.0).");
+  });
+  it("D3 se publica en /envios/ y D4 sin datos duplicados (LEG-141, LEG-148)", () => {
+    expect(DOCUMENTOS_LEGALES["envios-devoluciones"].ruta).toBe("/envios/");
+    const d4 = cargarLegalDesdeDocs(leer, legal, "vendedor")!.contenido.map((b) => b.texto);
+    expect(d4).toContain("Dirección de notificación judicial: Calle 37 n.° 23-77, apartamento 702, Bucaramanga, Santander");
+    expect(d4.filter((t) => t.startsWith("NIT:"))).toHaveLength(1);
+  });
+  it("ningún documento publica contraentrega como medio de pago (D1 §7)", () => {
+    for (const seccion of Object.keys(DOCUMENTOS_LEGALES)) {
+      const texto = cargarLegalDesdeDocs(leer, legal, seccion)!.contenido.map((b) => b.texto).join("\n");
+      expect(texto.replaceAll("No recibimos pagos contraentrega ni en efectivo", "")).not.toMatch(/contraentrega|efectivo/i);
+    }
+  });
   it("la sección de retracto publicada concede 5 días hábiles y no dice «no admite retracto»", () => {
     const texto = cargarLegalDesdeDocs(leer, legal, "envios-devoluciones")!.contenido.map((b) => b.texto).join("\n");
     expect(texto).toContain("puedes retractarte dentro de los cinco (5) días hábiles siguientes a la entrega");
@@ -54,16 +73,16 @@ describe("con documentos defectuosos", () => {
   });
 });
 
-describe("conRespaldoLegal", () => {
-  it("usa el respaldo solo cuando el repositorio interno no trae la página", async () => {
+describe("conLegalDesdeDocs (LEG-158)", () => {
+  it("las páginas legales salen siempre de docs/legal/, aunque Sanity traiga otra versión", async () => {
     const respaldo = async (seccion: string) => (seccion === "terminos" ? { seccion, version: "1", vigenteDesde: "2026-11-06", contenido: [] } : null);
-    const repo = conRespaldoLegal(new RepositorioContenidoVacio(), respaldo);
+    const repo = conLegalDesdeDocs(new RepositorioContenidoVacio(), respaldo);
     expect((await repo.legal("terminos"))?.version).toBe("1");
     expect(await repo.legal("otra")).toBeNull();
     expect(await repo.cafe("x")).toBeNull();
     expect(await repo.slugs()).toEqual({ cafes: [], provincias: [], productores: [] });
     const vacio = new RepositorioContenidoVacio();
-    const conSanity = conRespaldoLegal(
+    const conSanity = conLegalDesdeDocs(
       {
         cafe: () => vacio.cafe(),
         provincia: () => vacio.provincia(),
@@ -74,40 +93,36 @@ describe("conRespaldoLegal", () => {
       },
       respaldo,
     );
-    expect((await conSanity.legal("terminos"))?.version).toBe("9");
+    expect((await conSanity.legal("terminos"))?.version).toBe("1");
+    expect(await conSanity.legal("otra")).toBeNull();
   });
 });
 
-// Envío gratis por comunas (LEG-106): con los documentos versión 1 de hoy, la promoción no puede encenderse.
+// Envío gratis por comunas (LEG-106, LEG-167): con D1 y D3 1.0 publicados, la promoción puede encenderse desde 2026-11-17.
 describe("envío gratis con los documentos de docs/legal/", () => {
   const publicado = cargarLegalDesdeDocs(leer, legal, "envios-devoluciones")!.contenido;
-  it("el texto público de hoy no trae todavía el numeral de condiciones (lo pasa legal el día de la publicación)", () => {
-    expect(publicado.some((b) => b.texto.includes("Envío gratis en comunas de Bucaramanga"))).toBe(false);
+  const PROMO = { ...PROMOCION_PRUEBA, desde: "2026-11-17" };
+  it("el texto público trae el numeral de condiciones", () => {
+    expect(publicado.some((b) => b.texto.includes("Envío gratis en comunas de Bucaramanga"))).toBe(true);
+    expect(numeralEnvioGratisPublicado(leer, legal)).toBe(true);
   });
-  it("el control de publicación bloquea la promoción mientras no estén los documentos versión 2", () => {
+  it("el control de publicación deja encender la promoción desde 2026-11-17", () => {
+    expect(revisarEnvioGratisEnDocs(leer, PROMO, legal).errores).toEqual([]);
+  });
+  it("con otra fecha de inicio el control falla (el numeral escribe la fecha)", () => {
     const r = revisarEnvioGratisEnDocs(leer, PROMOCION_PRUEBA, legal);
-    expect(r.errores.length).toBeGreaterThan(0);
-    expect(r.errores[0]).toContain("no publica el numeral");
+    expect(r.errores[0]).toContain("no dice la fecha de inicio");
   });
-  it("sin el numeral publicado, /envios/ no se puede construir con la promoción encendida", () => {
-    expect(() => condicionesEnvioGratis(publicado, leer, PROMOCION_PRUEBA, false)).toThrow(ErrorDatos);
-  });
-  it("en un build de prueba usa el borrador de la nota E, completo, con la fecha de inicio y sin marcadores", () => {
-    const bloques = condicionesEnvioGratis(publicado, leer, PROMOCION_PRUEBA, true);
-    const texto = bloques.map((b) => b.texto).join("\n");
-    expect(bloques[0]).toMatchObject({ tipo: "parrafo" });
-    expect(bloques.filter((b) => b.tipo === "item").length).toBeGreaterThanOrEqual(12);
-    for (const comuna of PROMOCION_PRUEBA.comunas) expect(texto).toContain(comuna);
-    expect(texto).toContain("Vigencia: rige desde el 1 de enero de 2026.");
+  it("/envios/ toma el numeral publicado, con las comunas y sin marcadores", () => {
+    const texto = condicionesEnvioGratis(publicado, leer, PROMO, false).map((b) => b.texto).join("\n");
+    for (const comuna of PROMO.comunas) expect(texto).toContain(comuna);
     expect(texto).toContain("Peso: aplica con cualquier peso.");
+    // LEG-167: el numeral se corta antes de «Normas citadas», que cierra el documento.
+    expect(texto).not.toContain("Normas citadas");
     expect(texto).not.toMatch(/[{}[\]]|TODO\(|VERIFICAR|```/);
   });
-  it("terminada: toma el numeral publicado; sin él no hay sección (no falla); en prueba, el borrador", () => {
-    const fin = { desde: PROMOCION_PRUEBA.desde };
-    expect(condicionesEnvioGratisTerminada(publicado, leer, fin, false)).toBeNull();
-    expect(condicionesEnvioGratisTerminada(publicado, leer, fin, true)).toEqual(condicionesEnvioGratis(publicado, leer, PROMOCION_PRUEBA, true));
-    const conNumeral = [{ tipo: "titulo" as const, texto: "13. Envío gratis en comunas de Bucaramanga" }, { tipo: "parrafo" as const, texto: "Condiciones." }];
-    expect(condicionesEnvioGratisTerminada(conNumeral, leer, fin, false)).toEqual([{ tipo: "parrafo", texto: "Condiciones." }]);
-    expect(numeralEnvioGratisPublicado(leer)).toBe(false);
+  it("terminada: toma el numeral publicado", () => {
+    const fin = { desde: PROMO.desde };
+    expect(condicionesEnvioGratisTerminada(publicado, leer, fin, false)).toEqual(condicionesEnvioGratis(publicado, leer, PROMO, false));
   });
 });

@@ -83,7 +83,7 @@ export default function CajonContenido() {
             <footer className="border-t border-line bg-surface-raised px-6 py-5">
               <TotalesPedido totales={totales} destino={null} ciudadDespacho={catalogo.tienda.ciudadDespacho} className="text-sm" alNavegar={cerrarCajon} />
               <BotonEnlace href="/pedido/" bloque tamano="lg" className="mt-4" onClick={cerrarCajon}>
-                Continuar con el pedido <IconoFlecha className="ds-btn__icon" />
+                Revisar el pedido <IconoFlecha className="ds-btn__icon" />
               </BotonEnlace>
               <div className="mt-2 flex justify-center">
                 <Boton variante="enlace" tamano="sm" onClick={vaciar}>

@@ -20,10 +20,9 @@ async function basico(page: Page, departamento = "Santander", municipio = "Bucar
   await page.getByLabel("Departamento").selectOption(departamento);
   await page.getByLabel("Municipio").selectOption(municipio);
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-  await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
 }
 
-const revisar = (page: Page) => page.getByRole("button", { name: /Revisar el pedido/ }).click();
+const revisar = (page: Page) => page.getByRole("button", { name: /Finalizar el pedido/ }).click();
 const tipo = (page: Page) => page.getByLabel("Tipo de documento");
 const numero = (page: Page) => page.getByLabel("Número de documento");
 const postal = (page: Page) => page.getByLabel("Código postal");
@@ -32,7 +31,7 @@ const enResumen = (page: Page) => expect(page.getByRole("heading", { name: "Revi
 async function mensaje(page: Page) {
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-  await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+  await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
   const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
   return decodeURIComponent(href.split("?text=")[1]);
@@ -51,9 +50,9 @@ test.describe("documento opcional y código postal", () => {
     await expect(page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ })).not.toBeChecked();
     await expect(page.getByText(/^Documento:/)).toHaveCount(0);
     await expect(page.getByText(/^Código postal:/)).toHaveCount(0);
-    // Casilla corta del paquete v1 (P21 = a): la finalidad del documento está en la política §3, no en la casilla.
+    // Casilla de datos del paquete v1.0 (D2): nombra la factura entre las finalidades, pero no pide el documento.
     await expect(page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ })).toHaveAccessibleName(textosCasillas().autorizacion);
-    expect(textosCasillas().autorizacion).not.toMatch(/documento|factura/i);
+    expect(textosCasillas().autorizacion).not.toMatch(/documento/i);
     // Las casillas siguen separadas: marcar una no marca la otra.
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
     await expect(page.getByRole("checkbox", { name: /Autorizo a/ })).not.toBeChecked();

@@ -16,8 +16,8 @@ import type { LeerArchivo } from "./tabla";
 const CARPETA = join(process.cwd(), "data");
 const leerCon = (desde: string | null): LeerArchivo => (nombre) => {
   const texto = readFileSync(join(CARPETA, nombre), "utf8");
-  if (nombre !== "config.csv" || desde === null) return texto;
-  return texto.replace(/^envio_gratis_desde,.*$/m, `envio_gratis_desde,${desde}`);
+  if (nombre !== "config.csv") return texto;
+  return texto.replace(/^envio_gratis_desde,.*$/m, `envio_gratis_desde,${desde ?? ""}`);
 };
 
 const encendida = cargarCatalogo(leerCon("2026-11-06"), () => true).catalogo;
@@ -35,8 +35,16 @@ const BGA = { departamento: "Santander", municipio: "Bucaramanga" };
 const TARIFA_BGA = { 1: 8800, 2: 11600, 5: 15400 } as const;
 
 describe("datos reales: la promoción se lee de data/", () => {
-  it("apagada en el repositorio (envio_gratis_desde vacía)", () => {
+  it("apagada con envio_gratis_desde vacía", () => {
     expect(apagada.envios.envioGratis).toBeNull();
+  });
+  it("el repositorio la programa para el 17 de noviembre de 2026 (LEG-167): antes de esa fecha no rige", () => {
+    const real = cargarCatalogo(leerCon("2026-11-17"), () => true).catalogo.envios.envioGratis;
+    const disco = readFileSync(join(CARPETA, "config.csv"), "utf8");
+    expect(disco).toMatch(/^envio_gratis_desde,2026-11-17$/m);
+    expect(disco).toMatch(/^envio_gratis_terminada,$/m);
+    expect(promocionActiva(real, "2026-11-16")).toBeNull();
+    expect(promocionActiva(real, "2026-11-17")).not.toBeNull();
   });
   it("encendida en memoria: siete comunas de Bucaramanga, sin fecha final", () => {
     expect(REGLAS.envioGratis).toMatchObject({ departamento: "Santander", municipio: "Bucaramanga", desde: "2026-11-06", terminada: null });
@@ -80,7 +88,7 @@ describe("datos reales: sin comuna cubierta rige la regla normal", () => {
 });
 
 describe("datos reales: mensaje de WhatsApp (microcopy §8.4)", () => {
-  const esquema = crearEsquemaEnvio(encendida.tienda.formasPago, { Santander: "68" }, { envioGratis: REGLAS.envioGratis });
+  const esquema = crearEsquemaEnvio({ Santander: "68" }, { envioGratis: REGLAS.envioGratis });
   const lleno = {
     nombre: "N".repeat(80),
     celular: "300 123 4567",
@@ -94,7 +102,6 @@ describe("datos reales: mensaje de WhatsApp (microcopy §8.4)", () => {
     barrio: "B".repeat(60),
     comuna: "Ciudadela Real de Minas",
     indicaciones: "I".repeat(300),
-    formaPago: encendida.tienda.formasPago[0],
   };
   const datos = (v: Record<string, string>): DatosEnvio => {
     const r = validar(esquema, v);
@@ -105,12 +112,14 @@ describe("datos reales: mensaje de WhatsApp (microcopy §8.4)", () => {
     const subtotalCop = lineas.reduce((s, l) => s + l.totalCop, 0);
     return {
       nombreTienda: encendida.tienda.nombre,
+      numeroSolicitud: "DS-261117-1432-K7QM",
       lineas,
       subtotalCop,
       costoEnvio: calcularEnvio(lineas, envio, REGLAS),
       envio,
       ivaTarifa: encendida.tienda.ivaTarifa,
       legal: encendida.tienda.legal,
+      promociones: { whatsapp: true, correo: true },
     };
   };
   const linea = (nombreCafe: string, gramos: number, cantidad: number, molienda: "grano" | "molido" = "grano"): LineaMensaje => ({
@@ -125,9 +134,9 @@ describe("datos reales: mensaje de WhatsApp (microcopy §8.4)", () => {
   it("todas las líneas nuevas, en su lugar, y ≤ 2.000 caracteres con todos los campos llenos", () => {
     const { texto } = construirMensaje(pedido(datos(lleno), [linea("Café Casa Martínez", 500, 2), linea("Café Arreboles", 250, 1, "molido")]));
     expect(texto.length).toBeLessThanOrEqual(LIMITE_MENSAJE);
-    expect(texto).toContain("Envío (Bucaramanga · zona 1 · Ciudadela Real de Minas): $0 (envío gratis, sujeto a verificar la dirección)\nTotal: $125.000\nPlazo de entrega: máximo 1 día hábil desde que validen mi pedido y me den el aprobado por el chat.");
+    expect(texto).toContain("Envío: zona 1 · Ciudadela Real de Minas, $0 (envío gratis, sujeto a verificar la dirección)\nTotal: $125.000\nPlazo de entrega: máximo 1 día hábil desde que validen mi pago y me den el aprobado por el chat.");
     expect(texto).toMatch(/\nDirección: D+ · Barrio: B+\nComuna: Ciudadela Real de Minas\n/);
-    expect(texto).toContain("\n\nSi mi dirección no está en esa comuna, el envío es de $11.600 y el total queda en $136.600; espero su confirmación.\n\nAcepto los Términos");
+    expect(texto).toContain("\n\nSi mi dirección no está en esa comuna, el envío es de $11.600 y el total queda en $136.600; espero su confirmación.\nAcepto los Términos v1.0");
     expect(texto).not.toContain("Total sin envío");
   });
 
@@ -135,7 +144,7 @@ describe("datos reales: mensaje de WhatsApp (microcopy §8.4)", () => {
     const { texto } = construirMensaje(pedido(datos(lleno), [linea("Café Casa Martínez", 500, 20)]));
     expect(texto.length).toBeLessThanOrEqual(LIMITE_MENSAJE);
     expect(texto).toContain("Total: $1.000.000\nPlazo de entrega: máximo 1 día hábil");
-    expect(texto).toContain("\n\nSi mi dirección no está en esa comuna, quedo atento al valor del envío para confirmar mi pedido.\n\nAcepto");
+    expect(texto).toContain("\n\nSi mi dirección no está en esa comuna, quedo atento al valor del envío para confirmar mi pedido.\nAcepto");
     expect(texto).not.toMatch(/Total sin envío|POR COTIZAR/);
   });
 
@@ -156,7 +165,7 @@ describe("datos reales: mensaje de WhatsApp (microcopy §8.4)", () => {
       expect(d.comuna).toBeUndefined();
       const { texto } = construirMensaje(pedido(d, [linea("Café Casa Martínez", 500, 2)]));
       expect(texto).not.toMatch(/Comuna:|envío gratis|Plazo de entrega: máximo 1 día|Si mi dirección no está/);
-      expect(texto).toContain("Envío (Bucaramanga · zona 1): $8.800");
+      expect(texto).toContain("Envío: zona 1, $8.800 (IVA incluido)");
     }
   });
 

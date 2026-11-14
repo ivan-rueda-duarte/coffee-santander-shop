@@ -24,6 +24,9 @@ describe("numeral de condiciones del envío gratis", () => {
     expect(numeralEnvioGratis(NUMERAL)).toEqual(NUMERAL.slice(1));
     expect(numeralEnvioGratis([titulo("3. Valor del envío"), parrafo("x")])).toBeNull();
   });
+  it("se corta antes del párrafo «Normas citadas» con que cierra el documento (LEG-167)", () => {
+    expect(numeralEnvioGratis([...NUMERAL, parrafo("Normas citadas: Ley 1480 de 2011, arts. 7 y 8.")])).toEqual(NUMERAL.slice(1));
+  });
   it("el borrador de la nota E sirve solo con la fecha de inicio en lugar del marcador", () => {
     const md = ["### E. Versión 2", "```", "### 13. Envío gratis en comunas de Bucaramanga", "El envío es gratis.", "- Vigencia: rige desde el " + MARCA_FECHA_INICIO + ".", "```", "6. Otra cosa"].join("\n");
     expect(numeralEnvioGratisBorrador(md, "2026-01-01")).toEqual([parrafo("El envío es gratis."), item("Vigencia: rige desde el 1 de enero de 2026.")]);

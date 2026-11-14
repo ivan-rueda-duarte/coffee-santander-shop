@@ -59,7 +59,7 @@ export function LineaPedido({ linea, editable = true }: { linea: LineaConPrecio;
             ))}
           </select>
           <select
-            aria-label={`Molienda de ${nombre}`}
+            aria-label={`Presentación de ${nombre}`}
             className={selector}
             value={linea.molienda}
             onChange={(e) => actualizar(clave, { molienda: e.target.value as Molienda })}

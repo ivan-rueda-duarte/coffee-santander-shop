@@ -5,7 +5,7 @@ import { calcularEnvio, totalConEnvio } from "@/domain/envio/envio";
 import type { ResultadoEnvio } from "@/domain/envio/tipos";
 import type { LineaCarrito } from "@/domain/pedido/carrito";
 import { crearEsquemaEnvio, esquemaConsentimientos, validar } from "@/domain/pedido/envio";
-import { construirEnlace, construirMensaje } from "@/domain/pedido/mensaje-whatsapp";
+import { construirEnlace, construirMensaje, type PromocionesAutorizadas } from "@/domain/pedido/mensaje-whatsapp";
 import { calcularTotales, type Totales } from "@/domain/pedido/totales";
 
 export interface EntradaPedido {
@@ -14,6 +14,10 @@ export interface EntradaPedido {
   envio: unknown;
   autorizacionDatos: boolean;
   aceptaTerminos: boolean;
+  /** Casillas opcionales 3 y 4 (D2; LEG-145). La de correo solo cuenta si hay correo. */
+  promociones: PromocionesAutorizadas;
+  /** «DS-…», generado en el navegador al preparar el pedido (P39 = a, LEG-150; `generarNumeroSolicitud`). */
+  numeroSolicitud: string;
 }
 
 export interface PedidoListo {
@@ -59,7 +63,7 @@ export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido, codig
   }
   if (problemasLineas.length) errores.lineas = "Revisa tu pedido: hay cafés que cambiaron.";
 
-  const envio = validar(crearEsquemaEnvio(tienda.formasPago, codigosDepartamento, { envioGratis: catalogo.envios.envioGratis }), entrada.envio);
+  const envio = validar(crearEsquemaEnvio(codigosDepartamento, { envioGratis: catalogo.envios.envioGratis }), entrada.envio);
   if (!envio.ok) Object.assign(errores, envio.errores);
 
   const consentimientos = validar(esquemaConsentimientos, {
@@ -74,6 +78,7 @@ export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido, codig
   const costoEnvio = calcularEnvio(totales.lineas, envio.datos, catalogo.envios);
   const { texto, indicacionesResumidas } = construirMensaje({
     nombreTienda: tienda.nombre,
+    numeroSolicitud: entrada.numeroSolicitud,
     lineas: totales.lineas.map((l) => {
       const cafe = buscarCafe(catalogo, l.cafeSlug)!;
       return { nombreCafe: cafe.nombre, provincia: cafe.provincia, molienda: l.molienda, gramos: l.gramos, cantidad: l.cantidad, totalCop: l.totalCop };
@@ -83,6 +88,7 @@ export function prepararPedido(catalogo: Catalogo, entrada: EntradaPedido, codig
     envio: envio.datos,
     ivaTarifa: tienda.ivaTarifa,
     legal: tienda.legal,
+    promociones: entrada.promociones,
   });
   return { ok: true, pedido: { texto, enlace: construirEnlace(tienda.whatsapp, texto), indicacionesResumidas, totales, envio: costoEnvio, totalCop: totalConEnvio(totales.subtotalCop, costoEnvio).totalCop } };
 }

@@ -57,31 +57,44 @@ export function hoyEnColombia(): string {
 /**
  * Estado del envío gratis por comunas en el build que sirve out/, leído de data/config.csv (microcopy §8.6.1):
  * - apagada: sin `envio_gratis_desde`; programada: `desde` en el futuro;
- * - vigente: empezó y sin `envio_gratis_terminada` (solo se construye con ENVIO_GRATIS_PRUEBA=si mientras no estén los documentos v2);
+ * - vigente: empezó y sin `envio_gratis_terminada`. Antes del 2026-11-17 solo se prueba con
+ *   `ENVIO_GRATIS_PRUEBA=si FECHA_BUILD_PRUEBA=2026-11-17` (build de prueba, nunca se despliega);
  * - terminada: con `envio_gratis_terminada`; `avisoVisible` si hoy ≤ terminada + 30 días.
  */
 export function estadoEnvioGratisE2E(): { tipo: "apagada" | "programada" | "vigente" | "terminada"; desde: string; terminada: string; avisoVisible: boolean; prueba: boolean } {
   const desde = leerConfig("envio_gratis_desde");
   const terminada = leerConfig("envio_gratis_terminada");
   const prueba = process.env.ENVIO_GRATIS_PRUEBA === "si";
-  const hoy = hoyEnColombia();
+  // Igual que fechaDelBuild (src/infrastructure/entorno.ts): en un build de prueba, FECHA_BUILD_PRUEBA simula el día.
+  const hoy = prueba && process.env.FECHA_BUILD_PRUEBA ? process.env.FECHA_BUILD_PRUEBA : hoyEnColombia();
   const dias = (a: string, b: string) => (Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000;
   const tipo = !desde ? "apagada" : terminada ? "terminada" : hoy < desde ? "programada" : "vigente";
   return { tipo, desde, terminada, avisoVisible: tipo === "terminada" && dias(terminada, hoy) <= 30, prueba };
 }
 
-/** Textos exactos de las casillas (microcopy §4.3 y §5.1) con versión y fecha de data/config.csv. */
+/** Textos exactos de las cuatro casillas (D2 «Textos de las casillas», D5 §6.3) con versión y fecha de data/config.csv. */
 export function textosCasillas() {
-  const politica = `Política de Tratamiento de Datos versión ${leerConfig("version_politica_datos")} del ${fechaEnLetras(leerConfig("fecha_politica_datos"))}`;
+  const razon = leerConfig("razon_social");
+  const politica = `Política de tratamiento de datos versión ${leerConfig("version_politica_datos")} del ${fechaEnLetras(leerConfig("fecha_politica_datos"))}`;
   const terminos = `Términos y condiciones versión ${leerConfig("version_terminos")} del ${fechaEnLetras(leerConfig("fecha_terminos"))}`;
   return {
     enlacePolitica: politica,
     enlaceTerminos: terminos,
-    autorizacion: `Autorizo a ${leerConfig("nombre_tienda")} a tratar mis datos personales para gestionar mi pedido, conforme a la ${politica}, que leí.`,
+    autorizacion: `Autorizo a ${razon} a tratar mis datos personales para gestionar mi pedido: confirmarlo, cobrarlo, coordinar la entrega con la transportadora o el mensajero y emitir la factura. Entiendo que el pedido se envía por WhatsApp (Meta) y que algunos servicios pueden tratar mis datos fuera de Colombia. Leí la ${politica}.`,
     terminos: `Leí y acepto los ${terminos}.`,
+    promoWhatsapp: `Quiero recibir novedades y promociones de ${razon} por WhatsApp, de lunes a viernes de 7:00 a. m. a 7:00 p. m. y sábados de 8:00 a. m. a 3:00 p. m. Puedo cancelarlo cuando quiera escribiendo «BAJA» al mismo chat. Es opcional y no afecta mi pedido.`,
+    promoCorreo: `Quiero recibir novedades y promociones de ${razon} por correo electrónico. Puedo cancelarlo cuando quiera con el enlace de cada correo o escribiendo a ${leerConfig("correo_contacto")}. Es opcional y no afecta mi pedido.`,
   };
 }
 
-/** Microcopy §5.3 (paquete legal v1): aviso de retracto del resumen y de /envios/. */
+/** D5 §6.4: constancia del mensaje de WhatsApp con versiones y fecha de data/config.csv. */
+export function constanciaMensaje(): string {
+  return `Acepto los Términos v${leerConfig("version_terminos")} y autorizo el tratamiento de mis datos según la Política v${leerConfig("version_politica_datos")} del ${fechaEnLetras(leerConfig("fecha_politica_datos"))}.`;
+}
+
+/** D5 §6.3: aviso de retracto del resumen. */
 export const AVISO_RETRACTO =
-  "Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega, salvo si el empaque está abierto. El transporte de la devolución corre por tu cuenta. Te devolvemos el dinero en máximo 15 días calendario, por el medio de pago que prefieras.";
+  "Puedes retractarte dentro de los 5 días hábiles siguientes a la entrega, salvo si el empaque está abierto o el sello roto. El transporte de la devolución corre por tu cuenta. Te devolvemos el dinero en máximo 15 días calendario, por el medio que prefieras.";
+
+/** D5 §6.3: texto fijo de pago en el formulario (ya no hay campo de forma de pago, LEG-144). */
+export const TEXTO_PAGO_FORMULARIO = "Pagas por transferencia bancaria o por Bre-B después de aceptar el total por WhatsApp. En esta página no se paga.";

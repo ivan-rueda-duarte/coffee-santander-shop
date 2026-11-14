@@ -29,7 +29,7 @@ test.describe("6. accesibilidad", () => {
     await expect(page.getByRole("heading", { name: "Tu pedido", level: 1 })).toBeVisible();
     expect(await violacionesGraves(page)).toEqual([]);
     await page.getByRole("button", { name: /Continuar con el envío/ }).click();
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click(); // con errores visibles
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click(); // con errores visibles
     expect(await violacionesGraves(page)).toEqual([]);
   });
 

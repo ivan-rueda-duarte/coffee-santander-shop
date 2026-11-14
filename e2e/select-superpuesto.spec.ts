@@ -256,8 +256,7 @@ test.describe("QA-005: estado deshabilitado, lector, teclado, colores forzados, 
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Dirección").fill("Calle 1 # 2-3");
-    await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
-    await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByRole("main")).toContainText(`Providencia, ${SAN_ANDRES}`);
   });

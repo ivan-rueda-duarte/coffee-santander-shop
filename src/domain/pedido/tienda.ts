@@ -25,14 +25,25 @@ export interface VersionesLegales {
   fechaPoliticaDatos: string;
 }
 
+/** Medios de pago que admiten los textos legales 1.0 (D1 §7): transferencia bancaria o Bre-B, antes del despacho. */
+export const MEDIOS_PAGO = ["transferencia", "bre-b"] as const;
+export type MedioPago = (typeof MEDIOS_PAGO)[number];
+
+/** Textos fijos de pago (D5 §6.3 y §6.4; LEG-144, LEG-165). */
+export const TEXTOS_PAGO = {
+  formulario: "Pagas por transferencia bancaria o por Bre-B después de aceptar el total por WhatsApp. En esta página no se paga.",
+  mensaje: "Pago: transferencia o Bre-B",
+  pie: "Transferencia bancaria o Bre-B",
+} as const;
+
 /** Configuración de la tienda (data/config.csv). */
 export interface ConfigTienda {
   nombre: string;
   /** Con indicativo de país y solo dígitos: 573001129874. */
   whatsapp: string;
   ciudadDespacho: string;
-  notaEnvio: string;
-  formasPago: string[];
+  /** Medios de pago (`medios_pago`), solo de uso interno: los textos de pago son fijos (D5 §6.3). */
+  mediosPago: MedioPago[];
   /** Máximo de bolsas por línea del carrito. */
   maxCantidad: number;
   /** Tarifa de IVA incluida en los precios (5). null = no se afirma una tarifa (solo «con todos los impuestos incluidos»). */
@@ -42,23 +53,16 @@ export interface ConfigTienda {
 }
 
 /**
- * Partes de la línea «Te vende …» del resumen (microcopy §5.4): razón social, NIT, domicilio, dirección de
- * notificación, correo de atención y WhatsApp, cada una solo si existe. Sin razón social no hay línea.
+ * Partes de la línea «Te vende …» del resumen (D5 §6.3): razón social y NIT, cada una solo si existe.
+ * Sin razón social no hay línea. El enlace «Información del vendedor» lo pone la interfaz.
  */
-export function partesVendedor(v: DatosVendedor, whatsappFormateado: string | null): string[] {
+export function partesVendedor(v: DatosVendedor): string[] {
   if (!v.razonSocial) return [];
-  return [
-    v.razonSocial,
-    v.nit ? `NIT ${v.nit}` : null,
-    v.domicilio,
-    v.direccionNotificacion,
-    v.correoContacto,
-    whatsappFormateado ? `WhatsApp ${whatsappFormateado}` : null,
-  ].filter((p): p is string => Boolean(p));
+  return [v.razonSocial, v.nit ? `NIT ${v.nit}` : null].filter((p): p is string => Boolean(p));
 }
 
-/** «Te vende De Santander SAS · NIT … · …» o null si no hay razón social. */
-export function lineaVendedor(v: DatosVendedor, whatsappFormateado: string | null): string | null {
-  const partes = partesVendedor(v, whatsappFormateado);
-  return partes.length ? `Te vende ${partes.join(" · ")}.` : null;
+/** «Te vende De Santander SAS · NIT 902.121.184-8» o null si no hay razón social. */
+export function lineaVendedor(v: DatosVendedor): string | null {
+  const partes = partesVendedor(v);
+  return partes.length ? `Te vende ${partes.join(" · ")}` : null;
 }

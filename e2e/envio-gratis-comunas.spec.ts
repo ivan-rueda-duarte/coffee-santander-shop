@@ -5,12 +5,14 @@ import { estadoEnvioGratisE2E, fechaEnLetras } from "./ayudas";
 
 // Envío gratis en siete comunas de Bucaramanga (ronda QA 2026-11-09; microcopy-legal §8 v1.4 y §8.6.1 v1.5; diseño 2026-11-09).
 // Tres modos, según el build que sirve out/ (estado leído de data/config.csv, igual que el build):
-// - Encendida: `envio_gratis_desde` con fecha, `envio_gratis_terminada` vacía y ENVIO_GRATIS_PRUEBA=si (build de PRUEBA, nunca se despliega).
+// - Encendida: `envio_gratis_desde` con fecha (2026-11-17 en la 1.0), `envio_gratis_terminada` vacía y el día del build
+//   igual o posterior. Antes del 17/11: `ENVIO_GRATIS_PRUEBA=si FECHA_BUILD_PRUEBA=2026-11-17 npx playwright test`
+//   (build de PRUEBA con la fecha simulada, nunca se despliega). Desde el 17/11, el build normal ya la enciende.
 // - Terminada (P34 b): `envio_gratis_desde` y `envio_gratis_terminada` con fecha. Aviso 30 días; cálculo normal.
 // - Apagada (repositorio) o programada: nada de la promoción aparece.
 
 const ESTADO = estadoEnvioGratisE2E();
-const ENCENDIDA = ESTADO.tipo === "vigente" && ESTADO.prueba;
+const ENCENDIDA = ESTADO.tipo === "vigente";
 const TERMINADA = ESTADO.tipo === "terminada";
 const APAGADA = ESTADO.tipo === "apagada" || ESTADO.tipo === "programada";
 const COMUNAS = readFileSync("data/comunas_envio_gratis.csv", "utf8")
@@ -21,8 +23,9 @@ const COMUNAS = readFileSync("data/comunas_envio_gratis.csv", "utf8")
 const ALFABETICAS = [...COMUNAS].sort((a, b) => a.localeCompare(b, "es"));
 const OTRA = "Otra comuna o no la sé";
 
-const PLAZO_RESUMEN = "Entrega estimada: mismo día o siguiente día hábil. Plazo máximo: 1 día hábil desde que validamos tu pedido y te damos el aprobado por el chat.";
-const PLAZO_MENSAJE = "Plazo de entrega: máximo 1 día hábil desde que validen mi pedido y me den el aprobado por el chat.";
+// Ajustados a la 1.0 (dictamen 2026-11-14, sección 2 bis): el plazo se cuenta desde que se valida el pago.
+const PLAZO_RESUMEN = "Entrega estimada: el mismo día o el siguiente día hábil. Plazo máximo: 1 día hábil desde que validamos tu pago y te damos el aprobado por el chat.";
+const PLAZO_MENSAJE = "Plazo de entrega: máximo 1 día hábil desde que validen mi pago y me den el aprobado por el chat.";
 const AYUDA_SIN_COMUNA = `Envío gratis si tu dirección está en ${COMUNAS.slice(0, -1).join(", ")} o ${COMUNAS.at(-1)}. Si no eliges una de ellas, pagas la tarifa normal. Verificamos tu dirección por el chat antes de que aceptes el total. Condiciones`;
 const ANUNCIO = "Envío gratis en siete comunas de Bucaramanga. Ver condiciones";
 
@@ -98,26 +101,25 @@ async function completarDatos(page: Page, extra: { lleno?: boolean } = {}) {
     await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
   }
   await page.getByLabel("Celular").fill("300 123 4567");
-  await page.getByRole("radio", { name: "Efectivo contraentrega" }).check({ force: true });
 }
 
 async function irAResumen(page: Page) {
-  await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
 async function mensaje(page: Page) {
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-  await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+  await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
   await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
   const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
   return decodeURIComponent(href.split("?text=")[1]);
 }
 
-test.describe("envío gratis por comunas: ENCENDIDA (build de prueba)", () => {
-  test.skip(!ENCENDIDA, "Requiere envio_gratis_desde con fecha, envio_gratis_terminada vacía y ENVIO_GRATIS_PRUEBA=si");
+test.describe("envío gratis por comunas: ENCENDIDA", () => {
+  test.skip(!ENCENDIDA, "Requiere la promoción vigente el día del build (antes del 17/11: ENVIO_GRATIS_PRUEBA=si FECHA_BUILD_PRUEBA=2026-11-17)");
 
   test("el campo solo existe con Bucaramanga, tras Municipio, con las opciones de §8.2", async ({ page }) => {
     await pasoEnvio(page, KG1);
@@ -195,17 +197,17 @@ test.describe("envío gratis por comunas: ENCENDIDA (build de prueba)", () => {
       await expect(page.getByTestId("referencia-tarifa")).toContainText(alternativa);
       await expect(page.getByTestId("linea-plazo")).toHaveText(PLAZO_RESUMEN);
       await expect(page.locator("main")).not.toContainText("5 a 12 días hábiles");
-      await expect(page.locator("main")).not.toContainText("Por cotizar");
+      await expect(page.locator("main")).not.toContainText(/por cotizar/i);
     });
   }
 
   test("sin comuna o con «Otra comuna o no la sé»: tarifa normal y, con más de 5 kg, «por cotizar» y «Total sin envío»", async ({ page }) => {
     await pasoEnvio(page, KG6);
     await destino(page, "Bucaramanga");
-    await expect(envio(page)).toContainText("Por cotizar");
+    await expect(envio(page)).toContainText("por cotizar");
     await expect(total(page)).toHaveText(/^Total sin envío/);
     await comuna(page).selectOption(OTRA);
-    await expect(envio(page)).toContainText("Por cotizar");
+    await expect(envio(page)).toContainText("por cotizar");
     await expect(total(page)).toHaveText(/^Total sin envío\s*\$564\.000$/);
     await expect(page.getByTestId("etiqueta-envio-gratis")).toHaveCount(0);
     await expect(page.locator("#comuna-ayuda")).toHaveText(AYUDA_SIN_COMUNA);
@@ -240,16 +242,34 @@ test.describe("envío gratis por comunas: ENCENDIDA (build de prueba)", () => {
     await expect(estado(page)).toHaveText("");
   });
 
-  test("orden de foco: Municipio → Comuna → «Condiciones» → Código postal", async ({ page }) => {
+  // QA 2026-11-14: el <details> «Cómo consulto de qué comuna soy» salió del <p> de ayuda (QA-016) y quedó después de
+  // la ayuda, antes de Código postal. Su <summary> es un control nativo con foco: el orden correcto lo incluye.
+  test("orden de foco: Municipio → Comuna → «Condiciones» → «Cómo consulto…» → Código postal", async ({ page }) => {
     await pasoEnvio(page, KG1);
     await destino(page, "Bucaramanga");
     await page.getByLabel("Municipio").focus();
     const ruta: string[] = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       await page.keyboard.press("Tab");
       ruta.push(await page.evaluate(() => (document.activeElement?.id || document.activeElement?.textContent?.trim()) ?? ""));
     }
-    expect(ruta).toEqual(["comuna", "Condiciones", "codigoPostal"]);
+    expect(ruta).toEqual(["comuna", "Condiciones", "Cómo consulto de qué comuna soy", "codigoPostal"]);
+    // Enter y Espacio abren y cierran el desplegable sin mover el foco.
+    const summary = page.getByTestId("como-consultar-comuna").locator("summary");
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("como-consultar-comuna")).toHaveAttribute("open", "");
+    await page.keyboard.press("Space");
+    await expect(page.getByTestId("como-consultar-comuna")).not.toHaveAttribute("open", /.*/);
+  });
+
+  test("QA-016: el <details> no va dentro de un <p> ni dentro de la descripción accesible de Comuna", async ({ page }) => {
+    await pasoEnvio(page, KG1);
+    await destino(page, "Bucaramanga");
+    expect(await page.locator("p details").count()).toBe(0);
+    const descrita = await page.locator("#comuna-ayuda details, #comuna-ayuda summary").count();
+    expect(descrita).toBe(0);
+    await expect(page.locator("#comuna-ayuda")).not.toContainText("Cómo consulto");
   });
 
   test("resumen y mensaje de WhatsApp con comuna (§8.3 y §8.4), ≤ 2.000 caracteres con todos los campos", async ({ page }) => {
@@ -265,9 +285,9 @@ test.describe("envío gratis por comunas: ENCENDIDA (build de prueba)", () => {
     expect(await graves(page)).toEqual([]);
     const texto = await mensaje(page);
     expect(texto.length).toBeLessThanOrEqual(2000);
-    expect(texto).toContain(`Envío (Bucaramanga · zona 1 · Ciudadela Real de Minas): $0 (envío gratis, sujeto a verificar la dirección)\nTotal: $94.000\n${PLAZO_MENSAJE}`);
-    expect(texto).toMatch(/\nDirección: D{120} · Barrio: B{60}\nComuna: Ciudadela Real de Minas\nIndicaciones: /);
-    expect(texto).toContain("\n\nSi mi dirección no está en esa comuna, el envío es de $8.800 y el total queda en $102.800; espero su confirmación.\n\nAcepto los Términos");
+    expect(texto).toContain(`Envío: zona 1 · Ciudadela Real de Minas, $0 (envío gratis, sujeto a verificar la dirección)\nTotal: $94.000\n${PLAZO_MENSAJE}`);
+    expect(texto).toMatch(/\nDirección: D{120} · Barrio: B{60}\nComuna: Ciudadela Real de Minas\nCódigo postal: 680001\nIndicaciones: /);
+    expect(texto).toContain("\n\nSi mi dirección no está en esa comuna, el envío es de $8.800 y el total queda en $102.800; espero su confirmación.\nAcepto los Términos v");
     expect(texto).not.toContain("Total sin envío");
   });
 
@@ -291,7 +311,7 @@ test.describe("envío gratis por comunas: ENCENDIDA (build de prueba)", () => {
     await irAResumen(page);
     await expect(page.getByTestId("resumen-comuna")).toHaveCount(0);
     const texto = await mensaje(page);
-    expect(texto).toContain("Envío (Bucaramanga · zona 1): $8.800\nTotal: $102.800\n");
+    expect(texto).toContain("Envío: zona 1, $8.800 (IVA incluido)\nTotal: $102.800\n");
     expect(texto).not.toMatch(/Comuna|gratis|Plazo de entrega|Si mi dirección/);
   });
 
@@ -340,45 +360,32 @@ test.describe("envío gratis por comunas: ENCENDIDA (build de prueba)", () => {
     await comuna(page).selectOption("Centro");
     expect(await clasesProhibidas(page, "[data-testid=campo-comuna], [data-testid=linea-envio], [data-testid=linea-total]")).toEqual([]);
     await page.goto("/envios/");
-    expect(await clasesProhibidas(page, "[data-testid=seccion-envio-gratis], [data-testid=nota-envio-gratis-tabla], [data-testid=parrafo-inicial-envios], [data-testid=caja-cotizar], [data-testid=plazo-zona-1], [data-testid=plazo-zona-5]")).toEqual([]);
+    expect(await clasesProhibidas(page, "#envio-gratis, [data-testid=nota-envio-gratis-tabla], [data-testid=caja-cotizar], [data-testid=leyenda-iva]")).toEqual([]);
     await page.goto("/");
     expect(await clasesProhibidas(page, "[data-testid=anuncio-envio-gratis-inicio]")).toEqual([]);
   });
 
-  test("/envios/: párrafo inicial, fila de zona 1, salvedad, sección #envio-gratis, plazos y caja de cotizar (§8.5)", async ({ page }) => {
+  test("/envios/: numeral 13 de D3 con su ancla, nota de la tabla, salvedad de la leyenda y caja de cotizar sin textos paralelos (LEG-167)", async ({ page }) => {
     await page.goto("/envios/#envio-gratis");
     const titulo = page.locator("#envio-gratis");
-    await expect(titulo).toHaveText("Envío gratis en comunas de Bucaramanga");
+    await expect(titulo).toHaveText("13. Envío gratis en comunas de Bucaramanga");
     // El ancla deja el título visible bajo el encabezado fijo.
     const top = await titulo.evaluate((el) => el.getBoundingClientRect().top);
     const alto = await page.locator("header").first().evaluate((el) => el.getBoundingClientRect().bottom);
     expect(top).toBeGreaterThanOrEqual(alto);
-    await expect(page.getByTestId("parrafo-inicial-envios")).toHaveText(
-      "El envío se calcula por zona y por peso, y lo ves en tu pedido en cuanto eliges la ciudad. Pagas el valor que te mostramos; solo se cotiza aparte en zonas especiales y en pedidos de más de 5 kg. En siete comunas de Bucaramanga el envío es gratis con cualquier peso, si verificamos por el chat que tu dirección está en una de ellas. Ver condiciones",
-    );
-    await expect(page.getByTestId("parrafo-inicial-envios").getByRole("link", { name: "Ver condiciones" })).toHaveAttribute("href", "#envio-gratis");
+    for (const c of COMUNAS) await expect(page.getByText(new RegExp(`estas comunas de Bucaramanga: .*${c}`))).toBeVisible();
     const nota = page.getByTestId("tarifa-bucaramanga").getByTestId("nota-envio-gratis-tabla");
     await expect(nota).toHaveText("Gratis en siete comunas, con cualquier peso (ver condiciones).");
     await expect(nota).toHaveAttribute("href", "#envio-gratis");
     await expect(page.getByTestId("nota-envio-gratis-tabla")).toHaveCount(1);
     await expect(page.getByTestId("tarifa-bucaramanga")).toContainText("$8.800");
     await expect(page.getByTestId("leyenda-iva")).toContainText("Más de 5 kg, en cualquier zona, se cotiza aparte. Salvo en las siete comunas de Bucaramanga con envío gratis.");
-    await expect(page.getByTestId("lista-comunas").locator("li")).toHaveText(ALFABETICAS);
-    await expect(page.getByTestId("seccion-envio-gratis").getByRole("link", { name: "envíos, devoluciones, retracto y garantía" })).toHaveAttribute("href", "/legal/envios-devoluciones/");
-    await expect(page.getByTestId("plazo-zona-1")).toContainText(
-      "Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso, contado desde que validamos tu pedido y te damos el aprobado por el chat (ver condiciones).",
-    );
-    await expect(page.getByTestId("plazo-zona-1").getByRole("link", { name: "ver condiciones" })).toHaveAttribute("href", "#envio-gratis");
-    await expect(page.getByTestId("plazo-zona-5")).toContainText("No aplica a las siete comunas de Bucaramanga con envío gratis.");
-    await expect(page.getByTestId("caja-cotizar")).toHaveText(
-      "Escríbenos al +57 300 112 9874 y te cotizamos. Si tu dirección está en una de las siete comunas de Bucaramanga con envío gratis, no hace falta: el envío es gratis con cualquier peso.",
-    );
-    // La lista de comunas tiene el ancho de los párrafos (max-w-2xl) y no lleva pastillas.
-    const anchos = await page.getByTestId("seccion-envio-gratis").evaluate((s) => ({
-      lista: s.querySelector("[data-testid=lista-comunas]")!.getBoundingClientRect().width,
-      parrafo: s.querySelector("p")!.getBoundingClientRect().width,
-    }));
-    expect(anchos.lista).toBeLessThanOrEqual(anchos.parrafo + 1);
+    // Retirados con D3 completo (sección 2 bis): párrafo inicial, plazos de zona 1 y 5, lista aparte y frase de la caja.
+    for (const id of ["parrafo-inicial-envios", "plazo-zona-1", "plazo-zona-5", "lista-comunas", "seccion-envio-gratis"]) await expect(page.getByTestId(id)).toHaveCount(0);
+    await expect(page.getByTestId("caja-cotizar")).toHaveText("Escríbenos al +57 300 112 9874 y te cotizamos.");
+    // El numeral 13 aparece una sola vez y «Normas citadas» queda al final del documento, fuera del numeral.
+    await expect(page.getByRole("heading", { name: "13. Envío gratis en comunas de Bucaramanga" })).toHaveCount(1);
+    await expect(page.getByText(/^Normas citadas:/)).toHaveCount(1);
     // Sin envío gratis en JSON-LD ni en metadatos (LEG-116).
     const cabeza = await page.evaluate(() => [...document.querySelectorAll("script[type='application/ld+json'], meta")].map((e) => e.outerHTML).join("\n"));
     expect(cabeza).not.toMatch(/gratis|comuna|shippingRate|OfferShippingDetails/i);
@@ -523,7 +530,7 @@ test.describe("envío gratis por comunas: TERMINADA", () => {
     await irAResumen(page);
     await expect(page.locator("main")).not.toContainText(/gratis|comuna/i);
     const texto = await mensaje(page);
-    expect(texto).toContain("Envío (Bucaramanga · zona 1): $8.800");
+    expect(texto).toContain("Envío: zona 1, $8.800 (IVA incluido)");
     expect(texto).toContain("Total: $102.800");
     expect(texto).not.toMatch(/gratis|comuna/i);
   });
@@ -532,7 +539,7 @@ test.describe("envío gratis por comunas: TERMINADA", () => {
     await pasoEnvio(page, KG6);
     await destino(page, "Bucaramanga");
     await expect(page.locator("#comuna")).toHaveCount(0);
-    await expect(envio(page)).toContainText("Por cotizar");
+    await expect(envio(page)).toContainText("por cotizar");
     await expect(total(page)).toHaveText(/^Total sin envío/);
     await completarDatos(page);
     await irAResumen(page);
@@ -585,34 +592,23 @@ test.describe("envío gratis por comunas: TERMINADA", () => {
     await expect(page.locator("#envio-gratis")).toBeInViewport();
   });
 
-  test("/envios/: título, aviso, nota de vigencia (QA-011) y el numeral 13 en un bloque citado; sin lista de comunas, nota de tabla ni salvedades", async ({ page }) => {
+  // Con D3 completo en /envios/ (LEG-141), el numeral 13 publicado ya está en el documento: el aviso y la nota de
+  // vigencia van al inicio del numeral, sin bloque citado aparte (cambio de presentación pendiente de diseño).
+  test("/envios/: aviso y nota de vigencia (QA-011) al inicio del numeral 13 de D3; sin nota de tabla ni salvedades", async ({ page }) => {
     await page.goto("/envios/#envio-gratis");
-    const seccion = page.getByTestId("seccion-envio-gratis");
-    if (ESTADO.prueba) {
-      // Con ENVIO_GRATIS_PRUEBA el numeral sale del borrador de legal (nota E); en el despliegue, del publicado.
-      await expect(page.locator("#envio-gratis")).toHaveText("Envío gratis en comunas de Bucaramanga");
-      const parrafos = seccion.locator("p");
-      await expect(parrafos.nth(0)).toHaveText(AVISO);
-      await expect(parrafos.nth(1)).toHaveText(`Rigió desde el ${fechaEnLetras(ESTADO.desde)} y ya no rige para pedidos nuevos. Abajo está el numeral 13 de «Envíos, devoluciones, retracto y garantía», tal como sigue publicado: donde dice que la promoción sigue vigente, entiende que terminó el ${fechaEnLetras(ESTADO.terminada)}. Sus condiciones se siguen aplicando, completas, a los pedidos cuyo mensaje de WhatsApp ya decía «envío gratis», también en su entrega, su retracto y su garantía.`);
-      await expect(seccion).not.toContainText("Estas fueron sus condiciones");
-      const cita = seccion.locator("blockquote");
-      await expect(cita).toHaveCount(1);
-      await expect(cita.getByRole("heading", { name: "13. Envío gratis en comunas de Bucaramanga" })).toBeVisible();
-      await expect(cita.locator("p").first()).toContainText("El envío es gratis para los pedidos que entregamos en una dirección de estas comunas de Bucaramanga:");
-      await expect(seccion).toContainText("Vigencia: rige desde el");
-      await expect(seccion.getByRole("link", { name: "envíos, devoluciones, retracto y garantía" })).toHaveAttribute("href", "/legal/envios-devoluciones/");
-      expect(await clasesProhibidas(page, "[data-testid=seccion-envio-gratis]")).toEqual([]);
-    }
+    await expect(page.locator("#envio-gratis")).toHaveText("13. Envío gratis en comunas de Bucaramanga");
+    await expect(page.getByTestId("aviso-terminacion-envios")).toHaveText(AVISO);
+    await expect(page.getByTestId("nota-vigencia-terminada")).toHaveText(`Rigió desde el ${fechaEnLetras(ESTADO.desde)} y ya no rige para pedidos nuevos. Abajo está el numeral 13 de «Envíos, devoluciones, retracto y garantía», tal como sigue publicado: donde dice que la promoción sigue vigente, entiende que terminó el ${fechaEnLetras(ESTADO.terminada)}. Sus condiciones se siguen aplicando, completas, a los pedidos cuyo mensaje de WhatsApp ya decía «envío gratis», también en su entrega, su retracto y su garantía.`);
+    const orden = await page.evaluate(() => {
+      const t = document.getElementById("envio-gratis")!;
+      const a = document.querySelector("[data-testid=aviso-terminacion-envios]")!;
+      return Boolean(t.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING) && t.nextElementSibling === a;
+    });
+    expect(orden).toBe(true);
+    await expect(page.getByText(/Vigencia: rige desde el/)).toBeVisible();
     await expect(page.getByTestId("lista-comunas")).toHaveCount(0);
     await expect(page.getByTestId("nota-envio-gratis-tabla")).toHaveCount(0);
     await expect(page.getByTestId("leyenda-iva")).not.toContainText(/gratis|comunas/i);
-    // Fuera de la sección, /envios/ es el de la promoción apagada (§5.8): ni «gratis» ni «comuna».
-    const resto = await page.evaluate(() => {
-      const m = document.querySelector("main")!.cloneNode(true) as HTMLElement;
-      m.querySelectorAll("[data-testid=seccion-envio-gratis], script, style, template").forEach((e) => e.remove());
-      return m.textContent ?? "";
-    });
-    expect(resto).not.toMatch(/gratis|comuna/i);
     const cabeza = await page.evaluate(() => [...document.querySelectorAll("script[type='application/ld+json'], meta")].map((e) => e.outerHTML).join("\n"));
     expect(cabeza).not.toMatch(/gratis|comuna|shippingRate|OfferShippingDetails/i);
   });
@@ -651,7 +647,7 @@ test.describe("envío gratis por comunas: APAGADA (repositorio)", () => {
     await destino(page, "Bucaramanga");
     await expect(page.getByTestId("campo-comuna")).toHaveCount(0);
     await expect(page.locator("#comuna")).toHaveCount(0);
-    await expect(envio(page)).toContainText("Por cotizar");
+    await expect(envio(page)).toContainText("por cotizar");
     await expect(total(page)).toHaveText(/^Total sin envío/);
     await expect(page.locator("main")).not.toContainText(/gratis|comuna/i);
   });
@@ -664,9 +660,12 @@ test.describe("envío gratis por comunas: APAGADA (repositorio)", () => {
     await expect(cajon).toBeVisible();
     await expect(cajon.getByTestId("anuncio-envio-gratis")).toHaveCount(0);
     await expect(cajon).not.toContainText(/gratis/i);
+    // D3 1.0 publica su numeral 13 aunque la promoción no rija hoy (programada hasta el 17/11): es texto legal.
+    // Lo generado del CSV no aparece: ni nota de la tabla, ni salvedad de la leyenda, ni aviso de terminación.
     await page.goto("/envios/");
-    await expect(page.locator("#envio-gratis")).toHaveCount(0);
-    await expect(page.locator("main")).not.toContainText(/gratis|comuna/i);
+    await expect(page.getByTestId("nota-envio-gratis-tabla")).toHaveCount(0);
+    await expect(page.getByTestId("leyenda-iva")).not.toContainText(/gratis|comunas/i);
+    await expect(page.getByTestId("aviso-terminacion-envios")).toHaveCount(0);
     await page.goto("/");
     await expect(page.getByTestId("anuncio-envio-gratis-inicio")).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/envío gratis/i);

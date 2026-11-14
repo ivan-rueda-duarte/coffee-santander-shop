@@ -2,13 +2,12 @@ clave,valor
 nombre_tienda,De Santander
 whatsapp,573001129874
 ciudad_despacho,Bucaramanga
-nota_envio,Enviamos a todo Colombia desde Bucaramanga. Ves el valor del envío en tu carrito; en algunos destinos y en pedidos de más de 5 kg te lo confirmamos por WhatsApp antes de que pagues.
-formas_pago,Efectivo contraentrega|Transferencia Bre-B
+medios_pago,transferencia|bre-b
 max_cantidad,20
-version_terminos,1
-fecha_terminos,2026-11-06
-version_politica_datos,1
-fecha_politica_datos,2026-11-06
+version_terminos,1.0
+fecha_terminos,2026-11-17
+version_politica_datos,1.0
+fecha_politica_datos,2026-11-17
 iva_tarifa,5
 razon_social,De Santander SAS
 nit,902.121.184-8
@@ -19,5 +18,5 @@ direccion_notificacion,"Calle 37 n.° 23-77, apartamento 702, Bucaramanga, Santa
 correo_contacto,desantander.tienda@gmail.com
 correo_notificacion,desantander.tienda@gmail.com
 area_datos,Área comercial
-envio_gratis_desde,
+envio_gratis_desde,2026-11-17
 envio_gratis_terminada,

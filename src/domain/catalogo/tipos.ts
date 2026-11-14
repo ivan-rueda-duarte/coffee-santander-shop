@@ -96,7 +96,8 @@ export interface Cafe {
 }
 
 /** Etiquetas visibles. */
-export const ETIQUETA_MOLIENDA: Record<Molienda, string> = { grano: "Grano entero", molido: "Molido" };
+/** Presentación (D5 §6.2: «Presentación: Grano · Molido»; LEG-155). El tipo se sigue llamando `Molienda` por compatibilidad con el carrito guardado. */
+export const ETIQUETA_MOLIENDA: Record<Molienda, string> = { grano: "Grano", molido: "Molido" };
 export const ETIQUETA_TUESTE: Record<Tueste, string> = {
   claro: "Claro",
   medio_claro: "Medio claro",

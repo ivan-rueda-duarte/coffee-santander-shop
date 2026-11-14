@@ -71,12 +71,12 @@ Pares `clave,valor`. Si el valor lleva comas, va entre comillas (`domicilio,"Buc
 
 | Clave | Qué es |
 |---|---|
-| `nombre_tienda`, `whatsapp`, `ciudad_despacho`, `nota_envio`, `formas_pago`, `max_cantidad` | Obligatorias. `whatsapp` con indicativo y solo dígitos (`573001129874`); `nota_envio` es el texto corto del pie; `formas_pago` es una lista con `\|`. |
-| `version_terminos`, `fecha_terminos`, `version_politica_datos`, `fecha_politica_datos` | **Obligatorias.** Versión («1») y fecha (`2026-11-06`) de los Términos y condiciones y de la Política de tratamiento de datos. Las leen las casillas del resumen, la última línea del mensaje de WhatsApp y el rótulo «Versión … · vigente desde …» de las páginas legales; nada va fijo en el código. Si cambia la fecha real de publicación o se publica una versión nueva, se cambian aquí **y** en los documentos de `docs/legal/` el mismo día (`npm run datos` falla si no coinciden). |
-| `iva_tarifa` *(opcional)* | Tarifa de IVA incluida en los precios (`5`). Con valor, el sitio dice «Precios con IVA del 5 % incluido (art. 468-1 del Estatuto Tributario)»; vacía, dice solo «con todos los impuestos incluidos». Solo se publica con el concepto escrito del contador. |
-| `razon_social`, `nit`, `domicilio`, `direccion_notificacion`, `correo_contacto`, `correo_notificacion` | Datos del vendedor (Ley 1480, art. 50). Se muestran en el pie, en el resumen del pedido y en `/legal/vendedor/`; cada dato se pinta solo si existe. `nit` con dígito de verificación (`902.121.184-8`). |
+| `nombre_tienda`, `whatsapp`, `ciudad_despacho`, `medios_pago`, `max_cantidad` | Obligatorias. `whatsapp` con indicativo y solo dígitos (`573001129874`; el sitio lo muestra como «+57 300 112 9874»). `medios_pago` es `transferencia\|bre-b` (paquete del abogado v1.0, §7.1): solo se admiten esos dos, porque los textos de pago del sitio y de D1 §7 son fijos («transferencia bancaria o Bre-B»). `nota_envio` y `formas_pago` se retiraron (2026-11-14): el texto de envíos del pie es fijo (D5 §6.1). |
+| `version_terminos`, `fecha_terminos`, `version_politica_datos`, `fecha_politica_datos` | **Obligatorias.** Versión (`1.0`, como texto) y fecha (`2026-11-17`) de los Términos y condiciones y de la Política de tratamiento de datos. Las leen las casillas del resumen, la última línea del mensaje de WhatsApp y el rótulo «Versión … · vigente desde …» de las páginas legales; nada va fijo en el código. Si cambia la fecha real de publicación o se publica una versión nueva, se cambian aquí **y** en los documentos de `docs/legal/` el mismo día (`npm run datos` falla si no coinciden). |
+| `iva_tarifa` *(opcional)* | Tarifa de IVA incluida en los precios (`5`). Con valor, el sitio dice «Precio con IVA del 5 % incluido.» (D5 §6.2); vacía, dice solo «con todos los impuestos incluidos». Solo se publica con el concepto escrito del contador. |
+| `razon_social`, `nit`, `domicilio`, `direccion_notificacion`, `correo_contacto`, `correo_notificacion` | Datos del vendedor (Ley 1480, art. 50). Razón social, NIT, domicilio y correo se muestran en el pie; el resumen muestra razón social y NIT; `direccion_notificacion` va solo en `/legal/vendedor/` (decisión del dueño, P38 = b). Si cambia un dato, legal cambia el mismo día la lista de `docs/legal/informacion-vendedor.md`, que es la que publica `/legal/vendedor/`. `nit` con dígito de verificación (`902.121.184-8`). |
 | `matricula_mercantil`, `representante_legal`, `area_datos` | Solo se muestran en `/legal/vendedor/` (el representante es un dato personal; no va en el pie). `area_datos` es el área que atiende consultas de datos personales. |
-| `envio_gratis_desde`, `envio_gratis_terminada` *(opcionales)* | Envío gratis en siete comunas de Bucaramanga (ver `comunas_envio_gratis.csv`). **Hoy van vacías: la promoción está apagada.** Ver las instrucciones de esa sección antes de llenarlas. |
+| `envio_gratis_desde`, `envio_gratis_terminada` *(opcionales)* | Envío gratis en siete comunas de Bucaramanga (ver `comunas_envio_gratis.csv`). Hoy `envio_gratis_desde,2026-11-17` y `envio_gratis_terminada` vacía (paquete 1.0, LEG-167): un build anterior al 17/11 la deja «programada» y no aparece; el de publicación se hace ese día o después. Ver las instrucciones de esa sección. |
 
 ## tarifas_envio.csv, zonas_envio.csv y plazos_envio.csv (envíos por zona)
 
@@ -113,10 +113,12 @@ Una fila por zona (las cinco son obligatorias). Lo que se escribe aquí se publi
 | Columna | Qué es |
 |---|---|
 | `zona` | 1 a 5. |
-| `plazo_estimado` | Lo que suele tardar, en días hábiles, tal como se lee: `1 a 3 días hábiles`, `Mismo día o siguiente día hábil`. |
-| `plazo_maximo` | El plazo que la tienda se compromete a cumplir: `3 días hábiles`. En la zona 5 debe decir `por cotizar` (el sitio añade «nunca más de 30 días calendario»); en las zonas 1 a 4 tiene que ser un plazo real. |
+| `plazo_estimado` | Lo que suele tardar, tal como se lee en «Entrega estimada: …»: `de 1 a 3 días hábiles`, `el mismo día o el siguiente día hábil`. |
+| `plazo_maximo` | El plazo que la tienda se compromete a cumplir: `6 días hábiles`. En la zona 5 debe decir que se informa al cotizar (`se informa al cotizar; máximo 30 días calendario`); en las zonas 1 a 4 tiene que ser un plazo real. |
 
-Los plazos se cuentan desde que el cliente acepta el total en el chat y, si paga por Bre-B, desde que se recibe el pago (texto legal en `docs/legal/envios-devoluciones-retracto.md`).
+Valores del paquete del abogado v1.0 (§7.2): zona 1 `el mismo día o el siguiente día hábil` / `3 días hábiles`; zonas 2 y 3 `de 1 a 3 días hábiles` / `6 días hábiles`; zona 4 `de 2 a 6 días hábiles` / `10 días hábiles`; zona 5 `de 5 a 12 días hábiles` / `se informa al cotizar; máximo 30 días calendario`. Se cuentan desde el día hábil siguiente al pago (D3 §6). **Deben coincidir con D3 §6** (`docs/legal/envios-devoluciones-retracto.md`, publicado en `/envios/`): cambiar un plazo exige una versión nueva de los documentos.
+
+**Nombres del paquete y nombres del repositorio (LEG-152).** El paquete §7.2 llama `expresion_rotulo` a la columna `fabricante_expresion` de `catalogo.csv`, `presentaciones` a `moliendas` (grano, molido o ambas) y pone los plazos como columnas de `zonas_envio.csv`; aquí siguen en `plazos_envio.csv`. El efecto es el mismo.
 
 ## comunas_envio_gratis.csv (envío gratis por comunas)
 

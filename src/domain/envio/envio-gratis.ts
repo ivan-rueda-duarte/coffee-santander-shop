@@ -24,10 +24,10 @@ export const TEXTOS_ENVIO_GRATIS = {
   enlaceCondiciones: "Condiciones",
   /** §8.3: junto al valor «$0». */
   etiqueta: "Envío gratis",
-  /** §8.3: plazo propio de la promoción, con cualquier peso (no sale de data/plazos_envio.csv). */
-  plazoResumen: "Entrega estimada: mismo día o siguiente día hábil. Plazo máximo: 1 día hábil desde que validamos tu pedido y te damos el aprobado por el chat.",
-  /** §8.4: bajo «Total:» en el mensaje. */
-  plazoMensaje: "Plazo de entrega: máximo 1 día hábil desde que validen mi pedido y me den el aprobado por el chat.",
+  /** §8.3, ajustado a la 1.0 (dictamen 2026-11-14, sección 2 bis): plazo propio de la promoción, con cualquier peso (no sale de data/plazos_envio.csv). */
+  plazoResumen: "Entrega estimada: el mismo día o el siguiente día hábil. Plazo máximo: 1 día hábil desde que validamos tu pago y te damos el aprobado por el chat.",
+  /** §8.4, ajustado a la 1.0 (sección 2 bis): bajo «Total:» en el mensaje. */
+  plazoMensaje: "Plazo de entrega: máximo 1 día hábil desde que validen mi pago y me den el aprobado por el chat.",
   /** §8.6: portada y cajón, seguido del enlace «Ver condiciones». */
   anuncio: "Envío gratis en siete comunas de Bucaramanga.",
   enlaceAnuncio: "Ver condiciones",
@@ -38,26 +38,10 @@ export const TEXTOS_ENVIO_GRATIS = {
   tituloSeccion: "Envío gratis en comunas de Bucaramanga",
   notaTabla: "Gratis en siete comunas, con cualquier peso (ver condiciones).",
   salvedadTarifas: " Salvo en las siete comunas de Bucaramanga con envío gratis.",
-  /** §8.5 v1.4 (LEG-123): «ver condiciones» va enlazado a #envio-gratis (ver `ENLACE_PLAZO_ZONA1`). */
-  plazoZona1: " Con envío gratis en comunas de Bucaramanga, el máximo es 1 día hábil con cualquier peso, contado desde que validamos tu pedido y te damos el aprobado por el chat (ver condiciones).",
-  /** §8.5 v1.4 (LEG-121): se agrega al párrafo inicial de /envios/, seguido del enlace « Ver condiciones» (`enlaceAnuncio`). */
-  parrafoEnvios: " En siete comunas de Bucaramanga el envío es gratis con cualquier peso, si verificamos por el chat que tu dirección está en una de ellas.",
-  /** §8.5 v1.4 (LEG-122): se agrega a «Escríbenos al {WhatsApp} y te cotizamos.» en la caja final de /envios/. */
-  cajaCotizar: " Si tu dirección está en una de las siete comunas de Bucaramanga con envío gratis, no hace falta: el envío es gratis con cualquier peso.",
-  plazoZona5: " No aplica a las siete comunas de Bucaramanga con envío gratis.",
 } as const;
 
 /** Ancla de las condiciones en /envios/. */
 export const ANCLA_ENVIO_GRATIS = "envio-gratis";
-
-/** Parte de `plazoZona1` que va enlazada a #envio-gratis. */
-export const ENLACE_PLAZO_ZONA1 = "ver condiciones";
-
-/** Parte un texto en [antes, enlace, después] alrededor de la primera aparición de `enlace` (null si no aparece). */
-export function partirEnlace(texto: string, enlace: string): [string, string, string] | null {
-  const i = texto.indexOf(enlace);
-  return i < 0 ? null : [texto.slice(0, i), enlace, texto.slice(i + enlace.length)];
-}
 
 /** Días calendario que el aviso de terminación sigue en portada y cajón desde `envio_gratis_terminada` (§8.6.1, LEG-127). */
 export const DIAS_AVISO_TERMINACION = 30;

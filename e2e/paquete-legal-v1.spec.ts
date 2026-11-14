@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { AVISO_RETRACTO, estadoEnvioGratisE2E, fechaEnLetras, leerConfig, textosCasillas } from "./ayudas";
+import { AVISO_RETRACTO, constanciaMensaje, estadoEnvioGratisE2E, fechaEnLetras, leerConfig, TEXTO_PAGO_FORMULARIO, textosCasillas } from "./ayudas";
 
-// Ronda QA 2026-11-06 «paquete legal v1» (docs/qa/2026-11-06-paquete-legal-v1.md).
+// Ronda QA 2026-11-06 «paquete legal v1» (docs/qa/2026-11-06-paquete-legal-v1.md), actualizada el 2026-11-14 al
+// paquete del abogado v1.0 (docs/legal/revisiones/2026-11-14-paquete-abogado-v1.md, LEG-140 a LEG-167; pruebas de §7.4).
 // Verificación independiente de la entrega de docs/legal/revisiones/2026-11-06-paquete-v1.md contra
 // docs/legal/microcopy-legal.md v1.0 y la sección «## Texto para el consumidor» de los documentos legales.
 // Los valores esperados se leen de los .md y de data/*.csv con un extractor propio (no el del sitio).
@@ -25,12 +26,22 @@ const sinDesborde = (page: Page) => page.evaluate(() => document.documentElement
 // 1. Páginas legales letra por letra
 // ---------------------------------------------------------------------------------------------------------
 
+// Títulos h1 del paquete v1.0; D3 se publica en /envios/ (LEG-141).
 const LEGALES = [
-  { ruta: "/legal/terminos/", archivo: "terminos-y-condiciones.md", titulo: "Términos y condiciones" },
-  { ruta: "/legal/privacidad/", archivo: "politica-tratamiento-datos.md", titulo: "Política de tratamiento de datos" },
-  { ruta: "/legal/envios-devoluciones/", archivo: "envios-devoluciones-retracto.md", titulo: "Envíos, devoluciones, retracto y garantía" },
+  { ruta: "/legal/terminos/", archivo: "terminos-y-condiciones.md", titulo: "Términos y condiciones de compra" },
+  { ruta: "/legal/privacidad/", archivo: "politica-tratamiento-datos.md", titulo: "Política de tratamiento de datos personales" },
+  { ruta: "/envios/", archivo: "envios-devoluciones-retracto.md", titulo: "Envíos, devoluciones, retracto y garantía" },
   { ruta: "/legal/vendedor/", archivo: "informacion-vendedor.md", titulo: "Información del vendedor" },
 ];
+
+/** Valores entre llaves que pone el código (paquete §0; LEG-142). */
+const VALORES: Record<string, string> = {
+  version_terminos: leerConfig("version_terminos"),
+  fecha_terminos: fechaEnLetras(leerConfig("fecha_terminos")),
+  version_politica_datos: leerConfig("version_politica_datos"),
+  fecha_politica_datos: fechaEnLetras(leerConfig("fecha_politica_datos")),
+};
+const sustituir = (t: string) => t.replace(/\{([a-z_]+)\}/g, (m, k: string) => VALORES[k] ?? m);
 
 type BloqueEsperado = [etiqueta: "H2" | "P" | "LI", texto: string];
 
@@ -41,7 +52,7 @@ function textoConsumidor(archivo: string): BloqueEsperado[] {
   expect(inicio, `${archivo} sin «## Texto para el consumidor»`).toBeGreaterThan(-1);
   const salida: BloqueEsperado[] = [];
   for (const cruda of lineas.slice(inicio + 1)) {
-    const l = cruda.trim();
+    const l = sustituir(cruda.trim());
     if (l.startsWith("## ") || l === "---") break;
     if (!l) continue;
     if (l.startsWith("### ")) salida.push(["H2", l.slice(4)]);
@@ -52,19 +63,24 @@ function textoConsumidor(archivo: string): BloqueEsperado[] {
   return salida;
 }
 
-test.describe("páginas legales v1: texto público letra por letra", () => {
+test.describe("páginas legales 1.0: texto público letra por letra", () => {
   for (const doc of LEGALES) {
     test(`${doc.ruta}: título, rótulo, texto idéntico al .md y sin marcadores`, async ({ page }) => {
       const respuesta = await page.goto(doc.ruta);
       expect(respuesta?.status()).toBe(200);
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(doc.titulo);
-      await expect(page.getByText(`Versión ${leerConfig("version_terminos")} · vigente desde ${leerConfig("fecha_terminos")}`, { exact: true })).toBeVisible();
-      await expect(page.getByText("Versión 1 · vigente desde 2026-11-06", { exact: true })).toHaveCount(1);
+      // §7.4: versión 1.0 y fecha del 17/11/2026, leídas de config.csv.
+      const version = doc.archivo === "politica-tratamiento-datos.md" ? "version_politica_datos" : "version_terminos";
+      const fecha = doc.archivo === "politica-tratamiento-datos.md" ? "fecha_politica_datos" : "fecha_terminos";
+      await expect(page.getByTestId("rotulo-legal")).toHaveText(`Versión ${leerConfig(version)} · vigente desde el ${fechaEnLetras(leerConfig(fecha))}`);
+      await expect(page.getByTestId("rotulo-legal")).toHaveText("Versión 1.0 · vigente desde el 17 de noviembre de 2026");
       await expect(page).toHaveTitle(new RegExp(`^${doc.titulo}`));
 
-      const publicado = await page.locator("article .body-l").evaluate((cont) => {
+      // Lo generado de los CSV (tabla de tarifas de /envios/, aviso de la promoción terminada) no es texto del documento.
+      const publicado = await page.locator("article .body-l").first().evaluate((cont) => {
         const salida: [string, string][] = [];
         for (const el of Array.from(cont.children)) {
+          if (el.tagName === "SECTION" || el.hasAttribute("data-testid")) continue;
           if (el.tagName === "UL" || el.tagName === "OL") for (const li of Array.from(el.children)) salida.push(["LI", li.textContent ?? ""]);
           else salida.push([el.tagName, el.textContent ?? ""]);
         }
@@ -73,23 +89,32 @@ test.describe("páginas legales v1: texto público letra por letra", () => {
       expect(publicado).toEqual(textoConsumidor(doc.archivo));
 
       const texto = await page.locator("main").innerText();
-      expect(texto).not.toMatch(/en preparación|TODO|VERIFICAR|DECISIÓN|BORRADOR|\[|\]|\*\*|`|<!--/);
+      expect(texto).not.toMatch(/en preparación|TODO|VERIFICAR|DECISIÓN|BORRADOR|\[|\]|\{|\}|\*\*|`|<!--/);
     });
   }
 
-  test("/legal/vendedor/: dl con las 8 filas de microcopy §5.4 y los datos de config.csv", async ({ page }) => {
+  test("/legal/vendedor/: D4 sin el dl duplicado; la lista coincide con config.csv e incluye la dirección de notificación (LEG-148)", async ({ page }) => {
     await page.goto("/legal/vendedor/");
-    const filas = await page.getByTestId("datos-vendedor").locator("dt").evaluateAll((dts) => dts.map((dt) => [dt.textContent, dt.nextElementSibling?.textContent]));
-    expect(filas).toEqual([
-      ["Razón social", leerConfig("razon_social")],
-      ["NIT", leerConfig("nit")],
-      ["Matrícula mercantil", leerConfig("matricula_mercantil")],
-      ["Representante legal", leerConfig("representante_legal")],
-      ["Domicilio", leerConfig("domicilio")],
-      ["Dirección de notificación judicial", leerConfig("direccion_notificacion")],
-      ["Correo", leerConfig("correo_contacto")],
-      ["WhatsApp", "+57 300 112 9874"],
+    await expect(page.getByTestId("datos-vendedor")).toHaveCount(0);
+    await expect(page.locator("main dl")).toHaveCount(0);
+    const items = await page.locator("article .body-l li").allTextContents();
+    expect(items).toEqual([
+      `Razón social: ${leerConfig("razon_social")}`,
+      `NIT: ${leerConfig("nit")}`,
+      `Matrícula mercantil: ${leerConfig("matricula_mercantil")}`,
+      `Representante legal: ${leerConfig("representante_legal")}`,
+      `Domicilio: ${leerConfig("domicilio")}`,
+      `Dirección de notificación judicial: ${leerConfig("direccion_notificacion")}`,
+      `Correo de notificación judicial: ${leerConfig("correo_notificacion")}`,
+      `Correo de atención: ${leerConfig("correo_contacto")}`,
+      "WhatsApp y teléfono: +57 300 112 9874",
+      `Despachamos desde: ${leerConfig("ciudad_despacho")}, Santander`,
     ]);
+  });
+
+  test("/legal/privacidad/: D2 §13 con las llaves sustituidas (LEG-142)", async ({ page }) => {
+    await page.goto("/legal/privacidad/");
+    await expect(page.getByText(/^Esta política rige desde el 17 de noviembre de 2026 \(versión 1\.0\)\./)).toBeVisible();
   });
 
   for (const vp of VIEWPORTS) {
@@ -122,7 +147,7 @@ const DATOS = {
   direccion: "Calle 45 # 12-30",
 };
 
-async function llenarEnvio(page: Page, departamento: string, municipio: string, extra: { correo?: string; barrio?: string; indicaciones?: string; formaPago?: string } = {}) {
+async function llenarEnvio(page: Page, departamento: string, municipio: string, extra: { correo?: string; barrio?: string; indicaciones?: string } = {}) {
   await page.goto("/pedido/?paso=envio");
   await page.getByLabel("Nombre completo").fill(DATOS.nombre);
   await page.getByLabel("Celular").fill(DATOS.celular);
@@ -132,20 +157,19 @@ async function llenarEnvio(page: Page, departamento: string, municipio: string, 
   await page.getByLabel("Dirección").fill(DATOS.direccion);
   if (extra.barrio) await page.getByLabel(/^Barrio/).fill(extra.barrio);
   if (extra.indicaciones) await page.getByLabel(/^Indicaciones/).fill(extra.indicaciones);
-  await page.getByRole("radio", { name: extra.formaPago ?? "Transferencia Bre-B" }).check({ force: true });
 }
 
 async function irAlResumen(page: Page, departamento: string, municipio: string, lineas: Linea[] = [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 2 }], extra = {}) {
   await sembrar(page, lineas);
   await llenarEnvio(page, departamento, municipio, extra);
-  await page.getByRole("button", { name: /Revisar el pedido/ }).click();
+  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
 async function mensaje(page: Page) {
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-  await page.getByRole("button", { name: "Preparar pedido para WhatsApp" }).click();
+  await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
   const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
   return decodeURIComponent(href.split("?text=")[1]);
@@ -158,12 +182,12 @@ const PLAZOS = Object.fromEntries(
   }),
 );
 
-const LINEA_VENDEDOR =
-  `Te vende ${leerConfig("razon_social")} · NIT ${leerConfig("nit")} · ${leerConfig("domicilio")} · ${leerConfig("direccion_notificacion")} · ${leerConfig("correo_contacto")} · WhatsApp +57 300 112 9874. Información del vendedor`;
-const NOTA_PRECIO =
-  "Los precios incluyen todos los impuestos y el envío se muestra por separado (art. 50 de la Ley 1480 de 2011). La forma de pago se confirma por WhatsApp antes de que pagues. Más en envíos: zonas, tarifas y plazos y en envíos, devoluciones, retracto y garantía.";
-const LEYENDA_IVA = `Precios con IVA del ${leerConfig("iva_tarifa")} % incluido (art. 468-1 del Estatuto Tributario).`;
-const CONSTANCIA = `Acepto los Términos y condiciones versión ${leerConfig("version_terminos")} y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión ${leerConfig("version_politica_datos")} del ${fechaEnLetras(leerConfig("fecha_politica_datos"))}.`;
+// D5 §6.3: «Te vende De Santander SAS · NIT 902.121.184-8 · Información del vendedor».
+const LINEA_VENDEDOR = `Te vende ${leerConfig("razon_social")} · NIT ${leerConfig("nit")} · Información del vendedor`;
+const NOTA_PRECIO = "Los precios incluyen todos los impuestos y el envío se muestra por separado (art. 50 de la Ley 1480 de 2011). Más en envíos, devoluciones, retracto y garantía.";
+// D5 §6.2.
+const LEYENDA_IVA = `Precio con IVA del ${leerConfig("iva_tarifa")} % incluido.`;
+const CONSTANCIA = constanciaMensaje();
 
 test.describe("resumen del pedido (paquete legal v1)", () => {
   const casos = [
@@ -175,31 +199,32 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     test(`zona ${c.zona} (${c.municipio}): plazo, leyenda de IVA, nota del precio, retracto, vendedor y casillas`, async ({ page }) => {
       await irAlResumen(page, c.departamento, c.municipio);
       const p = PLAZOS[c.zona];
-      await expect(page.getByTestId("linea-plazo")).toHaveText(
-        p.maximo === "por cotizar"
-          ? `Entrega estimada: ${p.estimado}, en la oficina de la transportadora. Plazo máximo: se informa al cotizar; nunca más de 30 días calendario.`
-          : `Entrega estimada: ${p.estimado}. Plazo máximo: ${p.maximo}.`,
-      );
+      // D5 §6.3 (LEG-143): zona 5 con su propia fila de plazos_envio.csv.
+      await expect(page.getByTestId("linea-plazo")).toHaveText(`Entrega estimada: ${p.estimado}. Plazo máximo: ${p.maximo}, contado desde el día hábil siguiente a tu pago.`);
       await expect(page.getByTestId("leyenda-iva")).toHaveText(LEYENDA_IVA);
       await expect(page.getByTestId("nota-precio-total")).toHaveText(NOTA_PRECIO);
-      await expect(page.getByTestId("nota-precio-total").getByRole("link", { name: "envíos: zonas, tarifas y plazos" })).toHaveAttribute("href", "/envios/");
-      await expect(page.getByTestId("nota-precio-total").getByRole("link", { name: "envíos, devoluciones, retracto y garantía" })).toHaveAttribute("href", "/legal/envios-devoluciones/");
+      await expect(page.getByTestId("nota-precio-total").getByRole("link", { name: "envíos, devoluciones, retracto y garantía" })).toHaveAttribute("href", "/envios/");
+      await expect(page.getByTestId("resumen-pago")).toHaveText("Pago: transferencia o Bre-B");
       await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
       await expect(page.getByTestId("linea-vendedor")).toHaveText(LINEA_VENDEDOR);
       await expect(page.getByTestId("linea-vendedor")).not.toContainText(/Rueda Duarte|740574|Matrícula|Representante/);
 
       const casillas = textosCasillas();
-      expect(casillas.enlacePolitica).toBe("Política de Tratamiento de Datos versión 1 del 6 de noviembre de 2026");
-      expect(casillas.enlaceTerminos).toBe("Términos y condiciones versión 1 del 6 de noviembre de 2026");
+      expect(casillas.enlacePolitica).toBe("Política de tratamiento de datos versión 1.0 del 17 de noviembre de 2026");
+      expect(casillas.enlaceTerminos).toBe("Términos y condiciones versión 1.0 del 17 de noviembre de 2026");
       await expect(page.getByRole("checkbox", { name: casillas.autorizacion, exact: true })).not.toBeChecked();
       await expect(page.getByRole("checkbox", { name: casillas.terminos, exact: true })).not.toBeChecked();
-      await expect(page.getByRole("button", { name: "Preparar pedido para WhatsApp" })).toBeDisabled();
+      await expect(page.getByRole("checkbox", { name: casillas.promoWhatsapp, exact: true })).not.toBeChecked();
+      await expect(page.getByRole("button", { name: "Enviar por WhatsApp" })).toBeDisabled();
+      // §7.4: las promociones no desbloquean ni bloquean.
+      await page.getByRole("checkbox", { name: casillas.promoWhatsapp, exact: true }).check();
+      await expect(page.getByRole("button", { name: "Enviar por WhatsApp" })).toBeDisabled();
     });
   }
 
   test("QA-006: el botón deshabilitado explica qué falta (texto visible y asociado con aria-describedby)", async ({ page }) => {
     await irAlResumen(page, "Santander", "Bucaramanga");
-    const boton = page.getByRole("button", { name: "Preparar pedido para WhatsApp" });
+    const boton = page.getByRole("button", { name: "Enviar por WhatsApp" });
     await expect(boton).toBeDisabled();
     // Un lector de pantalla o quien navega con Tab no llega al botón deshabilitado ni sabe por qué no avanza:
     // debe haber una indicación visible, junto al botón, enlazada con aria-describedby.
@@ -212,7 +237,7 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     // Vía elegida (microcopy §5.9 v1.1, LEG-101/102): sin `disabled`, con aria-disabled; textos exactos por caso.
     await expect(boton).not.toHaveAttribute("disabled", /.*/);
     await expect(boton).toHaveAttribute("aria-disabled", "true");
-    const AYUDA_DOS = "Para preparar tu pedido, marca las dos casillas: la autorización de tus datos y los términos y condiciones.";
+    const AYUDA_DOS = "Para preparar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
     const AYUDA_DATOS = "Para preparar tu pedido, falta que autorices el tratamiento de tus datos.";
     const AYUDA_TERMINOS = "Para preparar tu pedido, falta que aceptes los términos y condiciones.";
     const ERROR_DATOS = "Debes autorizar el tratamiento de tus datos para continuar.";
@@ -232,7 +257,8 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     await expect(page.locator('a[href^="https://wa.me/"]').filter({ hasText: /Enviar/ })).toHaveCount(0);
     await expect(autorizacion).not.toBeChecked();
     await expect(terminos).not.toBeChecked();
-    await expect(autorizacion).toBeFocused();
+    // D5 §6.3: términos es la casilla 1; el foco va a ella.
+    await expect(terminos).toBeFocused();
     for (const [casilla, texto] of [[autorizacion, ERROR_DATOS], [terminos, ERROR_TERMINOS]] as const) {
       await expect(casilla).toHaveAttribute("aria-invalid", "true");
       const id = await casilla.getAttribute("aria-describedby");
@@ -265,20 +291,28 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
   });
 
-  test("mensaje con tarifa (zona 1): primera línea, subtotal con IVA, total, constancia final, sin DS-", async ({ page }) => {
+  test("§7.4 mensaje con tarifa (zona 1): solicitud DS, líneas, subtotal con IVA, envío, total y versiones", async ({ page }) => {
     await irAlResumen(page, "Santander", "Bucaramanga");
     const texto = await mensaje(page);
     const lineas = texto.split("\n");
-    expect(lineas[0]).toBe("¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.");
+    expect(lineas[0]).toMatch(/^¡Hola, De Santander! Envío mi solicitud de compra N\.° DS-\d{6}-\d{4}-[A-Z2-9]{4} para que me confirmen el total con el envío\.$/);
+    expect(texto).toContain("• Café Casa Martínez (Guanentá) — Grano — 250 g × 2 = ");
     expect(texto).toContain("Subtotal de productos: $60.000 (IVA del 5 % incluido)");
-    expect(texto).toMatch(/^Envío \(Bucaramanga · zona 1\): \$[\d.]+$/m);
+    expect(texto).toMatch(/^Envío: zona 1, \$[\d.]+ \(IVA incluido\)$/m);
     expect(texto).toMatch(/^Total: \$[\d.]+$/m);
     expect(lineas[lineas.length - 1]).toBe(CONSTANCIA);
     expect(lineas[lineas.length - 2]).toBe("");
-    expect(lineas[lineas.length - 3]).toBe("Forma de pago: Transferencia Bre-B");
-    expect(CONSTANCIA.match(/versión 1\b/g)).toHaveLength(2);
-    expect(texto).not.toMatch(/DS-|finalizar|N\.° ?DS|sin IVA/i);
+    expect(lineas[lineas.length - 3]).toBe("Pago: transferencia o Bre-B");
+    expect(CONSTANCIA).toBe("Acepto los Términos v1.0 y autorizo el tratamiento de mis datos según la Política v1.0 del 17 de noviembre de 2026.");
+    expect(texto).not.toMatch(/finalizar|sin IVA|promociones|contraentrega/i);
     expect(texto.length).toBeLessThan(2000);
+  });
+
+  test("§7.4 mensaje con promociones por WhatsApp: línea de promociones después de la constancia", async ({ page }) => {
+    await irAlResumen(page, "Santander", "Bucaramanga");
+    await page.getByRole("checkbox", { name: textosCasillas().promoWhatsapp, exact: true }).check();
+    const texto = await mensaje(page);
+    expect(texto.endsWith(`${CONSTANCIA}\nAutorizo recibir promociones por WhatsApp.`)).toBe(true);
   });
 
   test("mensaje en el peor caso (8 líneas × 20, todos los opcionales y 300 caracteres de indicaciones): < 2.000 y constancia intacta", async ({ page }) => {
@@ -289,10 +323,9 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     const texto = await mensaje(page);
     expect(texto.length).toBeLessThan(2000);
     expect(texto.split("\n").filter((l) => l.startsWith("• "))).toHaveLength(8);
-    expect(texto).toContain("Envío: POR COTIZAR (más de 5 kg)");
-    expect(texto).toMatch(/Quedo atento al valor del envío para confirmar mi pedido\.\n\n/);
-    expect(texto.split("\n").at(-1)).toBe(CONSTANCIA);
-    expect(texto.split("\n")[0]).toBe("¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.");
+    expect(texto).toContain("Envío: POR COTIZAR (zona 5 o más de 5 kg)");
+    expect(texto.endsWith(`${CONSTANCIA}\nQuedo atento al valor del envío para confirmar mi pedido.`)).toBe(true);
+    expect(texto.split("\n")[0]).toMatch(/^¡Hola, De Santander! Envío mi solicitud de compra N\.° DS-/);
   });
 
   for (const vp of VIEWPORTS) {
@@ -309,23 +342,26 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
 // 4. Pie
 // ---------------------------------------------------------------------------------------------------------
 
-test.describe("pie con el vendedor (microcopy §5.4 y §1.4)", () => {
+test.describe("pie con el vendedor (D4; §7.4: celular 360 × 740 y escritorio)", () => {
   for (const vp of [{ width: 360, height: 740 }, { width: 1440, height: 900 }]) {
-    test(`a ${vp.width} px: cinco líneas del vendedor, © con IVA, sin representante ni matrícula, axe y sin desborde`, async ({ page }) => {
+    test(`a ${vp.width} px: líneas del vendedor sin dirección de notificación (P38 = b), envíos y pagos de D5, © con IVA, axe y sin desborde`, async ({ page }) => {
       await page.setViewportSize(vp);
       await page.goto("/");
       const lineas = await page.getByTestId("pie-vendedor").locator("p").allTextContents();
       expect(lineas).toEqual([
         `${leerConfig("razon_social")} · NIT ${leerConfig("nit")}`,
         `Domicilio: ${leerConfig("domicilio")}`,
-        `Notificaciones judiciales: ${leerConfig("direccion_notificacion")}`,
         `Correo de atención y de notificación judicial: ${leerConfig("correo_contacto")}`,
         "WhatsApp +57 300 112 9874",
       ]);
       await expect(page.getByTestId("pie-vendedor").getByRole("link", { name: leerConfig("correo_contacto") })).toHaveAttribute("href", `mailto:${leerConfig("correo_contacto")}`);
       await expect(page.getByTestId("pie-copyright")).toHaveText(`© ${new Date().getFullYear()} De Santander SAS. Precios en pesos colombianos, con IVA del 5 % incluido.`);
       await expect(page.locator("footer")).toContainText("Café de origen de provincias de Santander, Colombia.");
-      await expect(page.locator("footer")).not.toContainText(/Rueda Duarte|740574|Matrícula|Representante/);
+      await expect(page.locator("footer")).not.toContainText(/Rueda Duarte|740574|Matrícula|Representante|Calle 37/);
+      await expect(page.locator("footer")).toContainText("Enviamos a todo Colombia desde Bucaramanga. Ves el valor del envío en tu carrito; en algunos destinos y en pedidos de más de 5 kg te lo confirmamos por WhatsApp antes de que pagues.");
+      await expect(page.locator("footer")).toContainText("Transferencia bancaria o Bre-B");
+      const legales = await page.locator("footer ul a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+      expect(legales).toEqual(["/legal/terminos/", "/legal/privacidad/", "/envios/", "/legal/vendedor/"]);
       for (const l of await page.getByTestId("pie-vendedor").locator("p").all()) await expect(l).toBeVisible();
       await page.locator("footer").scrollIntoViewIfNeeded();
       expect(await graves(page)).toEqual([]);
@@ -349,14 +385,19 @@ async function filasFicha(page: Page) {
 }
 
 test.describe("ficha del café (microcopy §3)", () => {
-  test("Casa Martínez: notificación sanitaria, Comercializa, ayuda de molienda, IVA y JSON-LD sin brand De Santander", async ({ page }) => {
+  test("Casa Martínez: notificación sanitaria, Comercializa, «Presentación: Grano · Molido», IVA y JSON-LD sin brand De Santander", async ({ page }) => {
     await page.goto("/cafes/cafe-casa-martinez/");
     const filas = await filasFicha(page);
     expect(filas).toContainEqual(["Notificación sanitaria INVIMA", "N.° NSA-003219-2017"]);
     expect(filas.at(-1)).toEqual(["Comercializa", "De Santander SAS"]);
     expect(filas.map(([k]) => k)).not.toContain("Registro sanitario");
     expect(JSON.stringify(filas)).not.toMatch(/Titular:|Fabricante:|pendiente|TODO/i);
-    await expect(page.getByTestId("ayuda-molienda")).toHaveText("Grano entero o molido, tal como lo empaca el fabricante. No molemos el café.");
+    await expect(page.getByRole("group", { name: "Presentación" }).getByRole("radio")).toHaveCount(2);
+    await expect(page.getByRole("radio", { name: "Grano", exact: true })).toBeAttached();
+    await expect(page.getByRole("radio", { name: "Molido", exact: true })).toBeAttached();
+    await expect(page.getByTestId("ayuda-molienda")).toHaveText("Grano o molido, tal como lo empaca el fabricante. No molemos el café.");
+    await expect(page.getByTestId("plazo-ficha").getByRole("link", { name: "Ver plazos" })).toHaveAttribute("href", "/envios/#6-plazos-de-entrega");
+    expect((await page.locator("main").innerText()).toLowerCase()).not.toMatch(/molienda|grano entero/);
     await expect(page.getByTestId("leyenda-iva")).toHaveText(LEYENDA_IVA);
     const jsonld = JSON.parse((await page.locator('script[type="application/ld+json"]').first().textContent()) ?? "{}");
     expect(jsonld["@type"]).toBe("Product");
@@ -364,7 +405,9 @@ test.describe("ficha del café (microcopy §3)", () => {
     expect(jsonld.aggregateRating).toBeUndefined();
   });
 
-  test("Arreboles: activo, sin fila sanitaria ni marcador, se puede agregar", async ({ page }) => {
+  // LEG-146: el paquete (§7.4) pide «Un café sin NSA no aparece»; el dueño mantiene Arreboles activo (2026-11-14).
+  // Esta prueba documenta la decisión vigente; pasa a «no aparece» cuando el dueño la cambie.
+  test("Arreboles: activo por decisión del dueño, sin fila sanitaria ni marcador, se puede agregar", async ({ page }) => {
     await page.goto("/cafes/cafe-arreboles/");
     const filas = await filasFicha(page);
     expect(filas.map(([k]) => k)).not.toContain("Notificación sanitaria INVIMA");
@@ -385,33 +428,36 @@ test.describe("ficha del café (microcopy §3)", () => {
 });
 
 // ---------------------------------------------------------------------------------------------------------
-// 6–7. /envios/ y ayuda de contraentrega
+// 6–7. /envios/ y forma de pago (contraentrega retirada)
 // ---------------------------------------------------------------------------------------------------------
 
-test("/envios/: frase de plazos exacta, metadatos, enlace final y sin textos retirados", async ({ page }) => {
+test("/envios/: D3 1.0, leyenda de IVA, metadatos y sin textos retirados", async ({ page }) => {
   await page.goto("/envios/");
-  await expect(page.getByText("El estimado es lo que suele tardar. El máximo es el plazo que nos comprometemos a cumplir. Los dos se cuentan en días hábiles desde que aceptas el total en el chat y, si pagas por transferencia Bre-B, desde que recibimos el pago. Si no entregamos en el máximo, puedes cancelar y te devolvemos todo en 15 días calendario.", { exact: true })).toBeVisible();
-  // Con el build de prueba del envío gratis (ENVIO_GRATIS_PRUEBA=si), microcopy §8.5 agrega la salvedad de las comunas.
-  // Terminada (§8.6.1), la salvedad desaparece: solo con la promoción vigente.
+  await expect(page.getByText("Para cada zona te informamos dos plazos: el estimado, que es lo que suele tardar, y el máximo, que es el plazo que nos comprometemos a cumplir. Se cuentan desde el día hábil siguiente a aquel en que recibimos tu pago.", { exact: true })).toBeVisible();
+  // Con la promoción vigente, la leyenda agrega la salvedad de las comunas.
   const eg = estadoEnvioGratisE2E();
-  const salvedad = eg.tipo === "vigente" && eg.prueba ? " Salvo en las siete comunas de Bucaramanga con envío gratis." : "";
+  const salvedad = eg.tipo === "vigente" ? " Salvo en las siete comunas de Bucaramanga con envío gratis." : "";
   await expect(page.getByTestId("leyenda-iva")).toHaveText(`Tarifas en pesos colombianos, con IVA del 5 % incluido. Más de 5 kg, en cualquier zona, se cotiza aparte.${salvedad} Nunca cobramos primero y ajustamos después.`);
-  await expect(page.getByTestId("retracto-envios")).toHaveText(`${AVISO_RETRACTO} Más en envíos, devoluciones, retracto y garantía.`);
-  await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", "Cómo calculamos el envío de tu pedido: zonas, tarifas por peso con IVA incluido y plazos de entrega desde Bucaramanga.");
-  await expect(page.getByRole("link", { name: "Lee la política completa de envíos, devoluciones, retracto y garantía." })).toHaveAttribute("href", "/legal/envios-devoluciones/");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", "Cómo calculamos el envío de tu pedido: zonas, tarifas por peso con IVA incluido y plazos de entrega desde Bucaramanga; retracto, devoluciones y garantía.");
   const texto = (await page.locator("main").innerText()).replace(/\s+/g, " ");
   expect(texto).not.toMatch(/¿Tu destino no aparece|Plazos orientativos|sin IVA|no admite retracto/i);
 });
 
-test("formulario: ayuda de contraentrega solo con efectivo contraentrega y enlazada al grupo", async ({ page }) => {
+test("§7.4 formulario: sin campo de forma de pago ni contraentrega; texto fijo de pago (LEG-144)", async ({ page }) => {
   await sembrar(page, [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }]);
   await page.goto("/pedido/?paso=envio");
-  await expect(page.getByTestId("ayuda-contraentrega")).toHaveCount(0);
-  await page.getByRole("radio", { name: "Efectivo contraentrega" }).check({ force: true });
-  await expect(page.getByTestId("ayuda-contraentrega")).toHaveText("Pagas al recibir. La tarifa de envío ya incluye la comisión de recaudo; no hay recargos.");
-  await expect(page.getByRole("group", { name: /Forma de pago/ })).toHaveAccessibleDescription("Pagas al recibir. La tarifa de envío ya incluye la comisión de recaudo; no hay recargos.");
-  await page.getByRole("radio", { name: "Transferencia Bre-B" }).check({ force: true });
-  await expect(page.getByTestId("ayuda-contraentrega")).toHaveCount(0);
+  await expect(page.getByRole("group", { name: /Forma de pago/ })).toHaveCount(0);
+  await expect(page.getByRole("radio")).toHaveCount(0);
+  await expect(page.getByTestId("texto-pago")).toContainText(TEXTO_PAGO_FORMULARIO);
+  expect((await page.locator("main").innerText()).toLowerCase()).not.toMatch(/contraentrega|forma de pago|efectivo/);
+});
+
+test("§7.4 ninguna pantalla ofrece contraentrega (solo el texto legal que la excluye)", async ({ page }) => {
+  for (const ruta of ["/", "/cafes/", "/cafes/cafe-casa-martinez/", "/pedido/", "/envios/", "/legal/terminos/", "/legal/privacidad/", "/legal/vendedor/"]) {
+    await page.goto(ruta);
+    const texto = (await page.locator("body").innerText()).replace(/\s+/g, " ").replaceAll("No recibimos pagos contraentrega ni en efectivo", "");
+    expect(texto, ruta).not.toMatch(/contraentrega/i);
+  }
 });
 
 // ---------------------------------------------------------------------------------------------------------
@@ -449,21 +495,19 @@ test.describe("paquete legal v1 bajo basePath", () => {
     for (const doc of LEGALES) {
       await page.goto(`${base}${REPO}${doc.ruta}`);
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(doc.titulo);
-      await expect(page.getByText("Versión 1 · vigente desde 2026-11-06", { exact: true })).toBeVisible();
+      await expect(page.getByTestId("rotulo-legal")).toHaveText("Versión 1.0 · vigente desde el 17 de noviembre de 2026");
     }
     await page.goto(`${base}${REPO}/cafes/cafe-casa-martinez/`);
     await expect(page.getByTestId("ayuda-molienda")).toBeVisible();
-    const legales = await page.locator("footer a[href*='/legal/']").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-    expect(legales).toEqual([`${REPO}/legal/terminos/`, `${REPO}/legal/privacidad/`, `${REPO}/legal/envios-devoluciones/`, `${REPO}/legal/vendedor/`]);
-    await page.goto(`${base}${REPO}/envios/`);
-    await expect(page.getByTestId("retracto-envios").getByRole("link")).toHaveAttribute("href", `${REPO}/legal/envios-devoluciones/`);
+    const legales = await page.locator("footer ul a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+    expect(legales).toEqual([`${REPO}/legal/terminos/`, `${REPO}/legal/privacidad/`, `${REPO}/envios/`, `${REPO}/legal/vendedor/`]);
     expect(fallos).toEqual([]);
   });
 });
 
-test("QA-008: «Cómo pedir» paso 3 escribe las formas de pago como en config.csv («Bre-B», no «bre-b»)", async ({ page }) => {
+test("QA-008 y LEG-165: «Cómo pedir» paso 3 con el texto fijo de pago («Bre-B», no «bre-b»)", async ({ page }) => {
   await page.goto("/");
-  const paso3 = page.getByText(/^Despachamos desde .+ Pagas con /);
-  await expect(paso3).toContainText("Bre-B");
+  const paso3 = page.getByText(/^Despachamos desde .+ Pagas por /);
+  await expect(paso3).toContainText("Pagas por transferencia bancaria o por Bre-B después de aceptar el total.");
   await expect(paso3).not.toContainText("bre-b");
 });

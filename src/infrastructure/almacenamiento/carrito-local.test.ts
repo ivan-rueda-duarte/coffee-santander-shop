@@ -20,16 +20,19 @@ describe("CarritoLocal", () => {
   });
   it("guarda y recupera con la clave v2", () => {
     const m = memoria();
-    new CarritoLocal(m).guardar({ lineas: [linea], formaPago: "Transferencia Bre-B" });
+    new CarritoLocal(m).guardar({ lineas: [linea] });
     expect(Object.keys(m.datos)).toEqual([CLAVE_CARRITO_V2]);
-    expect(new CarritoLocal(m).cargar()).toEqual({ version: 2, lineas: [linea], formaPago: "Transferencia Bre-B" });
+    expect(JSON.parse(m.datos[CLAVE_CARRITO_V2])).toEqual({ version: 2, lineas: [linea] });
+    expect(new CarritoLocal(m).cargar()).toEqual({ version: 2, lineas: [linea] });
   });
   it("migra el carrito de la v1 una sola vez y borra el viejo", () => {
     const v1 = JSON.stringify({ lines: [{ cafeId: 5, gramos: 250, molienda: "Grano entero", qty: 2 }], ciudad: "Cali", pago: "Efectivo contraentrega", sent: false });
     const m = memoria({ [CLAVE_CARRITO_V1]: v1 });
     const c = new CarritoLocal(m).cargar();
     expect(c.lineas).toEqual([linea]);
-    expect(c.municipio).toBe("Cali");
+    // LEG-149: la ciudad y el pago de la v1 no se migran ni se guardan.
+    expect(c).toEqual({ version: 2, lineas: [linea] });
+    expect(m.datos[CLAVE_CARRITO_V2]).not.toMatch(/Cali|contraentrega/);
     expect(m.datos[CLAVE_CARRITO_V1]).toBeUndefined();
     expect(JSON.parse(m.datos[CLAVE_CARRITO_V2]).lineas).toHaveLength(1);
   });

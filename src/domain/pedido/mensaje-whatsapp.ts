@@ -1,12 +1,12 @@
 import { formatearCOP } from "../comun/dinero";
 import { fechaEnLetras } from "../comun/fecha";
-import { nombreDestino, TEXTO_POR_COTIZAR, totalConEnvio } from "../envio/envio";
+import { totalConEnvio } from "../envio/envio";
 import { lineaVerificacionMensaje, TEXTOS_ENVIO_GRATIS } from "../envio/envio-gratis";
 import type { ResultadoEnvio } from "../envio/tipos";
 import { ETIQUETA_MOLIENDA, type Molienda } from "../catalogo/tipos";
 import { formatearCelular, SIGLA_DOCUMENTO, type DatosEnvio } from "./envio";
 import { notaIvaSubtotal } from "./iva";
-import type { VersionesLegales } from "./tienda";
+import { TEXTOS_PAGO, type VersionesLegales } from "./tienda";
 
 export const LIMITE_MENSAJE = 2000;
 const LARGO_INDICACIONES_RESUMIDAS = 120;
@@ -20,8 +20,16 @@ export interface LineaMensaje {
   totalCop: number;
 }
 
+/** Casillas opcionales de promociones (D2, «Textos de las casillas»; LEG-145). La de correo solo vale si hay correo. */
+export interface PromocionesAutorizadas {
+  whatsapp: boolean;
+  correo: boolean;
+}
+
 export interface PedidoMensaje {
   nombreTienda: string;
+  /** Identificador de la solicitud generado en el navegador («DS-261117-1432-K7QM»; P39 = a, LEG-150). */
+  numeroSolicitud: string;
   lineas: readonly LineaMensaje[];
   subtotalCop: number;
   /** Costo de envío calculado para el destino del formulario. */
@@ -29,8 +37,9 @@ export interface PedidoMensaje {
   envio: DatosEnvio;
   /** Tarifa de IVA incluida en los precios (data/config.csv); null = no se afirma tarifa. */
   ivaTarifa: number | null;
-  /** Versiones y fechas de los documentos aceptados (data/config.csv), para la constancia final (microcopy §5.2). */
+  /** Versiones y fechas de los documentos aceptados (data/config.csv), para la constancia (D5 §6.4). */
   legal: Pick<VersionesLegales, "versionTerminos" | "versionPoliticaDatos" | "fechaPoliticaDatos">;
+  promociones: PromocionesAutorizadas;
 }
 
 export interface MensajeConstruido {
@@ -44,47 +53,43 @@ function lineaDeProducto(l: LineaMensaje): string {
   return `• ${l.nombreCafe}${origen} — ${ETIQUETA_MOLIENDA[l.molienda]} — ${l.gramos} g × ${l.cantidad} = ${formatearCOP(l.totalCop)}`;
 }
 
-/** Líneas de subtotal, envío y total (microcopy §1.1, §1.2, §1.4 y, con envío gratis, §8.4). */
+/** Líneas de subtotal, envío y total (D5 §6.4 y, con envío gratis, dictamen 2026-11-14 sección 2 bis). */
 function lineasDeTotales(p: PedidoMensaje): string[] {
   const c = p.costoEnvio;
   const { totalCop } = totalConEnvio(p.subtotalCop, c);
   const subtotal = `Subtotal de productos: ${formatearCOP(p.subtotalCop)}${notaIvaSubtotal(p.ivaTarifa)}`;
+  const iva = p.ivaTarifa === null ? "" : " (IVA incluido)";
   if (c.tipo === "por_cotizar") {
-    return [subtotal, `Envío: POR COTIZAR (${TEXTO_POR_COTIZAR[c.motivo]})`, `Total sin envío: ${formatearCOP(totalCop)}`];
+    return [subtotal, "Envío: POR COTIZAR (zona 5 o más de 5 kg)", `Total sin envío: ${formatearCOP(totalCop)}`];
   }
   if (c.tipo === "gratis") {
-    return [
-      subtotal,
-      `Envío (${nombreDestino(p.envio.municipio)} · zona ${c.zona} · ${c.comuna}): $0 (envío gratis, sujeto a verificar la dirección)`,
-      `Total: ${formatearCOP(totalCop)}`,
-      TEXTOS_ENVIO_GRATIS.plazoMensaje,
-    ];
+    return [subtotal, `Envío: zona ${c.zona} · ${c.comuna}, $0 (envío gratis, sujeto a verificar la dirección)`, `Total: ${formatearCOP(totalCop)}`, TEXTOS_ENVIO_GRATIS.plazoMensaje];
   }
-  return [subtotal, `Envío (${nombreDestino(p.envio.municipio)} · zona ${c.zona}): ${formatearCOP(c.valorCop)}`, `Total: ${formatearCOP(totalCop)}`];
+  return [subtotal, `Envío: zona ${c.zona}, ${formatearCOP(c.valorCop)}${iva}`, `Total: ${formatearCOP(totalCop)}`];
 }
 
-/** Constancia de aceptación y autorización (microcopy §5.2): va siempre al final del mensaje. */
+/** Constancia de aceptación y autorización (D5 §6.4): versiones y fecha de data/config.csv. */
 export function lineaConstancia(legal: PedidoMensaje["legal"]): string {
-  return `Acepto los Términos y condiciones versión ${legal.versionTerminos} y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión ${legal.versionPoliticaDatos} del ${fechaEnLetras(legal.fechaPoliticaDatos)}.`;
+  return `Acepto los Términos v${legal.versionTerminos} y autorizo el tratamiento de mis datos según la Política v${legal.versionPoliticaDatos} del ${fechaEnLetras(legal.fechaPoliticaDatos)}.`;
 }
 
-/** Línea antes de la constancia: por cotizar (§1.2) o verificación de la comuna (§8.4). */
-function lineaAntesDeConstancia(p: PedidoMensaje): string | null {
-  const c = p.costoEnvio;
-  if (c.tipo === "por_cotizar") return "Quedo atento al valor del envío para confirmar mi pedido.";
-  if (c.tipo === "gratis") return lineaVerificacionMensaje(c, p.subtotalCop);
-  return null;
+/** «Autorizo recibir promociones por …» solo si marcó alguna casilla; la de correo solo cuenta con correo (D5 §6.4). */
+export function lineaPromociones(promociones: PromocionesAutorizadas, hayCorreo: boolean): string | null {
+  const canales = [promociones.whatsapp && "WhatsApp", promociones.correo && hayCorreo && "correo"].filter((c): c is string => Boolean(c));
+  return canales.length ? `Autorizo recibir promociones por ${canales.join(" y ")}.` : null;
 }
 
-/** Plantilla completa de microcopy §5.5 (sin número de solicitud: el sitio no numera pedidos), con los cambios de §8.4. */
+/** Plantilla de D5 §6.4, con las líneas del envío gratis de la sección 2 bis del dictamen del 2026-11-14. */
 function cuerpo(p: PedidoMensaje, indicaciones: string | undefined): string {
   const e = p.envio;
+  const c = p.costoEnvio;
   const direccion = e.barrio ? `${e.direccion} · Barrio: ${e.barrio}` : e.direccion;
-  // «Comuna:» solo si eligió una comuna de la lista y el envío es gratis (§8.4).
-  const comuna = p.costoEnvio.tipo === "gratis" ? p.costoEnvio.comuna : null;
-  const antesDeConstancia = lineaAntesDeConstancia(p);
+  // «Comuna:» solo si eligió una comuna de la lista y el envío es gratis.
+  const comuna = c.tipo === "gratis" ? c.comuna : null;
+  const verificacion = c.tipo === "gratis" ? lineaVerificacionMensaje(c, p.subtotalCop) : null;
+  const promociones = lineaPromociones(p.promociones, Boolean(e.correo));
   return [
-    `¡Hola, ${p.nombreTienda}! Envío mi solicitud de compra para que me confirmen el total con el envío.`,
+    `¡Hola, ${p.nombreTienda}! Envío mi solicitud de compra N.° ${p.numeroSolicitud} para que me confirmen el total con el envío.`,
     "",
     ...p.lineas.map(lineaDeProducto),
     "",
@@ -95,15 +100,17 @@ function cuerpo(p: PedidoMensaje, indicaciones: string | undefined): string {
     `Celular: ${formatearCelular(e.celular)}`,
     ...(e.correo ? [`Correo: ${e.correo}`] : []),
     ...(e.tipoDocumento && e.numeroDocumento ? [`Documento: ${SIGLA_DOCUMENTO[e.tipoDocumento]} ${e.numeroDocumento}`] : []),
-    `Ciudad: ${e.municipio}, ${e.departamento}`,
-    ...(e.codigoPostal ? [`Código postal: ${e.codigoPostal}`] : []),
+    `Departamento y municipio: ${e.departamento}, ${e.municipio}`,
     `Dirección: ${direccion}`,
     ...(comuna ? [`Comuna: ${comuna}`] : []),
+    ...(e.codigoPostal ? [`Código postal: ${e.codigoPostal}`] : []),
     ...(indicaciones ? [`Indicaciones: ${indicaciones}`] : []),
-    `Forma de pago: ${e.formaPago}`,
-    ...(antesDeConstancia ? ["", antesDeConstancia] : []),
+    TEXTOS_PAGO.mensaje,
     "",
+    ...(verificacion ? [verificacion] : []),
     lineaConstancia(p.legal),
+    ...(promociones ? [promociones] : []),
+    ...(c.tipo === "por_cotizar" ? ["Quedo atento al valor del envío para confirmar mi pedido."] : []),
   ].join("\n");
 }
 

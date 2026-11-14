@@ -8,18 +8,12 @@ import { calcularTotales, type Totales } from "@/domain/pedido/totales";
 import { useAvisos } from "../layout/avisos";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 
-export interface Preferencias {
-  formaPago?: string;
-  municipio?: string;
-}
-
 interface Valor {
   lineas: LineaCarrito[];
   totales: Totales;
   /** false hasta que se lee el carrito guardado en el navegador. */
   listo: boolean;
   puedeDeshacer: boolean;
-  preferencias: Preferencias;
   cajonAbierto: boolean;
   abrirCajon: () => void;
   cerrarCajon: () => void;
@@ -31,7 +25,6 @@ interface Valor {
   eliminar: (clave: string) => void;
   vaciar: () => void;
   deshacer: () => void;
-  guardarPreferencias: (p: Preferencias) => void;
 }
 
 const Contexto = createContext<Valor | null>(null);
@@ -43,7 +36,6 @@ export function CarritoProvider({ crearAlmacen, children }: { crearAlmacen: (max
   const max = catalogo.tienda.maxCantidad;
 
   const [estado, dispatch] = useReducer(reducirCarrito, undefined, () => crearCarrito([], max));
-  const [preferencias, setPreferencias] = useState<Preferencias>({});
   const [listo, setListo] = useState(false);
   const [cajonAbierto, setCajonAbierto] = useState(false);
   const almacen = useRef<CarritoAlmacen | null>(null);
@@ -71,7 +63,6 @@ export function CarritoProvider({ crearAlmacen, children }: { crearAlmacen: (max
   const leer = useCallback(() => {
     const guardado = almacen.current!.cargar();
     dispatch({ tipo: "reemplazar", lineas: depurarLineas(guardado.lineas, esValida, max) });
-    setPreferencias({ formaPago: guardado.formaPago, municipio: guardado.municipio });
   }, [esValida, max]);
 
   useEffect(() => {
@@ -85,8 +76,9 @@ export function CarritoProvider({ crearAlmacen, children }: { crearAlmacen: (max
   }, [leer, max, crearAlmacen]);
 
   useEffect(() => {
-    if (listo) almacen.current?.guardar({ lineas: estado.lineas, ...preferencias });
-  }, [listo, estado.lineas, preferencias]);
+    // Solo el carrito (LEG-149): al guardar tras leer, un carrito viejo con forma de pago o municipio se reescribe sin ellos.
+    if (listo) almacen.current?.guardar({ lineas: estado.lineas });
+  }, [listo, estado.lineas]);
 
   useEffect(() => {
     if (estado.aviso && estado.aviso !== ultimoAviso.current) {
@@ -106,7 +98,6 @@ export function CarritoProvider({ crearAlmacen, children }: { crearAlmacen: (max
       totales,
       listo,
       puedeDeshacer: estado.deshacer !== null,
-      preferencias,
       cajonAbierto,
       abrirCajon: abrir,
       cerrarCajon: () => setCajonAbierto(false),
@@ -137,9 +128,8 @@ export function CarritoProvider({ crearAlmacen, children }: { crearAlmacen: (max
         avisar("Vaciaste el pedido.", { etiqueta: "Deshacer", alPulsar: deshacer });
       },
       deshacer,
-      guardarPreferencias: (p) => setPreferencias((previas) => ({ ...previas, ...p })),
     }),
-    [estado.lineas, estado.deshacer, totales, listo, preferencias, cajonAbierto, avisar, deshacer, nombreDe, abrir, devolverFoco],
+    [estado.lineas, estado.deshacer, totales, listo, cajonAbierto, avisar, deshacer, nombreDe, abrir, devolverFoco],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;

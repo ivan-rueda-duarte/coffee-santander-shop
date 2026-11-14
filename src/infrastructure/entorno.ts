@@ -17,3 +17,16 @@ export function modoPruebaEnvioGratis(entorno: Readonly<Record<string, string | 
   }
   return activo;
 }
+
+/**
+ * Fecha con que el build decide la vigencia de la promoción. Normalmente es hoy en Colombia. Solo en un build de
+ * PRUEBA (`ENVIO_GRATIS_PRUEBA=si`) se puede simular otro día con `FECHA_BUILD_PRUEBA=AAAA-MM-DD`, por ejemplo el
+ * 2026-11-17 para probar la promoción antes de que empiece (LEG-167). Sin el modo de prueba, se ignora y se avisa.
+ */
+export function fechaDelBuild(entorno: Readonly<Record<string, string | undefined>> = process.env, ahora: Date = new Date()): string {
+  const simulada = entorno.FECHA_BUILD_PRUEBA;
+  if (!simulada) return hoyEnColombia(ahora);
+  if (!modoPruebaEnvioGratis(entorno)) return hoyEnColombia(ahora);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(simulada)) throw new Error(`FECHA_BUILD_PRUEBA="${simulada}" no es una fecha AAAA-MM-DD.`);
+  return simulada;
+}

@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { ETIQUETA_MOLIENDA, estaDisponible, MOLIENDAS, type Cafe, type Molienda } from "@/domain/catalogo/tipos";
 import { formatearCOP } from "@/domain/comun/dinero";
+import { slugify } from "@/domain/comun/slug";
 import { leyendaIva } from "@/domain/pedido/iva";
 import { useCarrito } from "../carrito/carrito-provider";
 import { Boton } from "../marca/boton";
@@ -21,7 +23,10 @@ function Pildora({ nombre, valor, marcado, alElegir, deshabilitado, children }: 
   );
 }
 
-/** Molienda + presentación + cantidad + «Agregar al pedido». El precio cambia con la selección. */
+/** Ancla del numeral 6 de D3 («Plazos de entrega») en /envios/. */
+const ENLACE_PLAZOS = `/envios/#${slugify("6. Plazos de entrega")}`;
+
+/** Presentación (grano o molido) + tamaño + cantidad + «Agregar al pedido». El precio cambia con la selección. */
 export function BloqueCompra({ cafe }: { cafe: Cafe }) {
   const { agregar } = useCarrito();
   const { catalogo } = useCatalogo();
@@ -44,7 +49,8 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
       }}
     >
       <fieldset>
-        <legend className="overline mb-2 text-ink-muted">Molienda</legend>
+        {/* D5 §6.2 (LEG-155): «Presentación: Grano · Molido», solo las que existen para este café. */}
+        <legend className="overline mb-2 text-ink-muted">Presentación</legend>
         <div className="flex flex-wrap gap-2">
           {MOLIENDAS.filter((m) => cafe.moliendas.includes(m)).map((m) => (
             <Pildora key={m} nombre="molienda" valor={m} marcado={molienda === m} alElegir={() => setMolienda(m)}>
@@ -52,12 +58,12 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
             </Pildora>
           ))}
         </div>
-        {/* Microcopy §3 (LEG-083): el selector elige entre dos bolsas del fabricante; la tienda no muele. */}
-        <p className="caption mt-2 text-ink-muted" data-testid="ayuda-molienda">Grano entero o molido, tal como lo empaca el fabricante. No molemos el café.</p>
+        {/* LEG-083 y LEG-155: el selector elige entre dos bolsas del fabricante; la tienda no muele (texto derivado de D1 §3, pendiente de diseño). */}
+        <p className="caption mt-2 text-ink-muted" data-testid="ayuda-molienda">Grano o molido, tal como lo empaca el fabricante. No molemos el café.</p>
       </fieldset>
 
       <fieldset className="mt-5">
-        <legend className="overline mb-2 text-ink-muted">Presentación</legend>
+        <legend className="overline mb-2 text-ink-muted">Tamaño</legend>
         <div className="flex flex-wrap gap-2">
           {cafe.presentaciones.map((p) => (
             <Pildora key={p.gramos} nombre="gramos" valor={String(p.gramos)} marcado={gramos === p.gramos} alElegir={() => setGramos(p.gramos)} deshabilitado={!p.disponible}>
@@ -85,7 +91,7 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
           </small>
         </p>
       </div>
-      {/* Microcopy §1.4: leyenda de IVA bajo el precio (la tarifa sale de data/config.csv). */}
+      {/* D5 §6.2: leyenda de IVA bajo el precio (la tarifa sale de data/config.csv). */}
       <p className="caption mt-1 text-right text-ink-muted" data-testid="leyenda-iva">{leyendaIva(catalogo.tienda.ivaTarifa)}</p>
 
       <div className="mt-5">
@@ -101,7 +107,12 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
             <Pastilla variante="agotado">Agotado</Pastilla>
           </div>
         )}
-        <p className="caption mt-3 text-ink-muted">Hasta {max} bolsas por tamaño y molienda; para más, escríbenos por WhatsApp.</p>
+        <p className="caption mt-3 text-ink-muted">Hasta {max} bolsas por tamaño y presentación; para más, escríbenos por WhatsApp.</p>
+        {/* D5 §6.2: la ficha no conoce la zona, así que remite a los plazos de /envios/ (texto del enlace propuesto por legal, LEG-153). */}
+        <p className="caption mt-1 text-ink-muted" data-testid="plazo-ficha">
+          Entrega estimada y plazo máximo según tu zona:{" "}
+          <Link href={ENLACE_PLAZOS} className="underline underline-offset-4">Ver plazos</Link>
+        </p>
       </div>
     </form>
   );
