@@ -1,5 +1,7 @@
 # Prompt para Claude Code — De Santander v2 (Next.js + Supabase + Sanity)
 
+> **Desactualizado (2026-11-14, LEG-162).** Mandan `CLAUDE.md` y `PRODUCT.md` («Decisiones (v2)»): no hay Supabase, Edge Function, Turnstile ni `crear-pedido`; los datos de comercio van en CSV, el pedido sale por WhatsApp y el pago es solo por transferencia bancaria o Bre-B (sin contraentrega). Las páginas legales salen de `docs/legal/` (paquete del abogado v1.0), no de Sanity.
+
 Uso recomendado: guarde este archivo en la raíz del repositorio como `docs/PROMPT-V2.md` y en la terminal ejecute
 `claude "Lee docs/PROMPT-V2.md completo y ejecútalo empezando por la FASE 0."`
 También puede copiar el bloque de abajo y pegarlo directamente en `claude`.

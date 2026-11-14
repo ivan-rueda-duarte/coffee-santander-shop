@@ -1,167 +1,113 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.0 — 2026-11-06.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.0 — 2026-11-14.
 
 # Términos y condiciones de compra
 
-Se publica en `/legal/terminos/` con el rótulo «Versión 1 · vigente desde 2026-11-06». La casilla «Leí y acepto los Términos y condiciones versión 1 del 6 de noviembre de 2026» del resumen del pedido enlaza aquí.
+Se publica en `/legal/terminos/` con el rótulo «Versión 1.0 · vigente desde 2026-11-17». La casilla 1 del resumen del pedido («Leí y acepto los Términos y condiciones versión {version_terminos} del {fecha_terminos}.») enlaza aquí.
 
-**Qué se publica.** Solo la sección «Texto para el consumidor», tal cual: subtítulos, párrafos y listas, sin enlaces ni tablas (la página legal usa `bloquesAEstructura`). Las direcciones web van escritas como texto. Las secciones «Notas para el abogado» y «Coherencia» no se publican.
+**Fuente.** Sección 3 (D1) de «De Santander SAS — Textos legales v1.0 para publicación» (`docs/legal/paquete-abogado/De Santander SAS — Textos legales v1.0 para publicación.docx`, 14/11/2026), que el dueño presenta como cerrada con su abogado. Según su sección 0, el texto se publica tal como está y sustituye los paquetes v0.5, v0.6 y v1 y las versiones 1 y 2 redactadas en esta carpeta, que quedan sin efecto. La sección «Texto para el consumidor» reproduce D1 letra por letra, con el formato que exige el parser del sitio (`###` en los subtítulos numerados y `- ` en las viñetas), **salvo tres frases añadidas por legal** por instrucción del dueño de mantener el envío gratis en comunas de Bucaramanga (2026-11-14): §6, frase final de la viñeta «por cotizar»; §6, frase final de la última viñeta («La única salvedad…», que exige el control de `npm run datos`); §8, frase final del primer párrafo. Son texto propio, **no del abogado**, y deben validarse con él antes del 17/11 (LEG-167). Legal no registra aquí la aprobación formal del abogado: este encabezado se conserva hasta que conste.
 
-**Estado.** El dueño instruyó publicar este documento en el sitio (decisión del 2026-11-06, «Paquete legal v1»). Se publica como versión 1 sin la marca de borrador; la revisión del abogado responsable sigue pendiente y se anota en `checklist-lanzamiento.md` (L1). La versión «1» del texto público equivale a la «1.0» de este archivo y debe coincidir con `version_terminos` en `data/config.csv`.
+**Qué se publica.** Solo la sección «Texto para el consumidor». El rótulo de versión va en el primer párrafo, fuera de la sección, porque la página lo pinta desde `data/config.csv` (LEG-138). El encabezado que pide el paquete para la página («Términos y condiciones de compra · Versión {version_terminos}, vigente desde el {fecha_terminos}») lo construye el código: es un requisito para el desarrollador (LEG-142).
 
-Cambios de la v1.0 (Paquete legal v1 del dueño, 2026-11-06, y decisiones del mismo día; revisión LEG-081 a LEG-100): datos completos del vendedor (§2); IVA del 5 % incluido en el precio y en el envío (§4); error de precio antes de aceptar el total (§4); molido de fábrica (§3); plazo máximo por zona y regla de 30 días (§8); **retracto de 5 días hábiles** con exclusión solo del empaque abierto o con sello roto (§9), que reemplaza la exclusión general de la v0.6; reversión del pago para Bre-B con aviso en 5 días hábiles y devolución en 15 días calendario (§11); comisión de recaudo incluida en la tarifa (§7), que sustituye a P7 = b; sin casilla ni promesa de promociones (§13); respuesta «ACEPTO» en el chat como constancia (§6); normas citadas al final. Se conserva de la v0.6 el modelo C (§2, §3 y §14), la formación del contrato (§6), las PQR (§12) y lo demás que el paquete no cambió. Se eliminan la cláusula de «error evidente», la nota «el café no tiene IVA», la exclusión general del retracto (num. 6 del art. 47 y Concepto SIC 16-062808) y el texto de transición de la comisión de recaudo.
+**Versión.** «1.0» es la versión pública: `version_terminos,1.0` y `fecha_terminos,2026-11-17` en `data/config.csv`. Hasta que el desarrollador cambie esas dos claves, `npm run datos` falla por versión distinta (comportamiento esperado). Revisión: `revisiones/2026-11-14-paquete-abogado-v1.md` (LEG-140 a LEG-166).
 
 ---
 
 ## Texto para el consumidor
 
 ### 1. Qué regulan estos términos
-Estos términos explican cómo compras café en la tienda en línea de De Santander: cómo haces el pedido, cuándo queda en firme, cómo pagas, cómo te llega y qué derechos tienes. Se aplican a todas las compras que hagas desde este sitio y que cierres por WhatsApp.
+Estos términos explican cómo compras café en la tienda en línea de De Santander: cómo haces el pedido, cuándo queda en firme, cómo pagas, cómo te llega y qué derechos tienes. Se aplican a todas las compras que hagas desde este sitio y cierres por WhatsApp.
 
-Rigen junto con estos documentos, que también puedes leer en el sitio:
-- Envíos, devoluciones, retracto y garantía.
-- Política de tratamiento de datos personales.
-- Información del vendedor.
-
-Si algo de estos términos te resulta menos favorable que lo que dice la ley, se aplica la ley.
+Rigen junto con estos documentos, que también están en el sitio: «Envíos, devoluciones, retracto y garantía», «Política de tratamiento de datos personales» e «Información del vendedor». Si algo de estos términos te resulta menos favorable que la ley, se aplica la ley.
 
 ### 2. Quién te vende
-- Razón social: De Santander SAS (en adelante, «De Santander»).
-- NIT: 902.121.184-8.
-- Matrícula mercantil: 740574.
-- Representante legal: Ivan Fernando Rueda Duarte.
-- Domicilio: Bucaramanga, Santander.
-- Dirección de notificación judicial: Calle 37 n.° 23-77, apartamento 702, Bucaramanga, Santander.
-- Correo de notificación judicial y de atención: desantander.tienda@gmail.com.
-- WhatsApp: +57 300 112 9874.
-- Despachamos desde Bucaramanga.
+Te vende De Santander SAS, NIT 902.121.184-8, con domicilio en Bucaramanga, Santander, y dirección de notificación judicial en la calle 37 n.° 23-77, apartamento 702, de Bucaramanga. Correo: desantander.tienda@gmail.com. WhatsApp: +57 300 112 9874. Los datos completos están en «Información del vendedor».
 
-De Santander es una tienda: comercializa café de origen santandereano de otras marcas. No cultivamos, no tostamos, no molemos ni empacamos el café. La marca de cada café y la empresa que lo fabrica o envasa figuran en la bolsa y en la ficha de ese café. Ante ti respondemos nosotros por la venta, la entrega y la garantía, junto con el fabricante.
+De Santander es una tienda que comercializa café de origen santandereano de otras marcas. No cultivamos, no tostamos, no molemos ni empacamos el café. La marca de cada café y la empresa que lo fabrica o envasa figuran en la bolsa y en la ficha de ese café. Ante ti respondemos nosotros por la venta, la entrega y la garantía, junto con el fabricante.
 
 ### 3. Los productos
-- Vendemos café tostado de origen de Santander, en las presentaciones que ves en cada ficha.
-- El café viene en grano entero o molido, tal como lo empaca su fabricante. Tú eliges cuál de las dos bolsas quieres. No molemos el café, no abrimos las bolsas ni las reempacamos.
-- Cada café lleva la marca con la que lo vende su fabricante. Esa marca no es nuestra: pertenece a quien figura en la bolsa. La mostramos tal como está en la bolsa para que sepas qué compras.
-- En la ficha de cada café ves la marca, quién lo fabrica o envasa, la notificación sanitaria del INVIMA con su titular, la provincia y el municipio de origen y los demás datos que tenemos de ese café. Solo publicamos datos que tienen respaldo del fabricante o del rótulo.
-- Las fotos e ilustraciones son una referencia. La bolsa que recibes puede verse distinta, pero el café, la marca, el peso y la molienda son los que elegiste.
-- La fecha de vencimiento, el lote, el fabricante y la notificación sanitaria están en la bolsa.
+- Vendemos café de origen de Santander, en grano o molido, en las presentaciones que ves en cada ficha. El café molido viene molido por su fabricante; no molemos a pedido.
+- Cada café lleva la marca con la que lo vende su fabricante. Esa marca no es nuestra: pertenece a quien figura en la bolsa.
+- En la ficha de cada café ves la marca, el fabricante, la notificación sanitaria del INVIMA, la provincia y el municipio de origen y los demás datos que tenemos. Solo publicamos datos que tienen respaldo del fabricante o del rótulo.
+- Las fotos son una referencia. La bolsa que recibes puede verse distinta, pero el café, la marca, el peso y la presentación (grano o molido) son los que elegiste.
+- La fecha de vencimiento, el lote, el fabricante y la notificación sanitaria están en la bolsa. No la abrimos ni la reempacamos.
 
 ### 4. Precios
-- Conforme a los artículos 26 y 50 de la Ley 1480 de 2011, el precio de cada producto incluye todos los impuestos. El costo del envío se informa por separado, antes de que aceptes el total.
-- Los precios publicados incluyen el IVA a la tarifa del 5 % (artículo 468-1 del Estatuto Tributario). El valor del envío que te cobramos hace parte del valor de la venta y también incluye el IVA del 5 % (artículo 447 del Estatuto Tributario).
-- Los precios están en pesos colombianos. Te cobramos el precio publicado el día en que nos envías el mensaje del pedido. Si cambiamos un precio después, no se aplica a tu pedido.
-- Si antes de que aceptes el total en el chat detectamos un error en el precio publicado, te lo informaremos y podrás aceptar el precio correcto o desistir del pedido sin costo. Una vez aceptado el total, respetamos ese precio.
+- Los precios están en pesos colombianos e incluyen todos los impuestos, conforme a los artículos 26 y 50 de la Ley 1480 de 2011.
+- Los precios publicados incluyen el IVA a la tarifa del 5 % (artículo 468-1 del Estatuto Tributario). El envío que te cobramos hace parte del valor de la venta y también incluye el IVA del 5 % (artículo 447 del Estatuto Tributario).
+- El costo del envío se muestra por separado, en tu carrito y en el resumen, antes de que envíes el pedido, salvo en los envíos «por cotizar» (numeral 8).
+- Te cobramos el precio publicado el día en que nos envías el mensaje del pedido. Si cambiamos un precio después, el cambio no se aplica a tu pedido.
+- En cada compra emitimos factura electrónica. Si nos das tu tipo y número de documento, la factura sale a tu nombre.
 
 ### 5. Cómo haces el pedido
-1. Eliges los cafés, el tamaño y la molienda, y los agregas al carrito. El carrito se guarda solo en tu navegador.
-2. Escribes los datos de envío y eliges la forma de pago.
-3. En el resumen revisas los cafés, el subtotal, el envío, el plazo de entrega de tu zona y el total. Allí también te recordamos cómo funciona el retracto (numeral 9). Luego autorizas el tratamiento de tus datos y aceptas estos términos, en dos casillas separadas que vienen sin marcar.
-4. Pulsas «Preparar pedido para WhatsApp» y después «Enviar por WhatsApp». Se abre WhatsApp con tu solicitud de compra ya escrita. La solicitud nos llega solo cuando tú mandas ese mensaje en el chat. Hasta entonces no hay pedido.
+- Eliges los cafés, el tamaño y la presentación (grano o molido), y los agregas al carrito. El carrito se guarda solo en tu navegador.
+- Escribes los datos de envío.
+- En el resumen revisas los cafés, el subtotal, el envío, el plazo de entrega de tu zona y el total, y lees cómo funciona el retracto. Luego aceptas estos términos y autorizas el tratamiento de tus datos, en dos casillas separadas. Si quieres recibir promociones, hay casillas aparte y opcionales.
+- Pulsas «Enviar por WhatsApp». Se abre WhatsApp con el pedido escrito. El pedido nos llega solo cuando tú mandas ese mensaje. Hasta entonces no hay pedido.
 
 El sitio no guarda tu pedido ni tus datos: van solo en el mensaje que mandas por WhatsApp.
 
 ### 6. Cuándo queda en firme tu compra
 - Tu mensaje de WhatsApp es tu solicitud de compra.
-- Te respondemos por el chat para confirmar la disponibilidad de los cafés, el total con el envío y la forma de pago.
-- Antes de procesar tu pedido te pedimos que respondas «ACEPTO» en el chat. Con esa respuesta aceptas el total, confirmas que leíste y aceptas estos términos y confirmas la autorización para tratar tus datos. Conservamos esa conversación como constancia.
-- Tu compra queda en firme cuando aceptas el total en el chat. Desde ese momento tenemos un contrato.
-- Si el envío es «por cotizar» (zona 5 o pedidos de más de 5 kg), te informamos el valor del envío y el total antes de que pagues. Si no lo aceptas, no hay compra y no pagas nada.
+- Te respondemos por el chat para confirmar la disponibilidad de los cafés y el total con el envío.
+- Antes de cobrarte te pedimos que respondas ACEPTO. Tu compra queda en firme cuando aceptas en el chat ese total. Desde ese momento hay contrato.
+- Si el envío es «por cotizar» (zona 5 o pedidos de más de 5 kg), te informamos el valor del envío y el total. Si no lo aceptas, no hay compra y no pagas nada. En las siete comunas de Bucaramanga con envío gratis no se cotiza con ningún peso («Envíos, devoluciones, retracto y garantía», numeral 13).
 - Si un café no está disponible, te lo decimos antes de confirmar y puedes cambiarlo, esperar o desistir sin costo.
-- No podemos cambiar las condiciones del resumen en tu contra después de que envías el mensaje: respetamos los precios y el envío que viste.
+- Después de que envías el mensaje no cambiamos en tu contra los precios ni el valor del envío que viste en el resumen. La única salvedad es el envío gratis en comunas de Bucaramanga: si al verificar tu dirección vemos que no está en la comuna que elegiste, te informamos el envío con la tarifa normal de la zona 1 o, si tu pedido pesa más de 5 kg, su valor cotizado, antes de que aceptes el total, y puedes aceptarlo o desistir sin costo («Envíos, devoluciones, retracto y garantía», numeral 13).
 
 ### 7. Formas de pago
-- Efectivo contraentrega: pagas al recibir el pedido, a quien lo entrega. La tarifa de envío de tu zona ya incluye la comisión de recaudo de la transportadora; no cobramos recargos adicionales.
-- Transferencia Bre-B: te damos los datos para transferir por el chat, después de confirmar el pedido. Despachamos cuando recibimos el pago.
-- En esta página no se paga ni se piden datos de tarjetas o cuentas.
-- Cuidado con los fraudes: solo te damos los datos de pago por el chat del WhatsApp +57 300 112 9874. Nunca te pedimos claves ni códigos.
+- Pagas por transferencia bancaria o por Bre-B, después de aceptar el total en el chat. Te damos los datos para transferir solo por el chat del WhatsApp +57 300 112 9874.
+- Despachamos cuando recibimos el pago.
+- No recibimos pagos contraentrega ni en efectivo. En este sitio no se paga ni se piden datos de tarjetas o cuentas.
+- Cuidado con los fraudes: nunca te pedimos claves, códigos ni que pagues a un número distinto del nuestro.
 
-### 8. Envío y entrega
-Despachamos desde Bucaramanga a todo Colombia. El valor del envío depende de la zona y del peso y lo ves antes de enviar el pedido, salvo en los casos «por cotizar», en los que te lo confirmamos antes de que pagues. Las zonas, las tarifas, quién paga el envío en cada caso y qué pasa si no hay quien reciba están en «Envíos, devoluciones, retracto y garantía» y en la página de envíos (/envios/).
+### 8. Envío y plazos de entrega
+Despachamos desde Bucaramanga a todo Colombia. El valor del envío depende de la zona y del peso y lo ves antes de enviar el pedido, salvo en los casos «por cotizar», en los que te lo confirmamos antes de que pagues. En siete comunas de Bucaramanga el envío es gratis, con las condiciones y el plazo del numeral 13 de «Envíos, devoluciones, retracto y garantía».
 
-El plazo estimado y el plazo máximo de entrega de cada zona figuran en la política de envíos y los ves en el resumen antes de enviar el pedido. Los plazos se cuentan en días hábiles desde que aceptas el total en el chat; si pagas por transferencia Bre-B, desde que recibimos tu pago, porque despachamos cuando lo recibimos. Si una zona no tiene plazo máximo publicado, el plazo máximo de entrega es de treinta (30) días calendario contados desde que aceptas el total. Si no entregamos dentro del plazo, puedes dejar sin efecto el pedido, y te devolvemos lo pagado dentro de los quince (15) días calendario siguientes.
+Para cada zona publicamos un plazo estimado y un plazo máximo de entrega, que figuran en la página de envíos y en el resumen de tu pedido. Se cuentan desde el día hábil siguiente a aquel en que recibimos tu pago. El plazo máximo es el que nos comprometemos a cumplir. En la zona 5 y en los pedidos de más de 5 kg el plazo máximo se informa al cotizar y no supera treinta (30) días calendario.
+
+Si no te entregamos dentro del plazo máximo, puedes dar por terminado el contrato y te devolvemos todo lo que pagaste, sin descuentos, dentro de los quince (15) días calendario siguientes. Quién paga el envío en cada caso y qué pasa si no hay quien reciba están en «Envíos, devoluciones, retracto y garantía».
 
 ### 9. Derecho de retracto
-Como compraste a distancia, puedes retractarte dentro de los cinco (5) días hábiles siguientes a la entrega del pedido (artículo 47 de la Ley 1480 de 2011). Avísanos por WhatsApp o al correo de atención. Debes devolver el producto en las mismas condiciones en que lo recibiste, con el empaque original sellado. Los costos de transporte y los demás que cause la devolución corren por tu cuenta. Te devolvemos lo pagado, sin descuentos ni retenciones, dentro de los quince (15) días calendario siguientes a tu aviso y por el medio de pago que prefieras. No hay retracto si el empaque fue abierto o su sello está roto, porque, por su naturaleza, el café abierto no puede devolverse (numeral 4 del artículo 47).
+Como compraste a distancia, puedes retractarte dentro de los cinco (5) días hábiles siguientes a la entrega del pedido (artículo 47 de la Ley 1480 de 2011). Avísanos por WhatsApp o al correo de atención.
 
-El retracto no afecta tu garantía: si el café llega dañado, vencido o equivocado, o no corresponde a lo que pediste, te respondemos sin costo (numeral 10). Y antes de que tu compra quede en firme puedes desistir sin costo (numeral 6).
+Debes devolver el producto en las mismas condiciones en que lo recibiste, con el empaque original sellado. Los costos de transporte y los demás que cause la devolución corren por tu cuenta.
+
+Te devolvemos lo pagado, sin descuentos ni retenciones, dentro de los quince (15) días calendario siguientes a tu aviso, siempre que nos devuelvas el producto en las condiciones indicadas, y por el medio de pago que prefieras (artículo 47 de la Ley 1480 de 2011, modificado por el artículo 3 de la Ley 2439 de 2024, y artículo 5 de la Ley 2439 de 2024).
+
+No hay retracto si el empaque fue abierto o su sello está roto, porque el café abierto, por su naturaleza, no puede devolverse (numeral 4 del artículo 47 de la Ley 1480 de 2011). El retracto no afecta tu garantía (numeral 10).
 
 ### 10. Garantía
-Todos nuestros cafés tienen garantía legal: deben llegar en buen estado, ser seguros y corresponder a lo que ofrecimos. La garantía va hasta la fecha de vencimiento de la bolsa. La atendemos nosotros directamente, aunque el café lo fabrique otra empresa. El procedimiento está en «Envíos, devoluciones, retracto y garantía».
+Todos nuestros cafés tienen garantía legal: deben llegar en buen estado, ser seguros y corresponder a lo que ofrecimos. La garantía va hasta la fecha de vencimiento que figura en la bolsa. La atendemos nosotros directamente, aunque el café lo fabrique otra empresa. El procedimiento está en «Envíos, devoluciones, retracto y garantía».
 
-### 11. Si pagaste por Bre-B y algo salió mal
-Si pagaste por Bre-B o por otro medio electrónico y fuiste víctima de fraude, la operación no fue solicitada, el producto no llegó, no corresponde a lo pedido o está defectuoso, puedes pedir la reversión del pago. Avísanos por WhatsApp o al correo de atención dentro de los cinco (5) días hábiles siguientes a la fecha en que conociste el hecho, y pide también la reversión a tu entidad. Devolvemos lo pagado dentro de los quince (15) días calendario siguientes. El detalle está en «Envíos, devoluciones, retracto y garantía», numeral 10.
+### 11. Si algo sale mal con tu pago
+Si pagaste por transferencia o por Bre-B y fuiste víctima de fraude, la operación no fue solicitada, el producto no llegó, no corresponde a lo pedido o está defectuoso, avísanos dentro de los cinco (5) días hábiles siguientes a la fecha en que conociste el hecho. Revisamos tu caso y, si procede, te devolvemos lo pagado dentro de los quince (15) días calendario siguientes. También puedes solicitar la devolución o la reversión a tu entidad, según sus procedimientos. El detalle está en «Envíos, devoluciones, retracto y garantía», numeral 10.
 
 ### 12. Quejas, reclamos y solicitudes
-Puedes escribirnos por WhatsApp al +57 300 112 9874 o al correo desantander.tienda@gmail.com. Por el mismo canal te damos un número de radicado (con la forma PQR-2026-001), con la fecha y la hora, y con él puedes preguntar en cualquier momento cómo va tu solicitud. Te respondemos en máximo 15 días hábiles desde el día siguiente al radicado. Si no estás de acuerdo con la respuesta, puedes acudir a la Superintendencia de Industria y Comercio (www.sic.gov.co).
+Escríbenos por WhatsApp al +57 300 112 9874 o al correo desantander.tienda@gmail.com. Por el mismo canal te damos un número de radicado (con la forma PQR-2026-001), con la fecha y la hora; con él puedes preguntar en cualquier momento cómo va tu solicitud. Te respondemos en máximo quince (15) días hábiles desde el día siguiente al radicado. Si no estás de acuerdo con la respuesta, puedes acudir a la Superintendencia de Industria y Comercio (www.sic.gov.co).
 
-### 13. Tus datos personales
-Tratamos tus datos según la Política de tratamiento de datos personales, que autorizas en una casilla aparte en el resumen del pedido. Aceptar estos términos no implica autorizar mensajes promocionales. No te enviamos novedades ni promociones sin una autorización distinta y expresa, que hoy no pedimos; si algún día la pedimos, será en una casilla separada, sin marcar, que podrás dejar vacía sin que cambie nada en tu pedido, y podrás cancelarla cuando quieras.
+### 13. Tus datos personales y las promociones
+Tratamos tus datos según la Política de tratamiento de datos personales, que autorizas por separado en el resumen del pedido. Aceptar estos términos no implica autorizar mensajes promocionales. Para recibir novedades y promociones hay casillas aparte, una por canal, que puedes dejar sin marcar sin que cambie nada en tu pedido. Puedes cancelarlas cuando quieras.
 
 ### 14. Nombres y marcas
-«De Santander» es el nombre de esta tienda y de la sociedad que la opera. Los textos, ilustraciones y fotos del sitio pertenecen a De Santander SAS o a quienes nos autorizaron a usarlos. Las marcas de los cafés que vendemos pertenecen a sus fabricantes; las mostramos solo para identificar el producto que compras. Puedes compartir el contenido del sitio para recomendar los cafés, pero no copiarlo para vender ni hacerte pasar por nosotros ni por los fabricantes.
+«De Santander» es el nombre de esta tienda y de la sociedad que la opera. Los textos, ilustraciones y fotos del sitio pertenecen a De Santander SAS o a quienes nos autorizaron a usarlos. Las marcas de los cafés pertenecen a sus titulares; las mostramos solo para identificar el producto que compras. Puedes compartir el contenido del sitio para recomendar los cafés, pero no copiarlo para vender ni para hacerte pasar por nosotros o por los fabricantes.
 
 ### 15. Cambios en estos términos
-Podemos actualizar estos términos. Cada versión tiene su número y fecha. A tu pedido se aplica la versión vigente el día en que nos mandas el mensaje.
+Podemos actualizar estos términos. Cada versión tiene su número y su fecha. A tu pedido se aplica la versión vigente el día en que nos mandas el mensaje.
 
 ### 16. Ley aplicable
-Estos términos se rigen por la ley colombiana, en especial el Estatuto del Consumidor (Ley 1480 de 2011) y la ley de comercio electrónico (Ley 527 de 1999). Puedes acudir a la Superintendencia de Industria y Comercio o a los jueces de Colombia, en los términos de la ley.
+Estos términos se rigen por la ley colombiana, en especial por la Ley 1480 de 2011 (Estatuto del Consumidor), modificada por la Ley 2439 de 2024, y por la Ley 527 de 1999 (comercio electrónico). Puedes acudir a la Superintendencia de Industria y Comercio o a los jueces de Colombia, en los términos de la ley.
 
-### 17. Normas que aplican
-Ley 1480 de 2011, arts. 4, 26, 29, 42, 43, 47 (num. 4) y 50; Ley 2439 de 2024, arts. 3, 4 y 5; Ley 527 de 1999, arts. 14 y 15; Código de Comercio, arts. 845 y 864; Estatuto Tributario, arts. 447 y 468-1.
+Normas citadas: Ley 1480 de 2011, arts. 4, 7, 8, 10, 11, 26, 29, 47 y 50; Ley 2439 de 2024, arts. 3, 4 y 5; Ley 527 de 1999, arts. 14 y 15; Código de Comercio, arts. 845 y 864; Estatuto Tributario, arts. 447 y 468-1; Ley 1581 de 2012; Ley 2300 de 2023.
 
 ---
 
 ## Notas para el abogado
 
-### A. Decisiones del dueño aplicadas en esta versión (Paquete legal v1, 2026-11-06)
-- **Retracto (§9).** Reemplaza la decisión P2 = C (sin retracto). El dueño concede retracto de 5 días hábiles y excluye solo el empaque abierto o con sello roto, con apoyo en el num. 4 del art. 47 (bienes que «por su naturaleza, no puedan ser devueltos o puedan deteriorarse o caducar con rapidez»; texto confirmado en la transcripción del Concepto SIC 16-062808 de 2016). El Concepto SIC concluye que los alimentos no tienen retracto (num. 6, perecederos): conceder el retracto es **más favorable** al consumidor, está permitido (art. 4: las normas son el mínimo) y obliga como condición objetiva anunciada (art. 29). Riesgo residual: una vez publicado no puede retirarse para los pedidos ya hechos. Pregunta L2 reformulada: confirmar que la exclusión del empaque abierto se apoya correctamente en el num. 4 y que «empaque original sellado» es un criterio verificable.
-- **IVA (§4).** El dueño afirma IVA del 5 % en el café (art. 468-1 E.T., partida 09.01, redacción de la Ley 1819 de 2016, leída en compilación no oficial) y en el envío cobrado dentro de la venta (art. 447 E.T.). Legal **no concluye** en materia tributaria: el texto se publica por decisión del dueño y requiere la confirmación escrita del contador (C1) **antes** de publicar. Si el contador concluye otra cosa, la viñeta debe cambiar antes de lanzar (LEG-082). Alternativa más prudente si no hay concepto: publicar solo la primera viñeta (precio con todos los impuestos) y omitir la tarifa.
-- **Plazo (§8).** El paquete cuenta el plazo «desde que aceptas el total». Como con Bre-B se despacha al recibir el pago, se agregó la salvedad «si pagas por transferencia Bre-B, desde que recibimos tu pago» para que el compromiso sea cumplible (LEG-087). Confirmar con el dueño.
-- **ACEPTO (§6).** El paquete prevé la respuesta «ACEPTO» como constancia de la autorización de datos. Se unificó con la aceptación del total: una sola respuesta cierra el contrato y deja constancia de términos y autorización (LEG-096). Confirmar que la operación del chat lo hará así.
-- **Comisión de recaudo (§7).** Sustituye P7 = b: la tarifa publicada ya la incluye; no hay recargos. Es una condición objetiva que obliga (art. 29): el dueño debe verificar que las tarifas de `data/tarifas_envio.csv` la cubren (LEG-092).
-- **Promociones (§13).** P12 pasa a «no por ahora»: no hay casilla ni finalidad promocional. El texto dice que no se envían sin autorización aparte (Ley 1581, art. 9; Ley 2300 de 2023, art. 5 par. 2, alcance a comercios no vigilados por VERIFICAR).
-- **Molienda (§3).** El café viene molido de fábrica; De Santander no lo muele. El selector grano/molido del sitio elige entre dos bolsas distintas del fabricante; no es molienda a pedido (LEG-083).
-- **Publicación.** El dueño instruyó publicar sin esperar la aprobación del abogado. Es su decisión; se registra en LEG-094. El texto público no lleva marca de borrador; este archivo sí, hasta la aprobación (L1).
+Estas notas no se publican. El análisis completo está en `revisiones/2026-11-14-paquete-abogado-v1.md`.
 
-### B. Cláusulas que se evitaron (arts. 42 y 43 Ley 1480; VERIFICAR la letra)
-No se incluyen: limitación de responsabilidad por defectos o demoras; renuncia a derechos; facultad de cambiar unilateralmente el precio o el envío después del mensaje; obligación de acudir a un juez o a un centro de arbitraje determinado; presunción de aceptación por silencio; penalidades por desistir antes de la aceptación del total; exclusión de la garantía porque el café sea de otra marca (art. 10, solidaridad); remisión del consumidor al fabricante; recargos no informados antes del pedido; condicionamiento del retracto a causas o a conservar el empaque exterior de envío (solo se exige el empaque original del producto sellado, que es la condición del num. 4).
-
-### C. Coherencia con otros textos (estado al 2026-11-06)
-| Texto | Hoy en el sitio | Debe decir (v1.0) | Hallazgo |
-|---|---|---|---|
-| Resumen, `aviso-retracto` (`flujo-pedido.tsx` línea 244) | «El café es un alimento: no admite retracto…» | Línea de retracto de microcopy §5.3 (5 días hábiles, salvo empaque abierto) | LEG-081 |
-| Primera línea del mensaje (`mensaje-whatsapp.ts` línea 57) | «Quiero finalizar mi pedido» | «¡Hola, De Santander! Envío mi solicitud de compra para que me confirmen el total con el envío.» | LEG-090 |
-| Mensaje, línea final | No existe | «Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026.» | LEG-050 |
-| Casilla de términos | «Acepto los términos y condiciones.» | «Leí y acepto los Términos y condiciones versión 1 del 6 de noviembre de 2026.» (enlace en el nombre del documento) | microcopy §5.1 |
-| Ficha, precio | Sin leyenda | «Precios con IVA del 5 % incluido (art. 468-1 del Estatuto Tributario).» | LEG-082 |
-| Pie, última línea | «Precios en pesos colombianos.» | «Precios en pesos colombianos, con IVA del 5 % incluido.» | LEG-082 |
-| Pie y resumen, vendedor | Oculto (`vendedorCompleto`) | Bloque completo de §2 (sin representante ni matrícula) | LEG-085 |
-| `PRODUCT.md` | «marca propia», «el pedido existe cuando el cliente envía el mensaje» | Modelo C; «la solicitud existe…» | LEG-078 |
-| Bajada, pie, metadatos, Historia | «marca propia», «Trabajamos con fincas…» | Textos del modelo C (microcopy §2) | LEG-069, LEG-071 |
-
-### D. Normas citadas y verificación
-| Norma | Uso | Estado |
-|---|---|---|
-| Ley 1480 de 2011, arts. 4, 26, 29, 42, 43 | Orden público, precio informado, lo anunciado obliga, cláusulas abusivas | VERIFICAR contra SUIN-Juriscol (no accesible en estas sesiones). |
-| Ley 1480, art. 47 y nums. 4 y 6 | Retracto de 5 días hábiles desde la entrega; excepciones; costos de devolución a cargo del consumidor | Texto leído en la transcripción del Concepto SIC 16-062808 del 18 de abril de 2016 (copia de Actualícese, 2026-11-06). VERIFICAR contra SUIN. |
-| Ley 2439 de 2024, arts. 3, 4 y 5 | Devolución en 15 días calendario (art. 47); lits. g) y h) del art. 50 (PQR, plazo de entrega, 30 días calendario) | Leída en el Diario Oficial 52.975 en sesión anterior. |
-| Ley 1480, art. 50 lits. a) y c) | Identificación del vendedor; precio total con impuestos; envío por separado; información del retracto | VERIFICAR la letra (se cita sin literal en el texto público, como pide el paquete). |
-| Ley 1480, art. 51; Decreto 587 de 2016 | Reversión del pago | Aplicación a Bre-B sin definir: el §11 es un compromiso propio (L3). |
-| Ley 527 de 1999, arts. 14 y 15; C. de Co., arts. 845 y 864 | Formación del contrato por mensajes de datos | VERIFICAR. |
-| Estatuto Tributario, arts. 447 y 468-1 | Base gravable incluye acarreos y comisiones; café (09.01, salvo 09.01.11) al 5 % | Art. 468-1 leído en compilación no oficial (estatuto.co / Actualícese, 2026-11-06). **Concepto escrito del contador pendiente (C1).** |
-| Decisión 486 de la CAN, arts. 157 y 158 | Uso informativo de marca ajena; agotamiento (§3, §14) | Texto oficial no accesible; VERIFICAR. |
-| Ley 2300 de 2023, art. 5 par. 2 | No obligar a recibir mensajes comerciales (§13) | Leída en el normograma de la DIAN; alcance a comercios no vigilados: VERIFICAR. |
-
-### E. Versión 2: envío gratis en comunas de Bucaramanga (2026-11-09; LEG-106)
-
-**Por qué hace falta.** El §6 de la versión 1 dice «No podemos cambiar las condiciones del resumen en tu contra después de que envías el mensaje: respetamos los precios y el envío que viste». Con la comuna autodeclarada, el resumen puede mostrar $0 y luego, al verificar, corresponder la tarifa de zona 1. Sin la salvedad, el cliente podría exigir el $0 (Ley 1480, arts. 29, 33 y 34). Es **Bloqueante** para publicar la funcionalidad.
-
-**Cuándo se aplica.** El día en que se publique la funcionalidad, junto con «Envíos, devoluciones, retracto y garantía» versión 2 (su nota E) e «Información del vendedor» con el mismo rótulo. Legal pasa los cambios al texto público, pone la fecha real (D-21) en el rótulo («Versión 2 · vigente desde AAAA-MM-DD», línea 5) y sube el encabezado a 2.0; el desarrollador cambia `version_terminos` a `2` y `fecha_terminos` a esa fecha. La casilla y la constancia del mensaje se actualizan solas desde `config.csv`. A los pedidos enviados antes se les sigue aplicando la versión 1 (§15).
-
-**Cambios del texto público.**
-1. §6, última viñeta, se reemplaza por: `No podemos cambiar las condiciones del resumen en tu contra después de que envías el mensaje: respetamos los precios y el envío que viste. La única salvedad es el envío gratis en comunas de Bucaramanga: si al verificar tu dirección vemos que no está en la comuna que elegiste, te informamos la tarifa normal de la zona 1 antes de que aceptes el total, y puedes aceptarla o desistir sin costo («Envíos, devoluciones, retracto y garantía», numeral 13).`
-2. §8, al final del primer párrafo: `En siete comunas de Bucaramanga el envío es gratis, con las condiciones del numeral 13 de «Envíos, devoluciones, retracto y garantía».`
-2 bis. §6, viñeta «Si el envío es "por cotizar" (zona 5 o pedidos de más de 5 kg)…», después del paréntesis: ` (salvo en las siete comunas de Bucaramanga con envío gratis, donde no se cotiza con ningún peso)` (P27 = b; LEG-119).
-2 ter. §8, segundo párrafo, después de la primera frase: `Con envío gratis en comunas de Bucaramanga, el plazo máximo es de un (1) día hábil con cualquier peso y se cuenta desde que validamos la transacción y te damos el aprobado de tu pedido por el chat, como explica el numeral 13 de «Envíos, devoluciones, retracto y garantía».` (LEG-118).
-3. §17: `Ley 1480 de 2011, arts. 4, 26, 29, 33, 34, 42, 43, 47 (num. 4) y 50; Ley 2439 de 2024, arts. 3, 4 y 5; Ley 527 de 1999, arts. 14 y 15; Código de Comercio, arts. 845 y 864; Estatuto Tributario, arts. 447 y 468-1.`
-
-**Sin cambios:** §4 (precio con impuestos: el envío gratis no cambia el precio de los cafés; LEG-113), §9 (retracto: el numeral 13 de envíos aclara que no se descuenta el envío gratis), §13 (no es una promoción por mensajes: no requiere autorización de datos aparte ni aplica la Ley 2300 de 2023, porque se anuncia en el sitio y no se envía al cliente).
+- **Parser del sitio.** D1 no trae corchetes, llaves, `TODO`, `DECISIÓN`, `VERIFICAR` ni comentarios: pasa el control de `src/domain/legal/texto-legal.ts` sin ajustes de redacción. Solo se agregó el formato Markdown (`###`, `- `).
+- **Añadidos de legal para el envío gratis (LEG-167; validar con el abogado).** Se agregaron al final de las frases del abogado, sin cambiar su texto: (1) §6, viñeta «por cotizar»: «En las siete comunas de Bucaramanga con envío gratis no se cotiza con ningún peso (…numeral 13).»; (2) §6, última viñeta: «La única salvedad es el envío gratis en comunas de Bucaramanga: si al verificar tu dirección vemos que no está en la comuna que elegiste, te informamos el envío con la tarifa normal de la zona 1 o, si tu pedido pesa más de 5 kg, su valor cotizado, antes de que aceptes el total, y puedes aceptarlo o desistir sin costo (…numeral 13).»; (3) §8: «En siete comunas de Bucaramanga el envío es gratis, con las condiciones y el plazo del numeral 13 de «Envíos, devoluciones, retracto y garantía».». Sin la salvedad (2), el cliente podría exigir el $0 aunque su dirección no esté en la comuna (Ley 1480, arts. 29 y 34; VERIFICAR la letra). «Normas citadas» no se tocó en D1.
+- **§2 y la dirección de notificación judicial.** D1 publica la dirección (calle 37 n.° 23-77, apartamento 702). El 2026-11-12 el dueño había pedido retirarla de los documentos (LEG-134); el paquete, posterior, la restituye. Se publica como la redactó el abogado. Falta la confirmación 3 del numeral 8.3 del paquete (cotejo con el certificado de existencia y representación legal; D-1) (LEG-148).
+- **§3, ficha con marca, fabricante y notificación sanitaria.** Hoy ningún café activo tiene `marca` ni `fabricante` en `data/catalogo.csv`, Café Casa Martínez no tiene `titular_nsa` y Café Arreboles no tiene NSA. Si se publica así, la viñeta sería inexacta (Ley 1480, art. 23) (LEG-146, LEG-147).
+- **Envío gratis.** El paquete no lo regulaba; el dueño ordenó mantenerlo (2026-11-14). Ver LEG-140 (resuelto con la alternativa c) y LEG-167.
+- **§8, cómputo del plazo.** El plazo corre «desde el día hábil siguiente a aquel en que recibimos tu pago». Cambia la forma en que hoy lo cuentan el resumen y `/envios/` (LEG-143).

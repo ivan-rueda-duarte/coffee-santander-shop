@@ -1,10 +1,16 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.6 — 2026-11-11.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.9 — 2026-11-14.
 
 # Microcopy legal
+
+**Aviso de la v1.9 (2026-11-14, LEG-140 a LEG-167).** Desde la publicación del 17/11/2026 mandan los textos de la sección 6 (D5) de «De Santander SAS — Textos legales v1.0 para publicación» (`docs/legal/paquete-abogado/`) y las casillas y el aviso de privacidad de D2 (copiados en `politica-tratamiento-datos.md`, secciones «Aviso de privacidad» y «Textos de las casillas»). Donde este documento diga otra cosa, **queda sin efecto**; en particular: §1 (leyendas de IVA y envío), §2 (portada, pie, metadatos, `/cafes/` e Historia: rige D5 §6.1), §3 (ficha: D5 §6.2), §4.3 y §5.1 (casillas: ahora cuatro), §5.2 y §5.5 (mensaje: D5 §6.4), §5.3 (retracto del resumen: D5 §6.3), §5.4 (vendedor: D4), §5.6 y §5.8 (plazos: D3 §6 y D5 §6.3), §5.7 (respuestas del chat: D5 §6.5), §6 (configuración: paquete §7.1 y §7.2, con los ajustes de LEG-151 y LEG-152) y §8 (envío gratis: el dueño lo mantiene; condiciones en el numeral 13 de D3 versión 1.0, vigente desde el 17 de noviembre de 2026, y textos del sitio ajustados en la sección 2 bis de LEG-167, que mandan sobre §8 donde difieran). Siguen vigentes, mientras no contradigan el paquete: §4 (documento y código postal), §5.9 (microayuda del botón) y las reglas de §7 que coinciden con D5 §6.6. Este archivo se reescribirá cuando el abogado valide LEG-167 y el dueño decida LEG-150.
 
 Textos exactos del sitio que tienen fundamento legal. El desarrollador los copia sin cambios; `{}` son variables que pone el código y salen de `data/config.csv` o de los CSV de datos. Cada texto distingue **exige la norma** y **se recomienda**.
 
 Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran; **§8** envío gratis en comunas de Bucaramanga.
+
+Cambios de la v1.8 (2026-11-12, QA-013; LEG-139): §2, párrafos 1 y 2 de la Historia reescritos sobre el texto pedido por el dueño, con dos variantes según que todos los cafés activos traigan marca y fabricante (LEG-070) y regla de la lista de datos; §7 retira el texto del dueño. El texto público de los documentos versión 2 no cambia.
+
+Cambios de la v1.7 (2026-11-12, documentos versión 2 y eliminación del pago contraentrega; LEG-133 a LEG-138): §1.7 retirada (no hay contraentrega ni comisión de recaudo); §2 «Cómo pedir» paso 3 con el ejemplo «Pagas con transferencia Bre-B.»; §5.4 con el estado del vendedor sin dirección de notificación en pie y resumen (decisión del dueño) y la fila de `/legal/vendedor/` sin marcador (LEG-134); §5.6 y §5.8, plazos contados desde la recepción del pago por Bre-B (LEG-136); §5.7 respuesta «ACEPTO» con la versión de `config.csv`; §6 con versión 2 y fecha 2026-11-12; §8.1 sin el caso contraentrega; §8 estado: documentos versión 2 listos.
 
 Cambios de la v1.6 (2026-11-11, QA-011 y QA-012; LEG-131 y LEG-132): §8.6.1, en `/envios/` con la promoción terminada se retira `Estas fueron sus condiciones:` y se agrega una nota de vigencia terminada antes del numeral 13, que se sigue mostrando sin cambios en un bloque citado; si el numeral no está publicado mientras el aviso es visible, `npm run datos` falla.
 
@@ -77,16 +83,11 @@ Exige la norma que el precio publicado incluya todos los impuestos (Ley 1480, ar
 
 Decisión del dueño (2026-11-06): sin número de solicitud («N.° DS-…» del paquete), porque el sitio no asigna números (`PRODUCT.md`). «Solicitud de compra» coincide con los términos §6 (el mensaje es la solicitud; el contrato nace al aceptar el total). `{nombre_tienda}` sale de `data/config.csv`. Reemplaza «Quiero finalizar mi pedido» (código actual) y «Quiero hacer este pedido:» (v0.6).
 
-### 1.7 Comisión de recaudo del pago contraentrega (sustituye a la §6 de la v0.6)
+### 1.7 Comisión de recaudo del pago contraentrega (retirada en la v1.7)
 
-| Dónde | Texto exacto |
-|---|---|
-| Formulario, ayuda bajo «Efectivo contraentrega» | `Pagas al recibir. La tarifa de envío ya incluye la comisión de recaudo; no hay recargos.` |
-| `/envios/`, párrafo bajo la tabla | `Si pagas contraentrega, la tarifa de envío de tu zona ya incluye la comisión de recaudo de la transportadora; no cobramos recargos adicionales.` |
+**Retirada el 2026-11-12.** El dueño eliminó el pago contraentrega: `formas_pago` solo tiene `Transferencia Bre-B`. No se muestra ninguna ayuda ni frase de comisión de recaudo (ni en el formulario ni en `/envios/`), ni línea de comisión, ni «Total sin comisión de recaudo», ni «POR CONFIRMAR». Si el dueño vuelve a ofrecer contraentrega, legal redacta una versión nueva de los documentos antes (LEG-135).
 
-No hay línea de comisión, ni rótulo «Total sin comisión de recaudo», ni «POR CONFIRMAR»: el bloque 3 de la entrega de LEG-069 a LEG-080 queda sin efecto. Es una condición objetiva que obliga (art. 29): el dueño debe verificar que las tarifas del CSV cubren la comisión (LEG-092).
-
-## 2. Inicio, Historia y confirmación (modelo C, sin cambios desde la v0.6)
+## 2. Inicio, Historia y confirmación (modelo C; Historia reescrita en la v1.8)
 
 | Dónde | Texto exacto |
 |---|---|
@@ -95,12 +96,15 @@ No hay línea de comisión, ni rótulo «Total sin comisión de recaudo», ni «
 | Pie (`pie.tsx`) | `Café de origen de provincias de Santander, Colombia.` |
 | Metadatos y Open Graph (`layout.tsx`, `DESCRIPCION`) | `De Santander: tienda de café de origen de provincias de Santander, Colombia. Elige por provincia, arma tu pedido y envíalo por WhatsApp.` |
 | `/cafes/`, `description` | `Todos los cafés de la tienda De Santander, con filtros por provincia, municipio, proceso, variedad, tueste, perfil de taza y altitud.` |
-| Historia, párrafo 1 | `De Santander es una tienda de café de origen santandereano. Vendemos café de marcas de Santander, tostado y empacado por quien figura en cada bolsa y en cada ficha, y lo despachamos desde {ciudad_despacho} a todo Colombia.` |
-| Historia, párrafo 2 | `En cada café verás la marca, quién lo fabrica, la provincia, el municipio, la altitud, la variedad y el proceso.` (condicionado a que ningún campo esté vacío) |
+| Historia, párrafo 1, **variante A** (todos los cafés activos traen `marca` y `fabricante`) | `De Santander es una tienda de café de origen santandereano. Reunimos cafés de marcas de nuestra tierra, tostados y empacados por quien figura en cada bolsa y en cada ficha.` |
+| Historia, párrafo 1, **variante B** (algún café activo sin `marca` o sin `fabricante`; **es la que rige hoy**) | `De Santander es una tienda de café de origen santandereano. Reunimos cafés de marcas de nuestra tierra, cada uno tal como lo empaca su fabricante.` |
+| Historia, párrafo 2, **variante A** | `Desde {ciudad_despacho} los enviamos a todo Colombia. En cada café te contamos quién lo hace y de dónde viene: la marca, quién lo fabrica, la provincia, el municipio, la altitud, la variedad y el proceso.` |
+| Historia, párrafo 2, **variante B** | `Desde {ciudad_despacho} los enviamos a todo Colombia. En cada café te contamos de dónde viene: la provincia, el municipio, la altitud, la variedad y el proceso.` |
+| Historia, regla de la lista del párrafo 2 (v1.8, LEG-139) | Cada dato de la lista (provincia, municipio, altitud, variedad, proceso) se nombra **solo si todos los cafés activos lo traen**, en ese orden, unidos con comas y «y» antes del último. Si ninguno cumple, el párrafo 2 termina en `… a todo Colombia.` La variante A exige `marca` **y** `fabricante` en todos los cafés activos (LEG-070); basta un café sin uno de ellos para usar la variante B en los **dos** párrafos. Con Sanity, el texto editorial que lo reemplace se revisa con los mismos criterios antes de publicar. |
 | Historia, proceso | *(sin pasos; el bloque «Del cafetal a la taza» no se muestra)* |
 | «Cómo pedir», paso 1 | `Cada café viene en bolsa de {tamaños}, en grano entero o molido, tal como lo empaca su fabricante. El precio de cada bolsa está en su tarjeta y en su ficha.` |
 | «Cómo pedir», paso 2 | `Completas tus datos de envío y se abre WhatsApp con tu solicitud de compra ya escrita. Con ese mensaje nos pides el pedido; queda en firme cuando aceptas el total en el chat.` |
-| «Cómo pedir», paso 3 | `Despachamos desde {ciudad_despacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con {formas de pago}.` Con la configuración actual, exacto: `… Pagas con efectivo contraentrega o transferencia Bre-B.` Regla de `{formas de pago}` (v1.1, LEG-103): cada forma tal como está en `formas_pago` de `data/config.csv`, con **solo la primera letra** en minúscula (nunca `toLowerCase` del texto completo: «Bre-B» es nombre propio); se unen con «o», no con «y» («a o b»; con tres o más, «a, b o c»), porque el cliente paga con una de ellas |
+| «Cómo pedir», paso 3 | `Despachamos desde {ciudad_despacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con {formas de pago}.` Con la configuración actual (v1.7), exacto: `… Pagas con transferencia Bre-B.` Regla de `{formas de pago}` (v1.1, LEG-103): cada forma tal como está en `formas_pago` de `data/config.csv`, con **solo la primera letra** en minúscula (nunca `toLowerCase` del texto completo: «Bre-B» es nombre propio); se unen con «o», no con «y» («a o b»; con tres o más, «a, b o c»), porque el cliente paga con una de ellas |
 | Historia, foto de respaldo (`secciones-inicio.tsx`, cuando Sanity no trae foto) | Texto alternativo: `Montañas verdes con cultivos en ladera, un camino de tierra y nubes bajas.` Crédito: **ninguno** (`credito: ""`, sin `figcaption`). Mientras el dueño no confirme autor, lugar y permiso de uso (LEG-104, P24), no se dice «Santander», «cafetal», «finca», «niebla de la mañana» ni «De Santander» como crédito. Cuando lo confirme: `Foto: {autor} · {municipio}, Santander · {año}` (solo con los tres datos) |
 | Confirmación, título | `Tu pedido está listo para enviar por WhatsApp` |
 | Confirmación con tarifa | `Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos para confirmarlo y acordar la forma de pago.` |
@@ -214,11 +218,11 @@ Exige la norma informar el retracto y su procedimiento antes de la compra (Ley 1
 
 | Dónde | Texto exacto |
 |---|---|
-| Resumen, bajo las casillas | `Te vende {razon_social} · NIT {nit} · {domicilio} · {direccion_notificacion} · {correo_contacto} · WhatsApp {whatsapp}. ` + enlace `Información del vendedor` (a `/legal/vendedor/`) |
-| Pie, bloque `address` | Línea 1 `{razon_social} · NIT {nit}`; línea 2 `Domicilio: {domicilio}`; línea 3 `Notificaciones judiciales: {direccion_notificacion}`; línea 4 `Correo de atención y de notificación judicial: {correo_contacto}` (enlace `mailto:`); línea 5 `WhatsApp {whatsapp formateado}` |
-| `/legal/vendedor/`, `dl` | Filas `Razón social`, `NIT`, `Matrícula mercantil`, `Representante legal`, `Domicilio`, `Dirección de notificación judicial`, `Correo`, `WhatsApp` |
+| Resumen, bajo las casillas | `Te vende {razon_social} · NIT {nit} · {domicilio} · {correo_contacto} · WhatsApp {whatsapp}. ` + enlace `Información del vendedor` (a `/legal/vendedor/`) (v1.7: sin dirección de notificación, decisión del dueño) |
+| Pie, bloque `address` | Línea 1 `{razon_social} · NIT {nit}`; línea 2 `Domicilio: {domicilio}`; línea 3 `Correo de atención y de notificación judicial: {correo_contacto}` (enlace `mailto:`); línea 4 `WhatsApp {whatsapp formateado}` (v1.7: se retira «Notificaciones judiciales», decisión del dueño) |
+| `/legal/vendedor/`, `dl` | Filas `Razón social`, `NIT`, `Matrícula mercantil`, `Representante legal`, `Domicilio`, `Dirección de notificación judicial`, `Correo`, `WhatsApp`. La fila de la dirección muestra `{direccion_notificacion}` de `config.csv` y **nunca un marcador**; sin dato, la fila no se pinta (LEG-134) |
 
-Exige la norma identificar al vendedor con dirección de notificación judicial (Ley 1480, art. 50 lit. a). Cada línea se pinta solo si el dato existe; `vendedorCompleto` se reemplaza por esa regla. Representante y matrícula solo en `/legal/vendedor/` (se recomienda; LEG-085).
+Exige la norma identificar al vendedor con dirección de notificación judicial (Ley 1480, art. 50 lit. a; VERIFICAR la letra). Con la decisión del dueño del 2026-11-12, la dirección solo se publica en `/legal/vendedor/`, enlazada desde el pie y el resumen; debe existir allí (LEG-134). Cada línea se pinta solo si el dato existe. Representante y matrícula solo en `/legal/vendedor/` (se recomienda; LEG-085).
 
 ### 5.5 Plantilla completa del mensaje de WhatsApp
 
@@ -257,7 +261,7 @@ Reglas: límite de 2.000 caracteres (si se pasa, se recortan las indicaciones y 
 | Zonas 1 a 4 | Bajo la línea de envío, `caption` | `Entrega estimada: {plazo_estimado}. Plazo máximo: {plazo_maximo}.` |
 | Zona 5 o más de 5 kg | Mismo lugar | `Entrega estimada: {plazo_estimado}, en la oficina de la transportadora. Plazo máximo: se informa al cotizar; nunca más de 30 días calendario.` |
 
-Ejemplo zona 3: «Entrega estimada: 1 a 3 días hábiles. Plazo máximo: 3 días hábiles.» Los valores salen de `data/plazos_envio.csv` (§6). Exige la norma (Ley 1480, art. 50 lit. h, Ley 2439 de 2024). Los plazos se cuentan desde la aceptación del total y, con Bre-B, desde el pago (envíos §6).
+Ejemplo zona 3: «Entrega estimada: 1 a 3 días hábiles. Plazo máximo: 3 días hábiles.» Los valores salen de `data/plazos_envio.csv` (§6). Exige la norma (Ley 1480, art. 50 lit. h, Ley 2439 de 2024). Los plazos se cuentan desde la recepción del pago por Bre-B, única forma de pago desde la v1.7 (envíos §6, versión 2).
 
 ### 5.7 Radicado de quejas, reclamos y solicitudes (plantilla operativa, sin cambios)
 
@@ -269,17 +273,17 @@ Ejemplo zona 3: «Entrega estimada: 1 a 3 días hábiles. Plazo máximo: 3 días
 | Formato | `PQR-` + año + `-` + consecutivo de tres dígitos desde `001` cada año. Un solo consecutivo para PQR de consumo y de datos personales (plazos distintos: 15 días hábiles; 10 + 5; 15 + 8). |
 | Registro privado (hoja de cálculo de Google) | `radicado · fecha y hora · canal · nombre · celular o correo · fecha del pedido · tipo · resumen · fecha límite · fecha de respuesta · quién respondió · resultado` |
 
-Respuesta al «ACEPTO» (operación, no código): antes de procesar, la tienda escribe `Tu total con envío es {$ total}. Responde ACEPTO para confirmar el pedido, los Términos y condiciones versión 1 y la autorización de datos.` y espera la respuesta antes de cobrar o despachar.
+Respuesta al «ACEPTO» (operación, no código): antes de procesar, la tienda escribe `Tu total con envío es {$ total}. Responde ACEPTO para confirmar el pedido, los Términos y condiciones versión {version_terminos} y la autorización de datos.` (desde la publicación de la versión 2: «versión 2») y espera la respuesta antes de cobrar o despachar.
 
 ### 5.8 Página `/envios/`
 
 | Dónde | Texto exacto |
 |---|---|
 | Título de la sección de plazos | `Plazos de entrega` |
-| Frase bajo el título | `El estimado es lo que suele tardar. El máximo es el plazo que nos comprometemos a cumplir. Los dos se cuentan en días hábiles desde que aceptas el total en el chat y, si pagas por transferencia Bre-B, desde que recibimos el pago. Si no entregamos en el máximo, puedes cancelar y te devolvemos todo en 15 días calendario.` |
+| Frase bajo el título (v1.7, LEG-136) | `El estimado es lo que suele tardar. El máximo es el plazo que nos comprometemos a cumplir. Los dos se cuentan en días hábiles desde que recibimos tu pago por transferencia Bre-B. Si no entregamos en el máximo, puedes cancelar y te devolvemos todo en 15 días calendario.` (antes: «desde que aceptas el total en el chat y, si pagas por transferencia Bre-B, desde que recibimos el pago»; con solo Bre-B el resultado es el mismo, pero conviene que coincida con envíos §6) |
 | Cada zona (`dd`) | `Estimado: {plazo_estimado}. Máximo: {plazo_maximo}.` (zona 5: `Estimado: {plazo_estimado}, en la oficina de la transportadora. Máximo: se informa al cotizar; nunca más de 30 días calendario.`) |
 | Línea legal (`plazo-legal`), se conserva | `Si no publicamos un plazo máximo para tu zona, entregamos en máximo 30 días calendario, como manda la ley.` |
-| Bajo la tabla de tarifas | Leyenda de IVA (§1.4) y frase de la comisión incluida (§1.7) |
+| Bajo la tabla de tarifas | Leyenda de IVA (§1.4). Sin frase de comisión (§1.7 retirada en la v1.7) |
 | Sección nueva `Retracto` | Texto de §5.3 |
 | `metadata.description` | `Cómo calculamos el envío de tu pedido: zonas, tarifas por peso con IVA incluido y plazos de entrega desde Bucaramanga.` |
 | Enlace final | `Lee la política completa de envíos, devoluciones, retracto y garantía.` (a `/legal/envios-devoluciones/`) |
@@ -310,15 +314,15 @@ Fundamento. **Exige la norma** que la autorización de datos y la aceptación de
 `data/config.csv` (claves nuevas o actualizadas):
 
 ```
-version_terminos,1
-fecha_terminos,2026-11-06
-version_politica_datos,1
-fecha_politica_datos,2026-11-06
+version_terminos,2
+fecha_terminos,2026-11-12
+version_politica_datos,2
+fecha_politica_datos,2026-11-12
 razon_social,De Santander SAS
 nit,902.121.184-8
 iva_tarifa,5
 domicilio,Bucaramanga, Santander
-direccion_notificacion,Calle 37 n.° 23-77, apartamento 702, Bucaramanga, Santander
+direccion_notificacion,{nueva dirección inscrita en Cámara de Comercio, D-25}
 correo_notificacion,desantander.tienda@gmail.com
 matricula_mercantil,740574
 representante_legal,Ivan Fernando Rueda Duarte
@@ -350,10 +354,11 @@ Páginas legales: el contenido público de cada documento (`terminos-y-condicion
 - `Cafetal entre montañas de Santander con niebla de la mañana` (texto alternativo de la foto de respaldo de la Historia) y el crédito `De Santander` de esa foto (v1.1, LEG-104; reemplazados por §2).
 - `transferencia bre-b` y la unión de las formas de pago con «y» en «Cómo pedir» (v1.1, LEG-103).
 - Atributo `disabled` en «Preparar pedido para WhatsApp» sin explicación (v1.1, LEG-101; reemplazado por §5.9).
+- Historia de portada (v1.8, LEG-139, QA-013): `De Santander es mucho más una tienda: es un puente directo entre los mejores caficultores de nuestra tierra y tu taza. Reunimos una selección exclusiva de cafés de origen santandereano, tostados y empacados directamente por sus productores —tal como lo ves en cada bolsa y ficha técnica—.` y `Desde {ciudad_despacho} enviamos este sabor de origen a todo Colombia. En cada café te contamos su historia: la provincia, el municipio, la altitud, la variedad y el proceso que lo hicieron único.` (reemplazados por §2). Tampoco se usan sueltas: `más que una tienda`, `puente directo`, `los mejores`, `selección exclusiva`, `directamente por sus productores`, `lo hicieron único`.
 
 ## 8. Envío gratis en comunas de Bucaramanga (v1.2; LEG-106 a LEG-117)
 
-**Estado.** Textos listos para implementar. **No se publican** hasta que estén publicados, el mismo día, los Términos versión 2, «Envíos, devoluciones, retracto y garantía» versión 2, «Información del vendedor» con el rótulo de la versión 2 y la Política versión 2 (LEG-106). **Decisiones del dueño (2026-11-09):** P25 = a (sin fecha final), P26 = a (sin pedido mínimo), **P27 = b (cualquier peso)**, P28 = a (sin comuna elegida, tarifa normal), plazo de 1 día hábil contado desde la validación de la transacción y el aprobado del pedido. P29 a, P30 a, P31 a y P32 a se aplican como recomendación de legal; el dueño todavía puede cambiarlas. **v1.5:** P33 y P33 bis cerradas (validación manual del pago Bre-B, el mismo día si llega en horario de atención y el siguiente día de atención si no). D-24 cerrado: lunes a viernes, de 7:00 a. m. a 5:00 p. m., hora de Colombia, sin contar festivos. P34 = b (terminación inmediata por orden del dueño). P35: el dueño reconstruye y despliega. En los textos no se usan números de comuna.
+**Estado (v1.7, 2026-11-12).** Los cuatro documentos versión 2 están redactados con fecha 2026-11-12 (LEG-133); su publicación depende de la aprobación del abogado responsable. La promoción se enciende con `envio_gratis_desde,2026-11-12` en el **mismo** build que publica la versión 2. **Regla original:** no se publican hasta que estén publicados, el mismo día, los Términos versión 2, «Envíos, devoluciones, retracto y garantía» versión 2, «Información del vendedor» con el rótulo de la versión 2 y la Política versión 2 (LEG-106). **Decisiones del dueño (2026-11-09):** P25 = a (sin fecha final), P26 = a (sin pedido mínimo), **P27 = b (cualquier peso)**, P28 = a (sin comuna elegida, tarifa normal), plazo de 1 día hábil contado desde la validación de la transacción y el aprobado del pedido. P29 a, P30 a, P31 a y P32 a se aplican como recomendación de legal; el dueño todavía puede cambiarlas. **v1.5:** P33 y P33 bis cerradas (validación manual del pago Bre-B, el mismo día si llega en horario de atención y el siguiente día de atención si no). D-24 cerrado: lunes a viernes, de 7:00 a. m. a 5:00 p. m., hora de Colombia, sin contar festivos. P34 = b (terminación inmediata por orden del dueño). P35: el dueño reconstruye y despliega. En los textos no se usan números de comuna.
 
 ### 8.1 Regla que suponen los textos
 
@@ -361,7 +366,7 @@ Páginas legales: el contenido público de cada documento (`terminos-y-condicion
 - Envío **$0 con cualquier peso** (P27 b). En las siete comunas, el pedido de más de 5 kg **no** es «por cotizar» y no usa la fila «Zona 5 y más de 5 kg» de los plazos (LEG-119).
 - Sin pedido mínimo (P26 a).
 - Sin comuna elegida, o con «Otra comuna o no la sé»: la regla de hoy para Bucaramanga, es decir, la tarifa de zona 1 hasta 5 kg y «por cotizar» con más de 5 kg (P28 a).
-- Plazo del envío gratis, con cualquier peso: **máximo 1 día hábil**, con un estimado de mismo día o siguiente día hábil. Se cuenta desde que la tienda valida la transacción y da por el chat el aprobado del pedido. Con contraentrega, ese momento es la aceptación del total. Con Bre-B, es la validación del pago. El dueño la hace a mano en el horario de atención: de lunes a viernes, de 7:00 a. m. a 5:00 p. m., hora de Colombia, sin contar festivos (D-24). Si el pago llega dentro de ese horario, la validación es ese mismo día; si llega fuera de él, el siguiente día de atención, antes de las 5:00 p. m. (LEG-118, LEG-130; P33 bis; texto completo en el numeral 13, nota E de envíos). Ningún texto del sitio fuera del numeral 13 repite el horario, salvo «Información del vendedor» versión 2 (recomendado). El plazo no se toma de una fila de `data/plazos_envio.csv`: es un valor propio de la promoción, para que un cambio en la zona 1 no lo cambie sin revisión.
+- Plazo del envío gratis, con cualquier peso: **máximo 1 día hábil**, con un estimado de mismo día o siguiente día hábil. Se cuenta desde que la tienda valida el pago por Bre-B (única forma de pago desde la v1.7) y da por el chat el aprobado del pedido. El dueño la hace a mano en el horario de atención: de lunes a viernes, de 7:00 a. m. a 5:00 p. m., hora de Colombia, sin contar festivos (D-24). Si el pago llega dentro de ese horario, la validación es ese mismo día; si llega fuera de él, el siguiente día de atención, antes de las 5:00 p. m. (LEG-118, LEG-130; P33 bis; texto completo en el numeral 13, nota E de envíos). Ningún texto del sitio fuera del numeral 13 repite el horario, salvo «Información del vendedor» versión 2 (recomendado). El plazo no se toma de una fila de `data/plazos_envio.csv`: es un valor propio de la promoción, para que un cambio en la zona 1 no lo cambie sin revisión.
 - Vigencia: desde `envio_gratis_desde` (D-21), sin fecha final (P25 a). Sin ese dato, nada de esta sección aparece en el sitio. Termina cuando el dueño da la orden y despliega el sitio con `envio_gratis_terminada` (P34 b, §8.6.1). `envio_gratis_hasta` (fecha final anunciada con anticipación) no se usa.
 
 ### 8.2 Campo «Comuna» (formulario de envío)

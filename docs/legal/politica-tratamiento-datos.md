@@ -1,78 +1,81 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.0 — 2026-11-06.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.0 — 2026-11-14.
 
 # Política de tratamiento de datos personales
 
-Se publica en `/legal/privacidad/` con el rótulo «Versión 1 · vigente desde 2026-11-06». La casilla de autorización del resumen del pedido enlaza aquí. Incluye, después del texto público, el **aviso de privacidad** y los **textos de las casillas**.
+Se publica en `/legal/privacidad/` con el rótulo «Versión 1.0 · vigente desde 2026-11-17». La casilla 2 (datos) del resumen del pedido enlaza aquí. Después del texto público van el **aviso de privacidad** (pie del formulario) y los **textos de las casillas**, que no forman parte de la página.
 
-**Qué se publica.** Solo la sección «Texto para el consumidor», tal cual: subtítulos, párrafos y listas, sin enlaces ni tablas. La lista de encargados va como lista, no como tabla. El aviso de privacidad y las casillas se usan en el sitio donde indica `microcopy-legal.md`; las «Notas para el abogado» no se publican.
+**Fuente.** Sección 4 (D2) de «De Santander SAS — Textos legales v1.0 para publicación» (`docs/legal/paquete-abogado/`, 14/11/2026), que el dueño presenta como cerrada con su abogado. Sustituye las versiones 1 y 2 de este archivo, que quedan sin efecto. La sección «Texto para el consumidor» reproduce D2 letra por letra, con el formato Markdown (`###`, `- `), **salvo dos añadidos de legal** por la instrucción del dueño de mantener el envío gratis en comunas de Bucaramanga (2026-11-14): §3, viñeta nueva «Comuna (opcional…)» después de «Barrio, código postal e indicaciones»; §7, frase final de la viñeta de la zona 1 («Si elegiste tu comuna, también la recibe.»). La comuna es un dato que el formulario recoge: sin mencionarla, D2 no describiría todos los datos tratados (Ley 1581 de 2012, arts. 4 lit. e y 12). No cambia ninguna finalidad, por lo que no exige otra autorización. Son texto propio, **no del abogado**, y deben validarse con él antes del 17/11 (LEG-167). La comuna no se guarda en el navegador, de modo que §2 no cambia. **Corrección de legal en §7 (2026-11-14, LEG-169; validar con el abogado):** la viñeta del abogado «El proveedor tecnológico de facturación electrónica: emitir tu factura. Colombia.» se reemplazó por la de la DIAN, porque el dueño factura en el servicio gratuito de la DIAN y no tiene proveedor tecnológico; tal como estaba, la viñeta describía un tercero que no existe. Las propuestas sobre DiDi y Uber (LEG-168), la casilla y el aviso de privacidad **no** se aplicaron: van como propuesta en la sección 2 bis de la revisión. Legal no registra aquí la aprobación formal del abogado.
 
-**Estado.** Publicación instruida por el dueño (2026-11-06, «Paquete legal v1»). La versión «1» del texto público equivale a la «1.0» de este archivo y debe coincidir con `version_politica_datos` en `data/config.csv` y con la línea final del mensaje de WhatsApp. La revisión del abogado sigue pendiente (L1).
+**Valores entre llaves.** El numeral 13 trae `{fecha_politica_datos}` y `{version_politica_datos}`, como los escribió el abogado («los pone el código desde los archivos CSV», sección 0 del paquete). El parser actual (`src/domain/legal/texto-legal.ts`) **no** los reemplaza ni los rechaza: si se construye el sitio sin el cambio del desarrollador, saldrían las llaves literales. Requisito Bloqueante LEG-142: reemplazarlos con `data/config.csv` (la fecha en letras, «17 de noviembre de 2026»; la versión, «1.0») y hacer fallar `npm run datos` si queda una llave en el texto publicado. Si no se implementa antes del 17/11, legal escribe los valores literales en el numeral 13 (ajuste mínimo, avisado al abogado).
 
-Cambios de la v1.0 (Paquete legal v1 y decisiones del dueño del 2026-11-06; revisión LEG-081 a LEG-100): responsable con datos completos y área comercial como responsable de datos (§1); dónde se guardan los datos (§2, texto del paquete); se retira la finalidad de promociones y la casilla de promociones (P12 pasa a «no por ahora»); vuelve la finalidad «atender tu retracto» (§3); casilla corta del paquete y prueba con «ACEPTO» en el chat (§5); conservación de 10 años (§6); lista de encargados del paquete: WhatsApp Business (Meta), Google, GitHub Pages, agregador de guías y mensajero de zona 1 (§7); vigencia (§13). Se retiran las menciones a Supabase, Turnstile y Sanity y la afirmación de que México no figura en la lista de la SIC. No se publica la afirmación de que existe contrato de transmisión con cada encargado ni la de verificación en dos pasos, porque no están acreditadas (notas B y C).
+**Versión.** `version_politica_datos,1.0` y `fecha_politica_datos,2026-11-17` en `data/config.csv`; la casilla de datos, la línea de constancia del mensaje y la página leen esos valores. Revisión: `revisiones/2026-11-14-paquete-abogado-v1.md` (LEG-140 a LEG-166).
 
 ---
 
 ## Texto para el consumidor
 
 ### 1. Quién trata tus datos
-El responsable del tratamiento de tus datos es De Santander SAS (en adelante, «De Santander»), la sociedad que opera esta tienda y comercializa los cafés. Los fabricantes de los cafés que vendemos no reciben tus datos.
-- NIT: 902.121.184-8.
-- Matrícula mercantil: 740574.
-- Representante legal: Ivan Fernando Rueda Duarte.
-- Domicilio: Bucaramanga, Santander.
-- Dirección de notificación judicial: Calle 37 n.° 23-77, apartamento 702, Bucaramanga, Santander.
-- Correo de notificación judicial y de atención: desantander.tienda@gmail.com.
-- WhatsApp y teléfono: +57 300 112 9874.
-- Las consultas y los reclamos sobre datos personales los atiende el área comercial, en desantander.tienda@gmail.com.
+El responsable del tratamiento es De Santander SAS, NIT 902.121.184-8, con domicilio en Bucaramanga, Santander, y dirección en la calle 37 n.° 23-77, apartamento 702, de Bucaramanga. Correo: desantander.tienda@gmail.com. WhatsApp y teléfono: +57 300 112 9874. Las consultas y los reclamos sobre datos personales los atiende el área comercial, en desantander.tienda@gmail.com y en el mismo WhatsApp. Los fabricantes de los cafés que vendemos no reciben tus datos.
 
-### 2. Dónde se guardan tus datos
-- El sitio web no almacena tus datos. Los datos del formulario pasan al mensaje que tú envías por WhatsApp, y De Santander los conserva en la aplicación WhatsApp Business y en su correo electrónico.
-- Tus datos nos llegan solo si tú mandas el mensaje por WhatsApp. Si cierras la página sin mandarlo, no recibimos nada.
-- En tu navegador (almacenamiento local) se guarda el carrito: los cafés, tamaños, moliendas y cantidades. También la forma de pago y el municipio que elegiste, para proponértelos la próxima vez. Tu nombre, celular, documento, dirección, código postal y correo no se guardan allí. Puedes borrar todo vaciando el pedido o borrando los datos del sitio en tu navegador.
-- El sitio no usa herramientas de analítica ni de publicidad. No usa cookies de seguimiento.
-- Al visitar el sitio, el servicio que lo aloja (GitHub Pages) registra tu dirección IP por seguridad. Ver el numeral 7.
+### 2. Qué hace y qué no hace este sitio con tus datos
+- El sitio web no almacena tus datos personales. No tiene base de datos ni servidor propio. Lo que escribes en el formulario se usa en tu navegador para armar el mensaje del pedido.
+- Tus datos nos llegan solo si tú mandas el mensaje por WhatsApp. De Santander los conserva en la aplicación WhatsApp Business y en su correo electrónico.
+- En tu navegador (almacenamiento local) se guarda solo el carrito: los cafés, tamaños, presentaciones y cantidades. Tu nombre, celular, documento, dirección y correo no se guardan allí. Puedes borrarlo vaciando el carrito o los datos del sitio en tu navegador.
+- El sitio no usa herramientas de analítica ni de publicidad, ni cookies de seguimiento. Si algún día las usa, esta política se actualizará antes.
+- El servicio que aloja el sitio (GitHub Pages) registra tu dirección IP por seguridad (numeral 7).
 
 ### 3. Qué datos tratamos y para qué
-Cuando mandas el mensaje del pedido por WhatsApp, recibimos los datos que escribiste. Los usamos solo para lo que se indica:
-- Nombre completo (obligatorio): saber a quién vendemos y a quién entregamos; ponerlo en la guía de envío.
-- Celular (obligatorio): confirmar el pedido y el pago por WhatsApp, y coordinar la entrega. La transportadora o el mensajero lo usan para contactarte al entregar.
+Cuando mandas el mensaje del pedido por WhatsApp recibimos los datos que escribiste y los usamos solo para lo que se indica:
+- Nombre completo (obligatorio): saber a quién vendemos y a quién entregamos, y ponerlo en la guía de envío.
+- Celular (obligatorio): confirmar el pedido y el pago por WhatsApp y coordinar la entrega. La transportadora o el mensajero lo usan para contactarte al entregar.
 - Departamento, municipio y dirección (obligatorios): calcular el envío, generar la guía y entregar el pedido.
-- Barrio, código postal e indicaciones para la entrega (opcionales): ayudar a la transportadora o al mensajero a encontrar tu dirección.
-- Correo (opcional): enviarte información de tu pedido y, si aplica, la factura electrónica.
-- Tipo y número de documento (opcionales): emitir la factura electrónica a tu nombre, si la quieres. Si no lo escribes, tu pedido sigue igual.
-- Forma de pago (obligatoria): acordar el pago. No pedimos ni recibimos datos de tarjetas ni claves. Si pagas por transferencia Bre-B, recibimos el comprobante que nos mandes, con los datos que muestre tu banco, para verificar el pago y, si hace falta, devolvértelo. Si pagas contraentrega, le indicamos a la transportadora el valor que debe recaudar.
-- Los mensajes que nos mandas por el chat o por correo: atender el pedido, la entrega, la garantía, tu retracto y tus quejas, reclamos y solicitudes.
-- Tus quejas, reclamos y solicitudes (número de radicado, fecha y hora, canal, nombre, contacto, pedido, lo que pides, nuestra respuesta y su fecha): darte el número de radicado, responderte en el plazo que publicamos y llevar el registro que exige la ley. El registro lo llevamos en una hoja de cálculo privada de la tienda.
+- Barrio, código postal e indicaciones (opcionales): ayudar a ubicar tu dirección.
+- Comuna (opcional, solo si el envío es a Bucaramanga): saber si tu pedido tiene envío gratis y verificar que tu dirección esté en esa comuna. Solo te preguntamos por las comunas donde el envío es gratis. Si no la eliges, tu pedido sigue igual y se aplica la regla normal de envío de la zona 1.
+- Correo (opcional): enviarte información de tu pedido y la factura electrónica.
+- Tipo y número de documento (opcionales): emitir la factura electrónica a tu nombre. Si no lo escribes, la factura se emite igual, sin tu nombre, y tu pedido no cambia.
+- Comprobante de transferencia o de Bre-B: verificar tu pago. No pedimos ni recibimos datos de tarjetas ni claves.
+- Datos de la cuenta o llave Bre-B a la que pidas una devolución: devolverte el dinero por retracto, por garantía, por incumplimiento del plazo o por un problema con tu pago.
+- Los mensajes que nos mandas por el chat o por correo: atender el pedido, la entrega, el retracto, la garantía y tus quejas, reclamos y solicitudes.
+- Tus quejas, reclamos y solicitudes (radicado, fecha y hora, canal, nombre, contacto, pedido, lo que pides y nuestra respuesta): darte el radicado, responderte en plazo y llevar el registro que exige la ley.
 
-También usamos tus datos para cumplir obligaciones legales: contables, tributarias, de protección al consumidor y para responder a autoridades que lo pidan conforme a la ley.
+También usamos tus datos para cumplir obligaciones legales contables, tributarias y de protección al consumidor, y para responder a las autoridades que los pidan conforme a la ley.
 
-No usamos tus datos para enviarte novedades ni promociones. Si algún día quisiéramos hacerlo, te pediríamos una autorización distinta y expresa, en una casilla separada y sin marcar, que podrás dejar vacía sin que cambie nada en tu pedido y cancelar cuando quieras. Autorizar el tratamiento para tu pedido o aceptar los términos no incluye esa autorización.
+Novedades y promociones (solo si tú lo autorizas):
+- Si marcas la casilla de promociones por WhatsApp, por correo o por los dos, usamos tu celular o tu correo para enviarte novedades y promociones de la tienda.
+- Es opcional: las casillas vienen sin marcar y tu pedido es igual las marques o no.
+- Te escribimos solo por el canal que autorizaste, de lunes a viernes de 7:00 a. m. a 7:00 p. m. y los sábados de 8:00 a. m. a 3:00 p. m., nunca en domingos ni festivos, y no más de un mensaje al día.
+- Puedes cancelar cuando quieras, sin costo, escribiendo «BAJA» por el mismo canal o pidiéndolo de cualquier forma. Te confirmamos la baja y no te volvemos a escribir por ese canal.
+- Anotamos tu número o correo, la fecha, el canal y la versión de esta política en una lista privada de contactos autorizados. No usamos esa lista para nada más ni la compartimos.
 
 ### 4. Datos que no necesitas darnos
-- Los campos marcados como «opcional» no son obligatorios. Si no los llenas, tu pedido sigue igual.
-- No pedimos datos sensibles (por ejemplo, de salud, origen étnico, creencias, orientación sexual o datos biométricos). No es obligatorio darlos y te pedimos no escribirlos en las indicaciones ni en el chat.
-- No vendemos a sabiendas a menores de edad sin la participación de su representante. Si eres menor de edad, pide a un adulto responsable que haga el pedido.
+- Los campos marcados como «opcional» no son obligatorios.
+- No pedimos datos sensibles, como los de salud, origen étnico, creencias, orientación sexual o datos biométricos. Te pedimos no escribirlos en las indicaciones ni en el chat.
+- Si eres menor de edad, pide a un adulto responsable que haga el pedido.
 
 ### 5. Cómo nos das la autorización
-Antes de preparar el pedido, en el resumen, marcas la casilla de autorización para tratar los datos de tu pedido. La casilla viene sin marcar y es distinta de la de los términos y condiciones. El mensaje que envías por WhatsApp incluye una línea que dice que autorizaste el tratamiento según esta política, con su versión y fecha.
-
-Antes de procesar tu pedido te pediremos en el chat que confirmes tu autorización respondiendo «ACEPTO». Conservamos esa conversación como constancia.
+- En el resumen del pedido marcas la casilla de autorización de datos. Viene sin marcar y es distinta de la de los términos y condiciones.
+- El mensaje que envías por WhatsApp incluye una línea que dice que autorizaste el tratamiento según esta política, con su versión.
+- Antes de procesar tu pedido te pedimos en el chat que confirmes respondiendo ACEPTO. Conservamos esa conversación como constancia de tu autorización.
+- La autorización para promociones se da en casillas aparte, una por canal, también sin marcar. Si marcas alguna, el mensaje lo dice; si no, no te enviamos promociones.
 
 ### 6. Cuánto tiempo guardamos tus datos
-Conservamos los datos de tus pedidos, facturas, peticiones, quejas y reclamos, junto con la constancia de tu autorización, durante diez (10) años contados desde la fecha del pedido o de la última actuación. Ese es el término en que la ley nos obliga a conservar los papeles y soportes del negocio (artículo 28 de la Ley 962 de 2005). Vencido ese plazo, los suprimimos.
+- Conservamos los datos de tus pedidos, facturas, pagos, devoluciones, quejas, reclamos y solicitudes, junto con la constancia de tu autorización, durante diez (10) años contados desde la fecha del pedido o de la última actuación. Ese es el término en que la ley nos obliga a conservar los papeles y soportes del negocio (artículo 28 de la Ley 962 de 2005).
+- La lista de contactos autorizados para promociones se conserva hasta que canceles o, si no cancelas, hasta veinticuatro (24) meses después de tu última compra. Al cancelar te borramos de la lista de inmediato y solo conservamos la constancia de la baja.
+- Vencidos esos plazos, suprimimos los datos.
 
 ### 7. Con quién compartimos tus datos y en qué países
-Para gestionar tu pedido compartimos tus datos con estos encargados:
-- WhatsApp LLC (Meta Platforms), aplicación WhatsApp Business. Uso: recibir tu pedido y comunicarnos contigo. País: Estados Unidos.
-- Google LLC. Uso: correo electrónico y documentos de la tienda, incluido el registro de quejas y reclamos. País: Estados Unidos.
-- GitHub, Inc. (GitHub Pages). Uso: alojamiento del sitio web; registra datos técnicos de tu visita, como la dirección IP. No recibe los datos del formulario. País: Estados Unidos.
-- El agregador de guías con el que despachamos y las transportadoras colombianas que él asigna. Uso: generar las guías de envío y entregar tu pedido. Reciben tu nombre, celular, dirección, municipio, barrio, código postal e indicaciones y, si pagas contraentrega, el valor a cobrar. País: Colombia.
-- El mensajero de la zona 1 (Bucaramanga, Floridablanca, Piedecuesta y Girón): un domiciliario o una plataforma de mensajería (DiDi). Uso: entregar tu pedido. Recibe los mismos datos de entrega. País: Colombia.
-- Autoridades, cuando la ley lo exija.
+Para atender tu pedido usamos servicios de otras empresas:
+- WhatsApp LLC (Meta Platforms), aplicación WhatsApp Business: recibir tu pedido y comunicarnos contigo. Trata los datos en Estados Unidos y también como responsable, conforme a las condiciones que aceptaste al usar WhatsApp.
+- Google LLC: correo electrónico y documentos de la tienda. Estados Unidos.
+- GitHub, Inc. (GitHub Pages): alojamiento del sitio; registra datos técnicos de tu visita, como la dirección IP. Estados Unidos. No recibe los datos del formulario.
+- La transportadora con la que despachemos tu pedido: generar la guía y entregarte el pedido (nombre, celular, dirección, municipio, barrio, código postal e indicaciones). Opera en Colombia. Te informamos cuál es junto con el número de guía.
+- En Bucaramanga, Floridablanca, Piedecuesta y Girón, la plataforma de domicilios o el mensajero que haga la entrega, con los mismos datos. Te informamos cuál es antes del despacho. Si elegiste tu comuna, también la recibe.
+- La Dirección de Impuestos y Aduanas Nacionales (DIAN): emitimos tu factura electrónica en su servicio gratuito de facturación, y la DIAN la recibe y la valida, como lo exige la ley. Colombia.
+- Las autoridades, cuando la ley lo exija.
 
-Estados Unidos figura en la lista de países con nivel adecuado de protección de la Superintendencia de Industria y Comercio (Circular Externa 005 de 2017). Meta también trata los datos de tu cuenta de WhatsApp como responsable, conforme a sus propias condiciones, que aceptaste con WhatsApp. Al marcar la casilla de autorización aceptas de forma expresa que tus datos se traten fuera de Colombia por los servicios indicados, para gestionar tu pedido.
+No vendemos ni alquilamos tus datos.
 
-No vendemos ni alquilamos tus datos. A la transportadora y al mensajero solo les damos los datos que necesitan para entregar.
+Datos fuera de Colombia. Estados Unidos figura en la lista de países con nivel adecuado de protección de la Superintendencia de Industria y Comercio (Circular Externa 005 de 2017). Si algún servicio de entrega trata tus datos en un país que no esté en esa lista, la casilla de autorización incluye tu consentimiento expreso para hacerlo, solo para atender tu pedido (artículo 26 de la Ley 1581 de 2012). Con las empresas que tratan datos por cuenta nuestra acordamos las condiciones de transmisión que exige el artículo 2.2.2.25.5.2 del Decreto 1074 de 2015.
 
 ### 8. Tus derechos
 Como titular de tus datos puedes:
@@ -80,109 +83,77 @@ Como titular de tus datos puedes:
 - pedir prueba de la autorización que nos diste;
 - saber, si lo pides, para qué hemos usado tus datos;
 - retirar la autorización o pedir que borremos tus datos, salvo cuando la ley o un contrato vigente nos obliguen a conservarlos (por ejemplo, la factura);
+- dejar de recibir promociones en cualquier momento, escribiendo «BAJA», sin que eso afecte tus pedidos;
 - consultar gratis tus datos;
 - presentar una queja ante la Superintendencia de Industria y Comercio, después de hacer tu consulta o reclamo ante nosotros.
 
 ### 9. Cómo hacer una consulta
-- Escríbenos por WhatsApp al +57 300 112 9874 o al correo desantander.tienda@gmail.com. Di tu nombre, cómo te contactamos y qué quieres saber.
-- Te respondemos en máximo 10 días hábiles desde que recibimos la consulta. Si no podemos en ese plazo, te decimos por qué y cuándo te responderemos, que no será más de 5 días hábiles después.
+- Escríbenos por WhatsApp al +57 300 112 9874 o al correo desantander.tienda@gmail.com. Dinos tu nombre, cómo te contactamos y qué quieres saber.
+- Te respondemos en máximo diez (10) días hábiles desde que recibimos la consulta. Si no podemos en ese plazo, te decimos por qué y cuándo responderemos, que no será más de cinco (5) días hábiles después.
 
 ### 10. Cómo hacer un reclamo
 Si quieres corregir, actualizar o borrar tus datos, retirar la autorización o crees que no cumplimos la ley:
-1. Escríbenos por WhatsApp o al correo. Incluye tu nombre y documento de identidad, qué pides y por qué, cómo te contactamos y los documentos que quieras aportar.
-2. Por el mismo canal te damos un número de radicado (con la forma PQR-2026-001), con la fecha y la hora.
-3. Si falta información, te la pedimos dentro de los 5 días siguientes. Si pasan 2 meses sin que la envíes, entendemos que desististe.
-4. Cuando el reclamo esté completo, lo marcamos como «reclamo en trámite» en máximo 2 días hábiles.
-5. Te respondemos en máximo 15 días hábiles desde el día siguiente a recibirlo. Si no podemos en ese plazo, te decimos por qué y cuándo te responderemos, que no será más de 8 días hábiles después.
+- Escríbenos por WhatsApp o al correo. Incluye tu nombre y documento de identidad, qué pides y por qué, cómo te contactamos y los documentos que quieras aportar.
+- Por el mismo canal te damos un número de radicado, con la fecha y la hora.
+- Si falta información, te la pedimos dentro de los cinco (5) días siguientes. Si pasan dos (2) meses sin que la envíes, entendemos que desististe.
+- Cuando el reclamo esté completo, lo marcamos como «reclamo en trámite» en máximo dos (2) días hábiles.
+- Te respondemos en máximo quince (15) días hábiles desde el día siguiente a recibirlo. Si no podemos en ese plazo, te decimos por qué y cuándo responderemos, que no será más de ocho (8) días hábiles después.
 
 ### 11. Cómo cuidamos tus datos
 - El sitio no guarda tus datos y no tiene analítica.
 - Solo las personas que atienden pedidos en De Santander ven el chat y los correos.
+- Los teléfonos y las cuentas de la tienda tienen clave y verificación en dos pasos.
 - A la transportadora y al mensajero solo les damos los datos que necesitan para entregar.
-- El enlace de WhatsApp lleva el texto del pedido; por eso queda en el historial de tu navegador. Si usas un equipo compartido, borra el historial después de enviar el pedido.
+- El enlace de WhatsApp lleva el texto del pedido y por eso queda en el historial de tu navegador. Si usas un equipo compartido, borra el historial después de enviar el pedido.
 
 ### 12. Cambios en esta política
-Cuando cambiemos esta política, publicaremos la nueva versión con su fecha. Si el cambio afecta las finalidades o los terceros con quienes compartimos tus datos, te lo avisaremos y, cuando la ley lo exija, te pediremos una nueva autorización.
+Cuando cambiemos esta política publicaremos la nueva versión con su fecha. Si el cambio afecta las finalidades o los terceros con quienes compartimos tus datos, te lo avisaremos y, cuando la ley lo exija, te pediremos una nueva autorización.
 
 ### 13. Vigencia
-Esta política rige desde el 6 de noviembre de 2026 (versión 1). Las bases de datos estarán vigentes mientras se mantenga la finalidad del tratamiento y por el plazo de conservación del numeral 6.
+Esta política rige desde el {fecha_politica_datos} (versión {version_politica_datos}). Las bases de datos estarán vigentes mientras se mantenga la finalidad del tratamiento y por los plazos del numeral 6.
+
+Normas aplicables: Ley 1581 de 2012; Decreto 1074 de 2015 (Decreto 1377 de 2013 compilado); Ley 2300 de 2023; Ley 962 de 2005, art. 28.
 
 ---
 
 ## Aviso de privacidad
 
-Texto corto para el resumen del pedido o para responder por el chat a quien pregunte (Decreto 1377 de 2013, arts. 14 y 15, compilados en el Decreto 1074 de 2015; VERIFICAR la numeración). Es publicable tal cual:
+Va en el pie del formulario de datos de envío (D2 del paquete, «Aviso de privacidad (pie del formulario)»). Texto exacto; «/legal/privacidad/» se muestra como enlace a esa página:
 
-> Aviso de privacidad. De Santander SAS (NIT 902.121.184-8, desantander.tienda@gmail.com, WhatsApp +57 300 112 9874) trata los datos de tu pedido para confirmarlo, entregarlo, facturarlo si lo pides y atender tu retracto, tus garantías y tus reclamos. Los datos viajan en el mensaje que mandas por WhatsApp (Meta) y se comparten con la transportadora o el mensajero. Algunos servicios los tratan fuera de Colombia. No te enviamos promociones. Puedes conocer, corregir o borrar tus datos y retirar tu autorización. Lee la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026 en /legal/privacidad/.
-
-<!-- El aviso es obligatorio cuando no se puede poner la política a disposición del titular (Decreto 1377, art. 14). Aquí la política se enlaza desde la casilla; el aviso es una recomendación. -->
+> De Santander SAS (NIT 902.121.184-8, desantander.tienda@gmail.com, WhatsApp +57 300 112 9874) trata los datos de tu pedido para confirmarlo, cobrarlo, entregarlo, facturarlo y atender tu retracto, tus garantías y tus reclamos; y, solo si marcas las casillas aparte, para enviarte promociones por el canal que elijas. Los datos viajan en el mensaje que mandas por WhatsApp (Meta) y se comparten con la transportadora o el mensajero. Algunos servicios los tratan fuera de Colombia. Puedes conocer, corregir o borrar tus datos y retirar tu autorización. Lee la política en /legal/privacidad/.
 
 ## Textos de las casillas
 
-**Casilla de datos** (texto del paquete v1; obligatoria, sin marcar por defecto; separada de la de términos; «Política de Tratamiento de Datos» enlaza a `/legal/privacidad/`; la versión y la fecha salen de `data/config.csv`):
+Todas vienen sin marcar. Cada una enlaza a su documento y lee versión y fecha de `data/config.csv` (la fecha en letras: «17 de noviembre de 2026»). El símbolo «☐» representa la casilla; no se escribe.
 
-> ☐ Autorizo a De Santander a tratar mis datos personales para gestionar mi pedido, conforme a la Política de Tratamiento de Datos versión 1 del 6 de noviembre de 2026, que leí.
+**Casilla 1, términos (obligatoria; texto de D5 §6.3).**
 
-**Casilla de términos** (texto del paquete v1; obligatoria, sin marcar; «Términos y condiciones» enlaza a `/legal/terminos/`):
+> ☐ Leí y acepto los Términos y condiciones versión {version_terminos} del {fecha_terminos}.
 
-> ☐ Leí y acepto los Términos y condiciones versión 1 del 6 de noviembre de 2026.
+**Casilla 2, datos (obligatoria).**
 
-**Línea final del mensaje de WhatsApp** (constancia; complementa el «ACEPTO» del chat, no lo reemplaza, porque el cliente puede editar el mensaje):
+> ☐ Autorizo a De Santander SAS a tratar mis datos personales para gestionar mi pedido: confirmarlo, cobrarlo, coordinar la entrega con la transportadora o el mensajero y emitir la factura. Entiendo que el pedido se envía por WhatsApp (Meta) y que algunos servicios pueden tratar mis datos fuera de Colombia. Leí la Política de tratamiento de datos versión {version_politica_datos} del {fecha_politica_datos}.
 
-> Acepto los Términos y condiciones versión 1 y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión 1 del 6 de noviembre de 2026.
+**Casilla 3, promociones por WhatsApp (opcional; nunca bloquea el botón).**
 
-**Casilla de promociones:** retirada. Decisión del dueño del 2026-11-06: «no por ahora». Los textos de la v0.6 (una casilla por canal o una sola, horarios de la Ley 2300 de 2023, «BAJA») quedan en el historial de Git de este archivo y en `revisiones/2026-11-06-decisiones-p4-p12.md`, por si se reabre. Si se reabre, antes de implementarla hay que agregar la finalidad en §3, la base de datos en §6 y la revocación en §8, y publicar una nueva versión.
+> ☐ Quiero recibir novedades y promociones de De Santander SAS por WhatsApp, de lunes a viernes de 7:00 a. m. a 7:00 p. m. y sábados de 8:00 a. m. a 3:00 p. m. Puedo cancelarlo cuando quiera escribiendo «BAJA» al mismo chat. Es opcional y no afecta mi pedido.
+
+**Casilla 4, promociones por correo (opcional; solo aparece si el cliente escribió su correo; nunca bloquea el botón).**
+
+> ☐ Quiero recibir novedades y promociones de De Santander SAS por correo electrónico. Puedo cancelarlo cuando quiera con el enlace de cada correo o escribiendo a desantander.tienda@gmail.com. Es opcional y no afecta mi pedido.
+
+**Errores (D5 §6.3).** Casilla 1: `Debes aceptar los términos para continuar.` Casilla 2: `Debes autorizar el tratamiento de tus datos para continuar.` Las casillas 3 y 4 no tienen error.
+
+**Líneas del mensaje de WhatsApp (D5 §6.4).** Constancia, siempre: `Acepto los Términos v{version_terminos} y autorizo el tratamiento de mis datos según la Política v{version_politica_datos} del {fecha_politica_datos}.` Promociones, solo si marcó alguna casilla: `Autorizo recibir promociones por {WhatsApp|correo|WhatsApp y correo}.` La línea de aceptación complementa la constancia ACEPTO del chat, pero no la reemplaza.
 
 ---
 
 ## Notas para el abogado
 
-### A. Qué exige la norma y dónde se cumple
+Estas notas no se publican. Análisis completo en `revisiones/2026-11-14-paquete-abogado-v1.md`.
 
-| Exigencia | Norma | Dónde se cumple |
-|---|---|---|
-| Autorización previa, expresa e informada | Ley 1581, arts. 3 lit. a, 4 lit. c, 9; Decreto 1377, arts. 5 y 7 (VERIFICAR numeración compilada) | Casilla sin marcar en el resumen, antes de abrir WhatsApp; «ACEPTO» en el chat antes de procesar |
-| Informar finalidad, derechos, responsable y carácter facultativo | Ley 1581, art. 12 (verificado en sesión anterior) | Casilla (enlace a la política) + numerales 1, 3, 4 y 8. La casilla del paquete es más corta que la de la v0.4: ya no enumera finalidades ni menciona a Meta. Es válida porque remite a la política «que leí»; se recomienda (no se exige) conservar en la casilla la frase «Entiendo que el pedido se envía por WhatsApp (Meta), que puede tratar mis datos fuera de Colombia» (LEG-095). |
-| Conservar prueba de la autorización | Ley 1581, art. 17 lit. b; Decreto 1377, art. 8 (VERIFICAR) | Línea final del mensaje de WhatsApp + respuesta «ACEPTO» en el chat (respaldos de WhatsApp Business). Hoy la línea no existe en el código (LEG-050). |
-| Política con contenido mínimo | Decreto 1377, art. 13 (VERIFICAR) | Este documento: responsable, área de datos (área comercial), tratamiento y finalidades, derechos, procedimiento, vigencia |
-| Consultas 10 + 5 días hábiles; reclamos 15 + 8 | Ley 1581, arts. 14 y 15 (verificados) | Numerales 9 y 10 |
-| Temporalidad: datos solo mientras sean necesarios | Ley 1581, art. 4 lit. g; Decreto 1377, art. 11 (VERIFICAR) | Numeral 6: 10 años para pedidos, facturas, PQR y constancias (art. 28 de la Ley 962 de 2005; interpretación prudente que el paquete reconoce). **Observación:** los chats de quien pregunta y no compra no son «papeles del comerciante»; se recomienda un plazo corto (propuesta: 12 meses) y decirlo en §6. Pendiente del dueño (D-6). |
-| Manual interno de políticas y procedimientos | Ley 1581, art. 17 lit. k | **Falta** (L5). |
-| Transferencia o transmisión internacional | Ley 1581, art. 26 | Numeral 7 y nota B |
-| Registro Nacional de Bases de Datos | Ley 1581, art. 25; Decreto 1074 de 2015, art. 2.2.2.26.1.2 (Decreto 090 de 2018): activos > 100.000 UVT | El paquete propone publicar «no estamos obligados». **No se publica** hasta conocer los activos (D-8); si no supera el umbral, no hay obligación y no hace falta decirlo. |
-
-### B. Encargados y transferencia internacional (riesgo conocido 4; L4)
-
-**Hechos.** La tienda usa la **aplicación** WhatsApp Business (no la API). El cliente manda el pedido desde su cuenta de WhatsApp al número de la tienda; los mensajes pasan por servidores de Meta. El chat queda en el teléfono de la tienda y en los respaldos. El correo es una cuenta gratuita de Gmail; el registro de PQR es una hoja de cálculo de Google. GitHub Pages registra la IP de los visitantes. El agregador de guías (razón social pendiente, D-16) y las transportadoras reciben los datos de entrega. En zona 1 entrega un domiciliario o DiDi; `data/zonas_envio.csv` también menciona «Uber Courier»: si se usa, debe agregarse a §7 antes de publicar (LEG-086).
-
-**Lo que se retiró del texto del paquete y por qué.**
-- «Con cada encargado hay un contrato de transmisión de datos en los términos del artículo 25 del Decreto 1377 de 2013.» No está acreditado: la aplicación WhatsApp Business y la cuenta gratuita de Gmail se rigen por condiciones de consumidor, sin acuerdo de encargo negociable; GitHub Pages, por sus condiciones generales; con DiDi y el agregador no consta contrato. Publicarlo sería una afirmación no demostrable (Ley 1480, art. 23; Ley 1581, art. 4 lit. a). El paquete mismo lo lista como punto por verificar. Va aquí como tarea L4: revisar si las condiciones de cada servicio cumplen el contenido mínimo del art. 2.2.2.25.5.2 del Decreto 1074 de 2015 y, con el agregador y DiDi, firmar o aceptar cláusulas de encargo.
-- La base legal que sí se publica: (i) Estados Unidos está en la lista de países con nivel adecuado de la Circular Externa 005 de 2017 de la SIC (confirmado el 2026-11-06 en fuentes secundarias: Holland & Knight, Brigard Urrego; VERIFICAR la lista vigente en la Circular Única, Título V); (ii) autorización expresa de la casilla (art. 26 lit. a); (iii) necesidad para ejecutar el contrato (art. 26 lit. e). **México también figura en esa lista** (misma fuente), lo que corrige la nota de la v0.5; es relevante solo si el agregador fuera Envia.com.
-- **DiDi.** Si aloja los datos en un país que no está en la lista (por ejemplo, China), hace falta una excepción del art. 26 o la autorización expresa del titular, y §7 debe informarlo. Pendiente (D-17): país de alojamiento y condiciones de datos de DiDi.
-- **Sanity y GitHub.** El paquete dice «no hay Sanity». La arquitectura del sitio (`CLAUDE.md`, `src/infrastructure/sanity/`) sí prevé Sanity para contenido editorial y para las páginas legales, pero el proyecto no está creado (`docs/PENDIENTES.md`). Por eso §7 no lo menciona y es cierto hoy. Si se activa Sanity y el sitio carga imágenes desde su CDN, Sanity recibe la IP del visitante y §7 debe actualizarse **antes** (LEG-084). GitHub se informa por transparencia; es más un proveedor de alojamiento que un encargado en sentido estricto.
-
-### C. Afirmaciones que no se publican por falta de dato
-- Verificación en dos pasos en los teléfonos y cuentas de la tienda (D-7): se retiró de §11 hasta que el dueño la confirme.
-- Razón social del agregador de guías (D-16): §7 dice «el agregador de guías con el que despachamos», que es cierto sin el nombre. Agregarlo cuando exista.
-- País de alojamiento de DiDi (D-17): §7 lo ubica en Colombia como prestador del servicio; si sus servidores están fuera, corregir.
-- Activos totales (D-8): no se publica nada sobre el RNBD.
-
-### D. Decisiones del dueño que afectan esta política
-- 2026-11-06, Paquete legal v1: aplicación WhatsApp Business; «ACEPTO» en el chat; conservación 10 años; encargados; versión 1 del 6 de noviembre de 2026; publicar sin esperar la aprobación del abogado (LEG-094).
-- 2026-11-06, decisiones adicionales: sin promociones por ahora (P12 → «no por ahora»); retracto de 5 días hábiles (vuelve la finalidad «atender tu retracto» en §3); modelo C (§1: la sociedad comercializa; los fabricantes no reciben datos).
-- Documento opcional (`DOCUMENTO_OBLIGATORIO = false`). Si el contador no confirma la facturación a nombre del comprador, se retira el campo y la viñeta de §3 (LEG-040).
-
-### E. Versión 2 (recomendada): campo «Comuna» para el envío gratis en Bucaramanga (2026-11-09; LEG-114)
-
-**Qué exige la norma.** La comuna es un dato de ubicación, no sensible y opcional. La finalidad («calcular el envío y entregar el pedido»), el responsable y los encargados (mensajero de zona 1) no cambian. Solo un cambio de finalidad obliga a pedir una nueva autorización (Decreto 1377 de 2013, art. 5, compilado en el Decreto 1074 de 2015: VERIFICAR la numeración). Los demás cambios se comunican publicando la nueva versión antes de aplicarlos (Decreto 1377, art. 13: VERIFICAR). Por eso **no se exige una nueva autorización** a quienes ya pidieron, y las casillas conservan su redacción.
-
-**Qué se recomienda (P31 a, aplicada el 2026-11-09 por instrucción del dueño, que aún puede cambiarla).** Publicar la versión 2 el mismo día que la funcionalidad, porque la versión 1 describe uno por uno los datos que se recogen (§2 y §3) y quedaría incompleta (Ley 1581, arts. 4 lit. e y 12). El día de la publicación, legal pasa estos cambios al texto público, pone la fecha real (D-21) en el rótulo («Versión 2 · vigente desde AAAA-MM-DD», línea 5) y sube el encabezado a 2.0; el desarrollador cambia `version_politica_datos` a `2` y `fecha_politica_datos` a esa fecha. La casilla, la constancia del mensaje y el aviso de privacidad toman la versión y la fecha nuevas.
-
-**Cambios del texto público.**
-1. §2, tercera viñeta, frase «Tu nombre, celular, documento, dirección, código postal y correo no se guardan allí.» pasa a: `Tu nombre, celular, documento, dirección, barrio, comuna, código postal y correo no se guardan allí.`
-2. §3, después de la viñeta «Barrio, código postal e indicaciones…», viñeta nueva: `Comuna (opcional, solo si el envío es a Bucaramanga): saber si tu pedido tiene envío gratis y verificar que tu dirección esté en esa comuna. Solo te preguntamos por las comunas donde el envío es gratis. Si no la eliges, tu pedido sigue igual y se cobra la tarifa normal de la zona 1.`
-3. §7, viñeta del mensajero de la zona 1, frase final «Recibe los mismos datos de entrega.» pasa a: `Recibe los mismos datos de entrega, incluida tu comuna si la elegiste.`
-4. §13: `Esta política rige desde el {fecha de inicio en letras} (versión 2). La versión 1 rigió desde el 6 de noviembre de 2026. Las bases de datos estarán vigentes mientras se mantenga la finalidad del tratamiento y por el plazo de conservación del numeral 6.`
-5. Aviso de privacidad, última frase: `Lee la Política de tratamiento de datos versión 2 del {fecha de inicio en letras} en /legal/privacidad/.`
-
-**Antes de aplicarla.** Confirmar con el desarrollador que la comuna no se guarda en `localStorage` (si se guardara, la frase 1 cambia). Si el dueño elige P28 b, la última frase de la viñeta 2 pasa a `Si no la eliges, tu pedido sigue igual.` **Alternativa P31 b:** mantener la versión 1; es lícito, pero la política no mencionaría un dato que se recoge.
+- **Hechos que D2 afirma y que el dueño debe confirmar antes del 17/11 (numeral 8.3 del paquete).** §11, verificación en dos pasos (confirmación 1; D-7); §7, condiciones de transmisión acordadas con transportadoras, plataforma de domicilios y facturación (confirmación 2: **confirmada por el dueño el 2026-11-14**; conservar la evidencia); §1, dirección y correo frente al certificado (confirmación 3; D-1); §6, plazo de 24 meses de la lista de promociones (confirmación 4). Mientras no consten, D2 publica afirmaciones no acreditadas (Ley 1581 de 2012, art. 4 lit. a y art. 12) (LEG-156).
+- **§2, almacenamiento local.** Hoy el código guarda en el navegador la forma de pago y el municipio (`src/domain/pedido/persistencia.ts`). D2 dice que solo se guarda el carrito: hay que cambiar el código antes de publicar (LEG-149).
+- **§7, encargados (actualizado el 2026-11-14 con datos del dueño; LEG-168 a LEG-170).** Zona 1: DiDi o Uber según el caso; D2 los describe en forma genérica y la transferencia fuera de la lista de la SIC se apoya en la casilla de datos (art. 26 lit. a). Se recomienda nombrarlos (propuesta C4 a C6). Facturación: servicio gratuito de la DIAN (corrección C3 aplicada). Condiciones de transmisión aceptadas con transportadoras, plataformas y facturación: confirmado por el dueño (8.3, confirmación 2). Sigue abierto si se usa un agregador de guías: si sí, es un encargado que D2 no informa (LEG-157). Sanity no figura: es correcto mientras el proyecto de Sanity no exista o no sirva contenido al visitante (LEG-158).
+- **§3, promociones.** Los horarios coinciden con el art. 3 de la Ley 2300 de 2023, que el art. 5 extiende a los contactos comerciales y publicitarios (fuentes secundarias; VERIFICAR la letra oficial). «No más de un mensaje al día» es un compromiso propio; VERIFICAR si la ley fija además un límite semanal aplicable a la publicidad (LEG-160).
+- **Casilla 4.** Promete «el enlace de cada correo». Si los correos salen de Gmail sin enlace de baja, la promesa sería falsa: el dueño debe incluir ese enlace en cada correo (LEG-160).

@@ -1,6 +1,28 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.9 — 2026-11-11.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.0 — 2026-11-14.
 
 # Checklist de lanzamiento legal
+
+## 0. Estado para la publicación del 17/11/2026 (paquete del abogado v1.0; LEG-140 a LEG-170)
+
+Esta sección manda sobre el resto del documento, que queda como historia (versiones 1 y 2, contraentrega, plazos 1/3/3/6, dos casillas y «sin promociones» ya no rigen). Detalle en `revisiones/2026-11-14-paquete-abogado-v1.md`.
+
+| # | Requisito | Norma | Dónde se cumple | Estado | Responsable |
+|---|---|---|---|---|---|
+| 0.1 | Textos D1 a D4 versión 1.0 en `docs/legal/` | Ley 1480, arts. 37 y 50; Ley 1581, art. 12 | Cuatro documentos | **Cumple** (borradores); añadidos de legal por validar (LEG-167, LEG-169) | Legal / abogado |
+| 0.2 | D3 publicado en `/envios/` | Ley 1480, art. 23 | `/envios/` | **No cumple** (LEG-141) | Desarrollador |
+| 0.3 | Versión 1.0, fechas y llaves resueltas | Ley 1581, art. 9 | `config.csv`, páginas, casillas, mensaje | **No cumple** (LEG-142) | Desarrollador |
+| 0.4 | Envío gratis con condiciones publicadas, `envio_gratis_desde,2026-11-17` | Ley 1480, arts. 29, 33 y 34 | D1 §6 y §8; D3 §3 y numeral 13 | **Cumple en el texto**; falta `config.csv` y validación del abogado (LEG-167) | Desarrollador / abogado |
+| 0.5 | Plazos 3, 6, 6 y 10 días hábiles desde el día hábil siguiente al pago | Ley 1480, art. 50 lit. h | Resumen, `/envios/`, `plazos_envio.csv` | **No cumple** (LEG-143); D-19 | Desarrollador / dueño |
+| 0.6 | Pago solo por transferencia o Bre-B, sin campo | Ley 1480, art. 50 | Formulario, resumen, mensaje | **No cumple** (LEG-144) | Desarrollador |
+| 0.7 | Cuatro casillas sin marcar; aviso de privacidad | Ley 1581, art. 9; Ley 2300 de 2023 | Resumen, formulario | **No cumple** (LEG-145) | Desarrollador |
+| 0.8 | Sin NSA, el café no se publica | Res. 2674 de 2013; paquete §1 | `catalogo.csv` | **No cumple** (Arreboles; LEG-146) | Dueño |
+| 0.9 | Marca, fabricante y titular en cada ficha | Ley 1480, art. 23; Res. 5109 de 2005 | `catalogo.csv`, ficha | **Falta dato** (D-11; LEG-147) | Dueño |
+| 0.10 | Solo el carrito en el navegador | Ley 1581, art. 4 lit. e | `persistencia.ts` | **No cumple** (LEG-149) | Desarrollador |
+| 0.11 | Mensaje según D5 §6.4 | Ley 527, art. 14 | `mensaje-whatsapp.ts` | **No cumple** (LEG-150); P39 | Desarrollador / dueño |
+| 0.12 | Confirmaciones del 8.3: 2FA (D-7), transmisión (D-27), certificado (D-1), 24 meses (D-28) | Ley 1581, arts. 4 y 12 | D2 §1, §6, §7, §11 | **D-27 cumple** (2026-11-14, LEG-170); D-7, D-1 y D-28 **Falta dato** | Dueño |
+| 0.13 | Terceros y países informados en D2 §7 | Ley 1581, arts. 12 y 26 | D2 §7 | **Cumple** el texto: DIAN corregida (LEG-169); DiDi y Uber descritos en forma genérica (se recomienda nombrarlos, LEG-168); agregador de guías por confirmar (LEG-157) | Abogado / dueño |
+| 0.14 | Dirección de notificación judicial publicada | Ley 1480, art. 50 lit. a | `/legal/vendedor/`, D1–D3; pie según P38 | **Cumple en el texto**; pie por decidir (LEG-148) | Dueño / desarrollador |
+| 0.15 | IVA y factura electrónica en toda venta | E.T., arts. 447 y 468-1 | D1 §4, leyendas | **Falta dato** (contador, D-18, D-23; LEG-161) | Contador |
 
 Reúne los hallazgos **abiertos** de severidad Bloqueante y Alta de LEG-001 a LEG-100, más los Media que condicionan la publicación. Fuente: `docs/legal/revisiones/` (LEG-001 a LEG-080) y `2026-11-06-paquete-v1.md` (LEG-081 a LEG-100). Se actualiza en cada revisión.
 
@@ -95,8 +117,9 @@ Grupos: **(a)** lo cierra legal con documentos; **(b)** lo decide el dueño; **(
 | D-13 | Soporte por marca de fincas y prácticas | Ficha (Sanity) | Pendiente. |
 | D-14 | Registro de las marcas ante la SIC | — | Pendiente (L6). |
 | D-15 | Plazo de la lista de promociones | — | **Sin objeto** (sin promociones). |
-| **D-16** | Razón social del agregador de guías | Política §7 | Pendiente. El texto público dice «el agregador de guías con el que despachamos». |
-| **D-17** | País de alojamiento y condiciones de datos de DiDi (y de Uber si se usa) | Política §7 | Pendiente. |
+| **D-16** | Plataforma de domicilios de la zona 1 y agregador de guías | Política §7 | **Zona 1 cerrado (2026-11-14):** DiDi o Uber, según el caso. Transportadora de los demás destinos sin nombre (se informa con la guía). Abierto: si se usa un agregador (LEG-157). |
+| **D-17** | País de alojamiento y condiciones de datos de DiDi y de Uber | Política §7 | Pendiente (LEG-168). Condiciones aceptadas por el dueño (D-27, LEG-170). |
+| **D-29** | Facturación electrónica | Política §7 | **Cerrado (2026-11-14):** servicio gratuito de la DIAN, a mano; D2 §7 corregida (LEG-169). |
 | **D-18** | Concepto escrito del contador: IVA del café y del envío; factura a nombre del comprador | Términos §4; envíos §3; leyendas | Pendiente. **Condición previa a publicar «IVA del 5 %».** |
 | **D-19** | Confirmación de la transportadora: máximos alcanzables; tarifa cubre la comisión | Envíos §3 y §6 | Pendiente (recomendado). |
 | **D-20** | Fecha real de publicación | `config.csv`, Sanity, documentos | Pendiente; si es posterior al 2026-11-06, se actualiza todo el mismo día. |
