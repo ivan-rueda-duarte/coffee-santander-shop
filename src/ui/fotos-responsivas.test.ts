@@ -29,8 +29,14 @@ describe("rutaVariante", () => {
     expect(rutaVariante("/fotos/cafes/cafe-x/1.jpg", 800, "webp")).toBe("/fotos-optimizadas/cafes/cafe-x/1-800.webp");
     expect(rutaVariante("/fotos/cafes/cafe-x/foto.v2.JPEG", 400, "avif")).toBe("/fotos-optimizadas/cafes/cafe-x/foto.v2-400.avif");
   });
-  it("solo acepta fotos de public/fotos/", () => {
-    expect(() => rutaVariante("/assets/fotografia/cafetal.jpg", 400, "webp")).toThrow(/public\/fotos/);
+  it("refleja public/assets/fotografia/ en public/fotos-optimizadas/assets/fotografia/ conservando el nombre", () => {
+    expect(rutaVariante("/assets/fotografia/cafetal-montana.jpg", 1200, "jpg")).toBe("/fotos-optimizadas/assets/fotografia/cafetal-montana-1200.jpg");
+    expect(rutaVariante("/assets/fotografia/sub/canon.png", 400, "avif")).toBe("/fotos-optimizadas/assets/fotografia/sub/canon-400.avif");
+  });
+  it("solo acepta fotos de public/fotos/ o public/assets/fotografia/", () => {
+    expect(() => rutaVariante("/assets/tramas/topo.jpg", 400, "webp")).toThrow(/public\/fotos\/ ni en public\/assets\/fotografia\//);
+    expect(() => rutaVariante("/assets/fotografia-vieja/x.jpg", 400, "webp")).toThrow();
+    expect(() => rutaVariante("/fotosx/x.jpg", 400, "webp")).toThrow();
   });
 });
 
@@ -65,11 +71,14 @@ describe("rutaRespaldo", () => {
 });
 
 describe("manifiesto versionado (src/data/fotos-responsivas.json)", () => {
-  it("cada entrada es coherente con anchosParaGenerar y está en public/fotos/", () => {
+  it("cada entrada es coherente con anchosParaGenerar y está en public/fotos/ o public/assets/fotografia/", () => {
     for (const [ruta, entrada] of Object.entries(manifiestoReal as ManifiestoFotos)) {
-      expect(ruta.startsWith("/fotos/")).toBe(true);
+      expect(ruta.startsWith("/fotos/") || ruta.startsWith("/assets/fotografia/")).toBe(true);
       expect(entrada.anchos).toEqual(anchosParaGenerar(entrada.ancho));
       expect(entrada.alto).toBeGreaterThan(0);
     }
+  });
+  it("incluye la foto de la Historia del inicio (LEG-104 la busca por «cafetal-montana»)", () => {
+    expect(Object.hasOwn(manifiestoReal, "/assets/fotografia/cafetal-montana.jpg")).toBe(true);
   });
 });

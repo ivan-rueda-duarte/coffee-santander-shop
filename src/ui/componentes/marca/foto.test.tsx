@@ -3,7 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Foto } from "./superficies";
 
 vi.mock("@/ui/manifiesto-fotos", () => ({
-  MANIFIESTO_FOTOS: { "/fotos/cafes/cafe-x/1.jpg": { ancho: 2256, alto: 4000, anchos: [400, 800, 1200] } },
+  MANIFIESTO_FOTOS: {
+    "/fotos/cafes/cafe-x/1.jpg": { ancho: 2256, alto: 4000, anchos: [400, 800, 1200] },
+    "/assets/fotografia/cafetal-montana.jpg": { ancho: 2000, alto: 1125, anchos: [400, 800, 1200] },
+  },
 }));
 
 afterEach(() => {
@@ -37,12 +40,23 @@ describe("Foto", () => {
     expect(html).toContain('src="/coffee-santander-shop/fotos-optimizadas/cafes/cafe-x/1-1200.jpg"');
   });
 
-  it("sin variantes (Sanity o public/assets) usa un <img> simple", () => {
+  it("sin variantes (Sanity o foto local fuera del manifiesto) usa un <img> simple", () => {
     const externa = renderToStaticMarkup(<Foto src="https://cdn.sanity.io/images/x.jpg" alt="" ancho={1} alto={1} />);
     expect(externa).not.toContain("<picture>");
     expect(externa).toContain('src="https://cdn.sanity.io/images/x.jpg"');
     vi.stubEnv("NEXT_PUBLIC_BASE_PATH", "/repo");
-    const local = renderToStaticMarkup(<Foto src="/assets/fotografia/cafetal-montana.jpg" alt="" ancho={1} alto={1} />);
-    expect(local).toContain('src="/repo/assets/fotografia/cafetal-montana.jpg"');
+    const local = renderToStaticMarkup(<Foto src="/assets/otra/foto.jpg" alt="" ancho={1} alto={1} />);
+    expect(local).not.toContain("<picture>");
+    expect(local).toContain('src="/repo/assets/otra/foto.jpg"');
+  });
+
+  it("las fotos de public/assets/fotografia/ también salen en <picture> con variantes que conservan el nombre", () => {
+    vi.stubEnv("NEXT_PUBLIC_BASE_PATH", "/repo");
+    const html = renderToStaticMarkup(<Foto src="/assets/fotografia/cafetal-montana.jpg" alt="Montañas" ancho={2000} alto={1125} />);
+    expect(html).toContain("<picture>");
+    expect(html).toContain('srcSet="/repo/fotos-optimizadas/assets/fotografia/cafetal-montana-400.avif 400w');
+    expect(html).toContain('src="/repo/fotos-optimizadas/assets/fotografia/cafetal-montana-1200.jpg"');
+    expect(html).toContain('loading="lazy"');
+    expect(html).not.toContain('"/repo/assets/fotografia/cafetal-montana.jpg"');
   });
 });

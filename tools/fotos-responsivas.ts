@@ -1,4 +1,5 @@
-// Genera las variantes responsivas de las fotos de public/fotos/ (la exportación estática no optimiza imágenes).
+// Genera las variantes responsivas de las fotos de public/fotos/ y public/assets/fotografia/
+// (CARPETAS_FOTOS; la exportación estática no optimiza imágenes).
 //
 //   npm run fotos                    → public/fotos-optimizadas/ (no versionada) + src/data/fotos-responsivas.json
 //   tsx tools/fotos-responsivas.ts --limpiar-out
@@ -11,8 +12,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, wri
 import { dirname, join, relative, sep } from "node:path";
 import {
   anchosParaGenerar,
-  CARPETA_ORIGINALES,
   CARPETA_VARIANTES,
+  CARPETAS_FOTOS,
   EXTENSION_RESPALDO,
   FORMATOS_VARIANTES,
   rutaVariante,
@@ -42,13 +43,17 @@ async function cargarSharp(): Promise<Sharp> {
   }
 }
 
-/** Rutas públicas ("/fotos/cafes/x/1.jpg") de todas las fotos originales. */
-function listarOriginales(carpeta = join(PUBLIC, CARPETA_ORIGINALES.slice(1))): string[] {
+/** Rutas públicas ("/fotos/cafes/x/1.jpg", "/assets/fotografia/cafetal-montana.jpg") de todas las fotos originales. */
+function listarOriginales(): string[] {
+  return CARPETAS_FOTOS.flatMap((c) => listarCarpeta(join(PUBLIC, c.originales.slice(1))));
+}
+
+function listarCarpeta(carpeta: string): string[] {
   if (!existsSync(carpeta)) return [];
   const rutas: string[] = [];
   for (const nombre of readdirSync(carpeta).sort()) {
     const ruta = join(carpeta, nombre);
-    if (statSync(ruta).isDirectory()) rutas.push(...listarOriginales(ruta));
+    if (statSync(ruta).isDirectory()) rutas.push(...listarCarpeta(ruta));
     else if (EXTENSIONES_ORIGEN.test(nombre)) rutas.push(`/${relative(PUBLIC, ruta).split(sep).join("/")}`);
   }
   return rutas;
@@ -88,6 +93,8 @@ async function generar(): Promise<void> {
     ];
     for (const { ancho: a, extension } of tareas) {
       const destino = enPublic(rutaVariante(original, a, extension));
+      // Dos originales con la misma variante (p. ej. public/fotos/assets/fotografia/x.jpg y public/assets/fotografia/x.jpg) se pisarían.
+      if (esperados.has(destino)) throw new Error(`Dos fotos generan la misma variante ${relative(RAIZ, destino)}; renombra una de ellas.`);
       esperados.add(destino);
       if (existsSync(destino) && statSync(destino).mtimeMs >= mtimeOriginal) continue;
       mkdirSync(dirname(destino), { recursive: true });

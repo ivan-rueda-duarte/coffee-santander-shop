@@ -136,7 +136,16 @@ export function Historia({ catalogo, contenido }: { catalogo: VistaCatalogo; con
             )}
           </div>
           <div className="space-y-8">
-            <Foto src={foto.url} alt={foto.alt} credito={foto.credito} ancho={2000} alto={1125} className="aspect-[16/10]" />
+            {/* Columna derecha de max-w-6xl (1152 px) con gap-12 desde lg; una columna con px-5 / md:px-8 por debajo. Fuera del primer pantallazo: diferida. */}
+            <Foto
+              src={foto.url}
+              alt={foto.alt}
+              credito={foto.credito}
+              ancho={2000}
+              alto={1125}
+              tamanos="(min-width: 1216px) 552px, (min-width: 1024px) calc(50vw - 56px), (min-width: 768px) calc(100vw - 64px), calc(100vw - 40px)"
+              className="aspect-[16/10]"
+            />
             {proceso.length > 0 && (
               <div>
                 <h3 className="h3 text-ink-title">Del cafetal a la taza</h3>

@@ -1,13 +1,20 @@
-// Variantes responsivas de las fotos de public/fotos/ (las genera tools/fotos-responsivas.ts antes del build).
+// Variantes responsivas de las fotos de public/fotos/ y public/assets/fotografia/ (las genera tools/fotos-responsivas.ts antes del build).
 // La exportación estática no tiene optimizador de imágenes: el script deja, por cada foto, versiones de
 // 400/800/1200 px de ancho en AVIF y WebP (sin ampliar las pequeñas) y un JPEG de respaldo, y escribe
 // src/data/fotos-responsivas.json (lo carga ./manifiesto-fotos). Aquí solo se calculan rutas y srcset:
 // TypeScript puro, sin React ni el JSON, para que el script lo use aunque el manifiesto aún no exista.
 
-/** Carpeta de las fotos originales dentro de public/. */
-export const CARPETA_ORIGINALES = "/fotos";
-/** Carpeta (dentro de public/, no versionada) donde el script deja las variantes. */
+/** Carpeta (dentro de public/, no versionada) donde el script deja todas las variantes. */
 export const CARPETA_VARIANTES = "/fotos-optimizadas";
+/**
+ * Carpetas de fotos originales dentro de public/ y dónde quedan sus variantes (siempre bajo CARPETA_VARIANTES):
+ * las fotos de café y provincia, y las fotos de marca de la portada (Historia). Las variantes conservan el nombre
+ * del archivo ("cafetal-montana.jpg" → "cafetal-montana-1200.jpg").
+ */
+export const CARPETAS_FOTOS = [
+  { originales: "/fotos", variantes: CARPETA_VARIANTES },
+  { originales: "/assets/fotografia", variantes: `${CARPETA_VARIANTES}/assets/fotografia` },
+] as const;
 /** Anchos objetivo en px. Una foto más angosta no se amplía: se usa su ancho real. */
 export const ANCHOS_VARIANTES = [400, 800, 1200] as const;
 /** Formatos modernos, en orden de preferencia para <source>. */
@@ -35,12 +42,15 @@ export function anchosParaGenerar(anchoOriginal: number): number[] {
   return [...ANCHOS_VARIANTES.filter((a) => a < tope), tope];
 }
 
-/** "/fotos/cafes/x/1.jpg" + 800 + "webp" → "/fotos-optimizadas/cafes/x/1-800.webp". */
+/**
+ * "/fotos/cafes/x/1.jpg" + 800 + "webp" → "/fotos-optimizadas/cafes/x/1-800.webp";
+ * "/assets/fotografia/cafetal-montana.jpg" + 1200 + "jpg" → "/fotos-optimizadas/assets/fotografia/cafetal-montana-1200.jpg".
+ */
 export function rutaVariante(original: string, ancho: number, extension: ExtensionVariante): string {
-  if (!original.startsWith(`${CARPETA_ORIGINALES}/`)) throw new Error(`La foto "${original}" no está en public${CARPETA_ORIGINALES}/.`);
-  const relativa = original.slice(CARPETA_ORIGINALES.length);
-  const sinExtension = relativa.replace(/\.[^./]+$/, "");
-  return `${CARPETA_VARIANTES}${sinExtension}-${ancho}.${extension}`;
+  const carpeta = CARPETAS_FOTOS.find((c) => original.startsWith(`${c.originales}/`));
+  if (!carpeta) throw new Error(`La foto "${original}" no está en ${CARPETAS_FOTOS.map((c) => `public${c.originales}/`).join(" ni en ")}.`);
+  const sinExtension = original.slice(carpeta.originales.length).replace(/\.[^./]+$/, "");
+  return `${carpeta.variantes}${sinExtension}-${ancho}.${extension}`;
 }
 
 export interface FuentesFoto {

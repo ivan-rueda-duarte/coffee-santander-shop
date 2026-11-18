@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { rutaVariante } from "../src/ui/fotos-responsivas";
 
 // Ronda QA 2026-11-18: fotos responsivas (auditoría UX A3, commit 1c1812e).
 // Corre contra out/ (webServer de playwright.config.ts). Las pruebas de out/ leen el disco: exigen un build reciente.
@@ -162,7 +163,8 @@ test.describe("QA 2026-11-18 · fotos responsivas", () => {
       .map((d) => join(d.parentPath, d.name));
     expect(quedan).toEqual([]);
     for (const [original, { anchos }] of Object.entries(MANIFIESTO)) {
-      const base = original.replace(/^\/fotos/, "/fotos-optimizadas").replace(/\.[^.]+$/, "");
+      // public/fotos/ → fotos-optimizadas/; public/assets/fotografia/ → fotos-optimizadas/assets/fotografia/ (rama feat/fotos-assets).
+      const base = rutaVariante(original, 1, "jpg").replace(/-1\.jpg$/, "");
       for (const a of anchos) for (const ext of ["avif", "webp"]) expect(existsSync(join(OUT, `${base}-${a}.${ext}`)), `${base}-${a}.${ext}`).toBe(true);
       expect(existsSync(join(OUT, `${base}-${anchos.at(-1)}.jpg`))).toBe(true);
     }

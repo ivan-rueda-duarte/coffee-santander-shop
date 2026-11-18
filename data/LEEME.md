@@ -57,6 +57,8 @@ Los tamaños admitidos son 250, 500 y 1000 g. Otro tamaño exige agregar una col
 
 Para cambiar una foto, reemplaza el archivo (mismo nombre) o cambia el nombre en el CSV. Un café sin `fotos` muestra la ilustración de la marca. Si el CSV no tiene fotos pero Sanity sí, se usan las de Sanity.
 
+No hace falta achicar las fotos a mano: el build genera solo las versiones livianas (AVIF, WebP y JPEG de 400, 800 y 1.200 px) de todo lo que haya en `public/fotos/` y `public/assets/fotografia/`, y publica esas en lugar del original.
+
 ## provincias.csv y municipios.csv
 
 Las siete provincias de Santander y sus 87 municipios. `descripcion` vacía = no se muestra. En `municipios.csv`, `divipola` es el código del DANE; la provincia de cada municipio sale de la Ordenanza 009 de 2019 de la Asamblea de Santander. Cimitarra, Onzaga y Piedecuesta no están en la ordenanza y se asignaron por indicación del dueño (Vélez, Guanentá y Metropolitana). Un municipio con la provincia sin confirmar lleva `por_verificar` en `si` y la provincia vacía (hoy ninguno). El trazado del mapa se genera con `npm run mapa` y lee estos dos archivos.
