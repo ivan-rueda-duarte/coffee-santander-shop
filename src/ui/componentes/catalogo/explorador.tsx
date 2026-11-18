@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Fragment, useState } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { agruparPorProvincia, textoContador, type Orden } from "@/domain/catalogo/filtros";
 import { precioDesde } from "@/domain/catalogo/tipos";
 import { formatearCOP } from "@/domain/comun/dinero";
@@ -11,7 +11,6 @@ import { Boton } from "../marca/boton";
 import { IconoCerrar, IconoFiltro } from "../marca/iconos";
 import { GrupoChips } from "./controles-filtro";
 import { etiquetaActivo, PanelFiltros, useOpciones } from "./panel-filtros";
-import { TarjetaCafe } from "./tarjeta-cafe";
 
 // La hoja de filtros (diálogo de Radix) solo se descarga cuando alguien la abre.
 const HojaFiltros = dynamic(() => import("./hoja-filtros"), { ssr: false });
@@ -27,20 +26,26 @@ const ORDENES: { valor: Orden; etiqueta: string }[] = [
 /** Enfoca el contador de resultados (lo usa el mapa al llevar al catálogo). */
 export const ID_CONTADOR = "resultados-catalogo";
 
+/**
+ * Tarjetas de café ya renderizadas en el servidor (Server Components), por slug. El explorador solo decide cuáles
+ * se ven y en qué orden: así la tarjeta, la foto y sus etiquetas no viajan en el JavaScript del navegador (QA-018).
+ */
+export type TarjetasPorSlug = Readonly<Record<string, ReactNode>>;
+
 /** Filtros + resultados. Lee la URL (useSearchParams), así que va dentro de <Suspense> (ver SeccionCatalogo). */
-export function ExploradorFiltrable() {
-  return <Explorador f={useFiltrosCatalogo()} />;
+export function ExploradorFiltrable({ tarjetas }: { tarjetas: TarjetasPorSlug }) {
+  return <Explorador f={useFiltrosCatalogo()} tarjetas={tarjetas} />;
 }
 
 /**
  * Respaldo de <Suspense>: el mismo explorador sin filtros. Reserva la barra lateral, los chips y el botón «Filtros»
  * en celular y la misma cuadrícula, para que el catálogo no salte al hidratar (M7).
  */
-export function ExploradorSinFiltros() {
-  return <Explorador f={useFiltrosSinUrl()} />;
+export function ExploradorSinFiltros({ tarjetas }: { tarjetas: TarjetasPorSlug }) {
+  return <Explorador f={useFiltrosSinUrl()} tarjetas={tarjetas} />;
 }
 
-function Explorador({ f }: { f: EstadoFiltros }) {
+function Explorador({ f, tarjetas }: { f: EstadoFiltros; tarjetas: TarjetasPorSlug }) {
   const { catalogo } = useCatalogo();
   const op = useOpciones(f);
   const [hojaAbierta, setHojaAbierta] = useState(false);
@@ -158,9 +163,7 @@ function Explorador({ f }: { f: EstadoFiltros }) {
               )}
               <ul className={agrupado ? "grid gap-6 sm:grid-cols-2 xl:grid-cols-3" : "mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3"}>
                 {cafes.map((c) => (
-                  <li key={c.slug}>
-                    <TarjetaCafe cafe={c} />
-                  </li>
+                  <li key={c.slug}>{tarjetas[c.slug]}</li>
                 ))}
               </ul>
             </Fragment>

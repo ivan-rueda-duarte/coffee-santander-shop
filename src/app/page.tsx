@@ -9,7 +9,7 @@ export default async function Inicio() {
   return (
     <>
       <Portada catalogo={catalogo} contenido={inicio} />
-      <SeccionCatalogo cafes={catalogo.cafes} provincias={catalogo.provincias} />
+      <SeccionCatalogo cafes={catalogo.cafes} />
       <SeccionMapa fuente={datosMapa.fuente} />
       <ComoPedir catalogo={catalogo} contenido={inicio} />
       <Historia catalogo={catalogo} contenido={historia} />

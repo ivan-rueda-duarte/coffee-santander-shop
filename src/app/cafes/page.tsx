@@ -10,5 +10,5 @@ export const metadata: Metadata = {
 
 export default async function PaginaCafes() {
   const catalogo = await cargarCatalogo();
-  return <SeccionCatalogo cafes={catalogo.cafes} provincias={catalogo.provincias} nivelTitulo="h1" />;
+  return <SeccionCatalogo cafes={catalogo.cafes} nivelTitulo="h1" />;
 }
