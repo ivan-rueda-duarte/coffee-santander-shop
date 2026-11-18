@@ -235,6 +235,8 @@ test.describe("QA-023: Resumen a 360 × 740", () => {
       // Leyenda visible (LEG-178, condición 1).
       await expect(page.getByTestId("leyenda-promociones")).toHaveText("Promociones (opcional)");
       expect((await page.getByTestId("leyenda-promociones").boundingBox())!.height).toBeGreaterThan(10);
+      // Diseño 2026-11-18 (media), pendiente de A1: rótulo de grupo en overline (mayúsculas), no titular.
+      expect(await page.getByTestId("leyenda-promociones").evaluate((e) => getComputedStyle(e).textTransform)).toBe("uppercase");
     });
   }
 

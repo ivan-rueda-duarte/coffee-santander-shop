@@ -366,7 +366,7 @@ function Contenido() {
               las de promociones (3 y 4, opcionales, nunca bloquean) van encima de las obligatorias (1 y 2), separadas por un
               filete y con la leyenda visible. Textos, numeración, lógica y mensaje sin cambio. */}
           <fieldset className="mt-6 space-y-3 border-b border-line pb-4" data-testid="casillas-promociones">
-            <legend className="caption font-semibold text-ink" data-testid="leyenda-promociones">Promociones (opcional)</legend>
+            <legend className="overline text-ink-muted" data-testid="leyenda-promociones">Promociones (opcional)</legend>
             <label className="flex cursor-pointer items-start gap-3 text-sm">
               <input id="c-promo-wa" type="checkbox" checked={promoWhatsapp} onChange={(e) => setPromoWhatsapp(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" />
               <span>{casillaPromocionesWhatsapp(razonSocial)}</span>
