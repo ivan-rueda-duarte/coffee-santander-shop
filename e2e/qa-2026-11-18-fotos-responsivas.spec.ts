@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { rutaVariante } from "../src/ui/fotos-responsivas";
 
 // Ronda QA 2026-11-18: fotos responsivas (auditoría UX A3, commit 1c1812e).
 // Corre contra out/ (webServer de playwright.config.ts). Las pruebas de out/ leen el disco: exigen un build reciente.
@@ -157,14 +156,21 @@ test.describe("QA 2026-11-18 · fotos responsivas", () => {
     }
   });
 
-  test("out/: sin originales de fotos/cafes y con todas las variantes del manifiesto", () => {
-    const quedan = readdirSync(join(OUT, "fotos"), { recursive: true, withFileTypes: true })
-      .filter((d) => d.isFile() && /\.(jpe?g|png|webp|avif)$/i.test(d.name))
-      .map((d) => join(d.parentPath, d.name));
+  test("out/: sin originales de fotos/ ni de assets/fotografia/ y con todas las variantes del manifiesto", () => {
+    const quedan = ["fotos", "assets/fotografia"].flatMap((c) =>
+      readdirSync(join(OUT, c), { recursive: true, withFileTypes: true })
+        .filter((d) => d.isFile() && /\.(jpe?g|png|webp|avif)$/i.test(d.name))
+        .map((d) => join(d.parentPath, d.name)),
+    );
     expect(quedan).toEqual([]);
     for (const [original, { anchos }] of Object.entries(MANIFIESTO)) {
-      // public/fotos/ → fotos-optimizadas/; public/assets/fotografia/ → fotos-optimizadas/assets/fotografia/ (rama feat/fotos-assets).
-      const base = rutaVariante(original, 1, "jpg").replace(/-1\.jpg$/, "");
+      // Ronda de verificación 2026-11-18 (2bc61e8): la ruta esperada se escribe aquí, sin rutaVariante() del código de
+      // producción, para que un error de mapeo no lo compartan el build y la prueba.
+      // public/fotos/x.jpg → fotos-optimizadas/x; public/assets/fotografia/x.jpg → fotos-optimizadas/assets/fotografia/x.
+      const prefijo = original.startsWith("/assets/fotografia/") ? "/fotos-optimizadas/assets/fotografia/" : "/fotos-optimizadas/";
+      const relativa = original.replace(/^\/assets\/fotografia\//, "").replace(/^\/fotos\//, "");
+      expect(original, "original fuera de las carpetas conocidas").toMatch(/^\/(fotos|assets\/fotografia)\//);
+      const base = `${prefijo}${relativa.replace(/\.[^.]+$/, "")}`;
       for (const a of anchos) for (const ext of ["avif", "webp"]) expect(existsSync(join(OUT, `${base}-${a}.${ext}`)), `${base}-${a}.${ext}`).toBe(true);
       expect(existsSync(join(OUT, `${base}-${anchos.at(-1)}.jpg`))).toBe(true);
     }
