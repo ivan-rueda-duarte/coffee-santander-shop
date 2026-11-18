@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { FocusEvent } from "react";
 import { useCarrito } from "../carrito/carrito-provider";
 import { IconoBolsa } from "../marca/iconos";
 
@@ -22,6 +23,15 @@ const ENLACES = [
   { href: "/#historia", texto: "Historia" },
   { href: "/envios/", texto: "Envíos" },
 ];
+
+/**
+ * QA-027: Chromium no desplaza un contenedor al enfocar un elemento que ya se ve en parte, y «Envíos» quedaba bajo el
+ * fundido. Al enfocar un enlace de la tira se desplaza solo lo necesario; scroll-px-6 lo saca del fundido de 24 px.
+ * Sin «smooth»: el desplazamiento es instantáneo y respeta prefers-reduced-motion.
+ */
+function traerALaVista(e: FocusEvent<HTMLUListElement>) {
+  if (e.target instanceof HTMLAnchorElement) e.target.scrollIntoView({ inline: "nearest", block: "nearest" });
+}
 
 const sinBarraFinal = (ruta: string) => (ruta.length > 1 ? ruta.replace(/\/+$/, "") : ruta);
 
@@ -69,7 +79,9 @@ export function Encabezado() {
           overflow-x-auto no lo recorte. */}
       {!ruta.startsWith("/pedido") && (
         <nav aria-label="Principal" className="border-b border-line bg-surface md:hidden" data-theme="light" data-testid="tira-navegacion">
-          <ul className="flex overflow-x-auto overscroll-x-contain px-2 pr-6 [scrollbar-width:none] [mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)] [&::-webkit-scrollbar]:hidden">
+          <ul
+            onFocus={traerALaVista}
+            className="flex scroll-px-6 overflow-x-auto overscroll-x-contain px-2 pr-6 [scrollbar-width:none] [mask-image:linear-gradient(to_right,#000_calc(100%-24px),transparent)] [&::-webkit-scrollbar]:hidden">
             {ENLACES.map((e) => (
               <li key={e.href}>
                 <Link
