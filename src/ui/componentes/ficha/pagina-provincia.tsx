@@ -6,7 +6,7 @@ import { TarjetaCafe } from "../catalogo/tarjeta-cafe";
 import { BotonEnlace } from "../marca/boton";
 import { Antetitulo, Pastilla } from "../marca/etiquetas";
 import { Foto, Textura } from "../marca/superficies";
-import { Migas } from "./ficha-cafe";
+import { Migas } from "../layout/migas";
 
 // Familia de color de cada provincia (verde, arcilla, oro, neutro, tierra). Una provincia nueva usa «verde».
 const FAMILIA: Record<string, string> = {

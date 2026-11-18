@@ -6,6 +6,7 @@ import { ETIQUETA_MOLIENDA, estaDisponible, type Cafe, type Molienda } from "@/d
 import { claveLinea, crearCarrito, depurarLineas, reducirCarrito, type LineaCarrito } from "@/domain/pedido/carrito";
 import { calcularTotales, type Totales } from "@/domain/pedido/totales";
 import { useAvisos } from "../layout/avisos";
+import { Boton } from "../marca/boton";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 
 interface Valor {
@@ -139,4 +140,20 @@ export function useCarrito(): Valor {
   const v = useContext(Contexto);
   if (!v) throw new Error("useCarrito debe usarse dentro de <CarritoProvider>");
   return v;
+}
+
+/**
+ * «Agregar» de la tarjeta de café: primer tamaño disponible (la presentación se cambia después en el pedido). La tarjeta
+ * es un Server Component y solo lo pone con el café disponible (con todo agotado pinta la pastilla «Agotado»).
+ * Vive en este módulo, que el layout ya descarga en todas las páginas, para que la isla no pida un trozo de JS
+ * aparte al cargar el inicio, el catálogo y las provincias (QA-018). Se importa desde `./boton-agregar`.
+ */
+export function BotonAgregar({ cafe }: { cafe: Cafe }) {
+  const { agregar } = useCarrito();
+  const primera = cafe.presentaciones.find((p) => p.disponible);
+  return (
+    <Boton tamano="sm" onClick={() => agregar(cafe)} aria-label={`Agregar ${cafe.nombre}, ${primera?.gramos} g, al pedido`}>
+      Agregar
+    </Boton>
+  );
 }

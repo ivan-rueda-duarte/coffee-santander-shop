@@ -63,7 +63,7 @@ function Explorador({ f, tarjetas }: { f: EstadoFiltros; tarjetas: TarjetasPorSl
       {/* Escritorio: filtros fijos a la izquierda */}
       <aside aria-label="Filtros" className="hidden lg:block">
         <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pr-2">
-          <PanelFiltros f={f} incluirProvincias />
+          <PanelFiltros f={f} incluirProvincias diferirRangos />
         </div>
       </aside>
 

@@ -10,7 +10,7 @@ import { leyendaIvaTarifas } from "@/domain/pedido/iva";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { DOCUMENTOS_LEGALES } from "@/infrastructure/legal/legal-md";
 import { BotonEnlace } from "@/ui/componentes/marca/boton";
-import { Migas } from "@/ui/componentes/ficha/ficha-cafe";
+import { Migas } from "@/ui/componentes/layout/migas";
 import { DocumentoLegal } from "@/ui/componentes/layout/documento-legal";
 import { canonica, cargarCatalogo, repositorioContenido } from "../_datos/catalogo";
 

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { fechaEnLetras } from "@/domain/comun/fecha";
 import { DOCUMENTOS_LEGALES } from "@/infrastructure/legal/legal-md";
 import { DocumentoLegal } from "@/ui/componentes/layout/documento-legal";
-import { Migas } from "@/ui/componentes/ficha/ficha-cafe";
+import { Migas } from "@/ui/componentes/layout/migas";
 import { canonica, repositorioContenido } from "../../_datos/catalogo";
 
 export const dynamicParams = false;

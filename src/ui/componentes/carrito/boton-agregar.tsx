@@ -1,18 +1,3 @@
-"use client";
-
-import { estaDisponible, type Cafe } from "@/domain/catalogo/tipos";
-import { Boton } from "../marca/boton";
-import { Pastilla } from "../marca/etiquetas";
-import { useCarrito } from "./carrito-provider";
-
-/** «Agregar» de la tarjeta: primer tamaño disponible (la presentación se cambia después en el pedido). */
-export function BotonAgregar({ cafe }: { cafe: Cafe }) {
-  const { agregar } = useCarrito();
-  if (!estaDisponible(cafe)) return <Pastilla variante="agotado">Agotado</Pastilla>;
-  const primera = cafe.presentaciones.find((p) => p.disponible);
-  return (
-    <Boton tamano="sm" onClick={() => agregar(cafe)} aria-label={`Agregar ${cafe.nombre}, ${primera?.gramos} g, al pedido`}>
-      Agregar
-    </Boton>
-  );
-}
+// Sin "use client": la isla vive en carrito-provider.tsx, el módulo cliente que el layout ya descarga, para que la
+// tarjeta (Server Component) no pida un trozo de JS aparte al cargar la página (QA-018).
+export { BotonAgregar } from "./carrito-provider";

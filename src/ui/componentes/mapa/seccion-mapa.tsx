@@ -19,7 +19,9 @@ function HuecoMapa({ children }: { children?: React.ReactNode }) {
   );
 }
 
-// El mapa pesa más que el resto de la página: se descarga cuando su sección está por entrar en pantalla.
+// El mapa pesa más que el resto de la página (≈21 KB gzip con su geometría): se descarga cuando su caja está a 200 px
+// de entrar en pantalla. Se observa la caja del mapa y no la sección: en celular el texto de la sección asoma bajo la
+// portada, pero el mapa queda debajo, fuera de la primera pantalla, y no debe contar en el JS inicial (QA-018).
 const MapaProvincias = dynamic(() => import("./mapa-provincias"), {
   ssr: false,
   loading: () => (
@@ -30,7 +32,7 @@ const MapaProvincias = dynamic(() => import("./mapa-provincias"), {
 });
 
 export function SeccionMapa({ fuente }: { fuente: string }) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const [cerca, setCerca] = useState(false);
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export function SeccionMapa({ fuente }: { fuente: string }) {
     }
     const obs = new IntersectionObserver(
       (entradas) => entradas.some((e) => e.isIntersecting) && setCerca(true),
-      { rootMargin: "500px 0px" },
+      { rootMargin: "200px 0px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -50,7 +52,7 @@ export function SeccionMapa({ fuente }: { fuente: string }) {
 
   return (
     <Textura trama="claro" como="section" id="mapa" aria-labelledby="titulo-mapa" className="scroll-mt-20 bg-surface-sunken px-5 py-16 md:px-8 md:py-20">
-      <div ref={ref as React.RefObject<HTMLDivElement>} className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
         <div>
           <Antetitulo>Santander por provincias</Antetitulo>
           <h2 id="titulo-mapa" className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]">
@@ -64,7 +66,7 @@ export function SeccionMapa({ fuente }: { fuente: string }) {
           </BotonEnlace>
           <p className="caption mt-6 max-w-md text-ink-muted">{fuente}</p>
         </div>
-        <div>
+        <div ref={ref}>
           {cerca ? (
             <Suspense fallback={<HuecoMapa />}>
               <MapaProvincias />

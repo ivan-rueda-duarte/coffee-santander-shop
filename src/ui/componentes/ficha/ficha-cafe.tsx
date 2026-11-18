@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { FichaCafe } from "@/application/casos-uso/obtener-ficha-cafe";
 import { ETIQUETA_PERFIL } from "@/domain/catalogo/perfiles";
 import { detalleNotificacionSanitaria, filaFabricante, ROTULO_NOTIFICACION_SANITARIA } from "@/domain/catalogo/rotulado";
@@ -10,6 +9,7 @@ import { TarjetaCafe } from "../catalogo/tarjeta-cafe";
 import { Antetitulo, BarraAcento, SelloSCA } from "../marca/etiquetas";
 import { BolsaIlustrada, Foto, Textura } from "../marca/superficies";
 import { BloqueCompra } from "./bloque-compra";
+import { Migas } from "../layout/migas";
 
 const GLOSARIO = [
   { dato: "Altitud", texto: "Metros sobre el nivel del mar donde crece el café. A más altura el grano madura más lento." },
@@ -17,27 +17,6 @@ const GLOSARIO = [
   { dato: "Proceso", texto: "Cómo se separa el grano de la fruta. En el lavado se quita la pulpa con agua." },
   { dato: "Tueste", texto: "Un tueste claro deja más acidez y notas frutales; uno oscuro da más cuerpo y notas de chocolate." },
 ];
-
-export function Migas({ items }: { items: { texto: string; href?: string }[] }) {
-  return (
-    <nav aria-label="Ruta de navegación" className="caption text-ink-muted">
-      <ol className="flex flex-wrap items-center gap-x-2">
-        {items.map((i, n) => (
-          <li key={i.texto} className="flex items-center gap-2">
-            {i.href ? (
-              <Link href={i.href} className="relative underline-offset-4 hover:underline before:absolute before:content-[''] before:-inset-x-1.5 before:-inset-y-[13px]">
-                {i.texto}
-              </Link>
-            ) : (
-              <span aria-current="page" className="font-semibold text-ink">{i.texto}</span>
-            )}
-            {n < items.length - 1 && <span aria-hidden="true">/</span>}
-          </li>
-        ))}
-      </ol>
-    </nav>
-  );
-}
 
 export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
   const { cafe, municipio, provincia, productor, relacionados, contenido, tienda } = ficha;

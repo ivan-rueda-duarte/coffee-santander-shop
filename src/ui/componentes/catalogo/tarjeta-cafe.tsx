@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ETIQUETA_PROCESO, ETIQUETA_TUESTE, grupoDeTueste, mostrarSelloSca, precioDesde, type Cafe } from "@/domain/catalogo/tipos";
+import { ETIQUETA_PROCESO, ETIQUETA_TUESTE, estaDisponible, grupoDeTueste, mostrarSelloSca, precioDesde, type Cafe } from "@/domain/catalogo/tipos";
 import { formatearCOP, formatearMiles } from "@/domain/comun/dinero";
 import { nombresDeVariedades } from "@/domain/marca/variedad";
 import { BotonAgregar } from "../carrito/boton-agregar";
@@ -56,7 +56,7 @@ export function TarjetaCafe({ cafe }: { cafe: Cafe }) {
             {desde !== null ? formatearCOP(desde) : "Consultar"}
             <small>desde</small>
           </p>
-          <BotonAgregar cafe={cafe} />
+          {estaDisponible(cafe) ? <BotonAgregar cafe={cafe} /> : <Pastilla variante="agotado">Agotado</Pastilla>}
         </div>
       </div>
     </article>

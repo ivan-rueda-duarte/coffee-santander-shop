@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { UMBRALES_SCA, type Dimension, type FiltroActivo } from "@/domain/catalogo/filtros";
 import { ETIQUETA_PERFIL } from "@/domain/catalogo/perfiles";
 import { ETIQUETA_PROCESO, ETIQUETA_TUESTE_GRUPO, GRUPOS_TUESTE, type GrupoTueste, type Perfil, type Proceso } from "@/domain/catalogo/tipos";
@@ -12,8 +12,44 @@ import { useCatalogo } from "@/ui/hooks/use-catalogo";
 import type { EstadoFiltros } from "@/ui/hooks/use-filtros-catalogo";
 import { GrupoChips, GrupoOpcionUnica, Interruptor, type OpcionChip } from "./controles-filtro";
 
-// El deslizador (Radix Slider) pesa ~14 KB: se descarga cuando el panel de filtros aparece.
-const FiltroRango = dynamic(() => import("./filtro-rango"), { ssr: false, loading: () => <div className="h-14" aria-hidden="true" /> });
+/**
+ * Hueco del deslizador mientras no está: la misma caja que FiltroRango (leyenda, raíz h-11 y valores), para que el
+ * panel no salte al cargarlo.
+ */
+function HuecoRango({ ref }: { ref?: React.Ref<HTMLDivElement> }) {
+  return (
+    <div ref={ref} aria-hidden="true">
+      <p className="overline">&nbsp;</p>
+      <div className="h-11" />
+      <p className="mt-1 text-sm font-medium">&nbsp;</p>
+    </div>
+  );
+}
+
+// El deslizador (Radix Slider) pesa ≈10,5 KB gzip: se descarga solo cuando hace falta (QA-018).
+const FiltroRango = dynamic(() => import("./filtro-rango"), { ssr: false, loading: () => <HuecoRango /> });
+
+/**
+ * En la barra lateral, el deslizador se descarga cuando su caja está a 200 px de entrar en pantalla. Por debajo de lg la
+ * barra está oculta (display: none) y nunca se cruza con la pantalla, así que en celular no se descarga al cargar la
+ * página: allí lo trae la hoja de filtros al abrirse.
+ */
+function RangoCuandoSeVe(props: ComponentProps<typeof FiltroRango>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [cerca, setCerca] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || cerca) return;
+    if (!("IntersectionObserver" in window)) {
+      const cuadro = requestAnimationFrame(() => setCerca(true));
+      return () => cancelAnimationFrame(cuadro);
+    }
+    const obs = new IntersectionObserver((entradas) => entradas.some((e) => e.isIntersecting) && setCerca(true), { rootMargin: "200px 0px" });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [cerca]);
+  return cerca ? <FiltroRango {...props} /> : <HuecoRango ref={ref} />;
+}
 
 export function useOpciones(f: EstadoFiltros) {
   const { catalogo } = useCatalogo();
@@ -55,12 +91,14 @@ export function etiquetaActivo(a: FiltroActivo, f: EstadoFiltros, op: ReturnType
   }
 }
 
-export function PanelFiltros({ f, incluirProvincias }: { f: EstadoFiltros; incluirProvincias: boolean }) {
+/** `diferirRangos`: en la barra lateral los deslizadores esperan a verse; en la hoja se cargan al abrirla. */
+export function PanelFiltros({ f, incluirProvincias, diferirRangos = false }: { f: EstadoFiltros; incluirProvincias: boolean; diferirRangos?: boolean }) {
   const { catalogo } = useCatalogo();
   const op = useOpciones(f);
   const visible = useMemo(() => new Set<Dimension>(catalogo.filtrosVisibles), [catalogo.filtrosVisibles]);
   const { filtros } = f;
   const { altitud, precio } = catalogo.limites;
+  const Rango = diferirRangos ? RangoCuandoSeVe : FiltroRango;
 
   return (
     <div className="space-y-6">
@@ -74,7 +112,7 @@ export function PanelFiltros({ f, incluirProvincias }: { f: EstadoFiltros; inclu
       {visible.has("tuestes") && <GrupoChips leyenda="Tueste" opciones={op.tuestes} seleccion={filtros.tuestes} alAlternar={(v) => f.alternar("tuestes", v)} />}
       {visible.has("perfiles") && <GrupoChips leyenda="Perfil de taza" opciones={op.perfiles} seleccion={filtros.perfiles} alAlternar={(v) => f.alternar("perfiles", v)} />}
       {visible.has("altitud") && altitud && (
-        <FiltroRango leyenda="Altitud" limites={altitud} paso={50} valor={filtros.altitud} formato={(n: number) => `${formatearMiles(n)} m`} alConfirmar={f.cambiarAltitud} />
+        <Rango leyenda="Altitud" limites={altitud} paso={50} valor={filtros.altitud} formato={(n: number) => `${formatearMiles(n)} m`} alConfirmar={f.cambiarAltitud} />
       )}
       {visible.has("sca") && (
         <GrupoOpcionUnica
@@ -86,7 +124,7 @@ export function PanelFiltros({ f, incluirProvincias }: { f: EstadoFiltros; inclu
         />
       )}
       {visible.has("precio") && precio && (
-        <FiltroRango leyenda="Precio desde" limites={precio} paso={1000} valor={filtros.precio} formato={formatearCOP} alConfirmar={f.cambiarPrecio} />
+        <Rango leyenda="Precio desde" limites={precio} paso={1000} valor={filtros.precio} formato={formatearCOP} alConfirmar={f.cambiarPrecio} />
       )}
       {visible.has("disponibles") && <Interruptor etiqueta="Solo en stock" activo={filtros.soloDisponibles} alCambiar={f.cambiarStock} />}
     </div>
