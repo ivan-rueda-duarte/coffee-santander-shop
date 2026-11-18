@@ -70,6 +70,25 @@ test.describe("7. celular (360 × 740)", () => {
     await expect(page.locator("div.fixed.inset-x-0.bottom-0")).toHaveCount(0);
   });
 
+  test("M3: tira de navegación bajo el encabezado, no fija, con los cinco destinos; «Envíos» actual en /envios/; sin tira en /pedido/", async ({ page }) => {
+    await page.goto("/");
+    const tira = page.getByTestId("tira-navegacion");
+    await expect(tira).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Principal" })).toHaveCount(1); // la de escritorio está oculta
+    await expect(tira.getByRole("link")).toHaveText(["Mapa", "Cafés", "Cómo pedir", "Historia", "Envíos"]);
+    for (const enlace of await tira.getByRole("link").all()) expect((await enlace.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    const encabezado = await page.locator("header").evaluate((h) => h.getBoundingClientRect().height);
+    expect(encabezado, "el encabezado fijo no pasa de 75 px").toBeLessThanOrEqual(75);
+    await page.evaluate(() => window.scrollTo(0, 600));
+    await expect.poll(() => tira.evaluate((t) => t.getBoundingClientRect().bottom)).toBeLessThan(0); // se va con el desplazamiento
+    await page.goto("/envios/");
+    await expect(page.getByTestId("tira-navegacion").getByRole("link", { name: "Envíos" })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByTestId("tira-navegacion").locator("[aria-current]")).toHaveCount(1);
+    await page.goto("/pedido/");
+    await expect(page.locator("header")).toBeVisible();
+    await expect(page.getByTestId("tira-navegacion")).toHaveCount(0);
+  });
+
   test("tocar una provincia del mapa abre una hoja con su botón", async ({ page }) => {
     await page.goto("/");
     await page.locator("#mapa").scrollIntoViewIfNeeded();
