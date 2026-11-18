@@ -86,7 +86,7 @@ const textoPasos = (catalogo: VistaCatalogo, contenido: ContenidoInicio | null) 
 export function ComoPedir({ catalogo, contenido }: { catalogo: VistaCatalogo; contenido: ContenidoInicio | null }) {
   const pasos = textoPasos(catalogo, contenido);
   return (
-    <section id="pedir" aria-labelledby="titulo-pedir" className="scroll-mt-20 bg-surface px-5 py-16 md:px-8 md:py-20">
+    <section id="pedir" aria-labelledby="titulo-pedir" className="scroll-mt-20 border-t border-line bg-surface px-5 py-16 md:px-8 md:py-20">
       <div className="mx-auto max-w-6xl">
         <Antetitulo>Tres pasos</Antetitulo>
         <Titular id="titulo-pedir" antes="Cómo" remate="pedir" className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]" />

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
 import { Textura } from "../marca/superficies";
 
@@ -36,11 +37,14 @@ export function SeccionMapa({ fuente }: { fuente: string }) {
         <div>
           <Antetitulo>Santander por provincias</Antetitulo>
           <h2 id="titulo-mapa" className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]">
-            Explora por <em className="font-normal">provincia</em>
+            Santander, <em className="font-normal">provincia a provincia</em>
           </h2>
           <p className="body-l mt-4 max-w-md text-ink-muted">
-            Toca una provincia para filtrar el catálogo; vuelve a tocarla para quitarla. Los puntos marcan el municipio de cada café.
+            Elige una provincia para ver sus cafés y filtrar el catálogo. Los puntos marcan el municipio de cada café.
           </p>
+          <BotonEnlace variante="enlace" tamano="sm" href="#catalogo" className="mt-4">
+            Ir a los cafés
+          </BotonEnlace>
           <p className="caption mt-6 max-w-md text-ink-muted">{fuente}</p>
         </div>
         <div>

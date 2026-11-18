@@ -24,7 +24,7 @@ export function SeccionCatalogo({
       <div className="mx-auto max-w-6xl">
         <Antetitulo>Nuestros cafés</Antetitulo>
         <Titulo id="titulo-catalogo" className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]">
-          Elige por <em className="font-normal">origen</em>
+          Elige por <em className="font-normal">provincia</em>
         </Titulo>
         <p className="body-l mt-3 max-w-2xl text-ink-muted">Cada café dice de qué provincia y municipio viene y qué vas a encontrar en la taza.</p>
         <div className="mt-10">
