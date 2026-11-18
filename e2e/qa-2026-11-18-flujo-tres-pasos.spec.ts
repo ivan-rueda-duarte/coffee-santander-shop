@@ -167,7 +167,7 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     await alResumen(page);
     await terminos(page).check();
     await datos(page).check();
-    await enviarPorWhatsapp(page);
+    const antes = await enviarPorWhatsapp(page);
     await expect(respaldo(page)).toBeVisible();
     await promoWa(page).check();
     await expect(respaldo(page)).toHaveCount(0);
@@ -175,18 +175,22 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     // LEG-173 (2): «se oculta hasta un nuevo clic válido».
     await page.waitForTimeout(200);
     await expect(respaldo(page), "el respaldo reapareció sin un nuevo clic").toHaveCount(0);
+    // QA-022, regla elegida (§9.4): tras un cambio, aunque se deshaga, el clic siguiente genera un número DS nuevo.
+    expect(numeroDe(await enviarPorWhatsapp(page))).not.toBe(numeroDe(antes));
   });
 
   test("LEG-173: el respaldo no reaparece sin un nuevo clic al desmarcar y volver a marcar la casilla 1", async ({ page }) => {
     await alResumen(page);
     await terminos(page).check();
     await datos(page).check();
-    await enviarPorWhatsapp(page);
+    const antes = await enviarPorWhatsapp(page);
     await terminos(page).uncheck();
     await expect(respaldo(page)).toHaveCount(0);
     await terminos(page).check();
     await page.waitForTimeout(200);
     await expect(respaldo(page), "el respaldo reapareció sin un nuevo clic").toHaveCount(0);
+    // QA-022, regla elegida (§9.4): el clic siguiente genera un número DS nuevo.
+    expect(numeroDe(await enviarPorWhatsapp(page))).not.toBe(numeroDe(antes));
   });
 
   test("LEG-173: el respaldo se oculta al cambiar la cantidad desde el cajón en la misma pestaña; segundo clic = DS nuevo", async ({ page }) => {
@@ -263,24 +267,59 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     // Nombre accesible del botón «Pedido» y del enlace «Envío».
     const nombre = async (sel: string) => (await page.locator(sel).first().evaluate((e) => e.textContent ?? "")).replace(/\s+/g, " ");
     test.info().annotations.push({ type: "textContent-pedido", description: await nombre("ol[aria-label='Pasos del pedido'] li button") });
-    // QA-024: Chromium calcula «Pedido , hecho» (el span sr-only es absoluto y se separa con un espacio).
+    // QA-024: Chromium calculaba «Pedido , hecho» (el span sr-only es absoluto y se separa con un espacio).
     expect(arbol, "QA-024: nombre accesible con espacio antes de la coma").not.toContain(" , hecho");
+    await expect(pasos.getByRole("button", { name: "Pedido, hecho", exact: true })).toBeVisible();
+    await expect(pasos.getByRole("link", { name: "Envío, hecho", exact: true })).toBeVisible();
   });
 
-  test("altura a 360 × 740: casilla 1 → borde inferior del botón (presupuesto de A1 ≈ 660 px; altura útil ≈ 676 px)", async ({ page }) => {
-    await page.setViewportSize({ width: 360, height: 740 });
-    await alResumen(page);
-    const tope = await terminos(page).evaluate((e) => e.getBoundingClientRect().top + window.scrollY);
-    const fin = await boton(page).evaluate((b) => b.getBoundingClientRect().bottom + window.scrollY);
-    const encabezado = await page.locator("header").first().evaluate((h) => h.getBoundingClientRect().height);
-    const util = 740 - encabezado;
-    const medida = Math.round(fin - tope);
-    test.info().annotations.push({ type: "casilla1-boton-360", description: `${medida} px; altura útil ${Math.round(util)} px` });
-    // Evidencia: captura con la casilla 1 alineada bajo el encabezado.
-    await page.evaluate(([t, h]) => window.scrollTo(0, t - h - 8), [tope, encabezado]);
-    await page.screenshot({ path: "docs/qa/capturas/2026-11-18-a1-resumen-360-casilla1.png" });
-    expect(medida, "QA-023: la casilla 1 y el botón no caben en una pantalla de 360 × 740").toBeLessThanOrEqual(util);
-  });
+  // QA-023, criterio 7 de diseño (sección «QA-023», B3 aceptado por legal con condiciones, LEG-178): M1 ≤ U − 16, medido
+  // desde el borde superior de la ETIQUETA de la casilla 1 (antes se medía desde el <input>, con umbral U), con y sin correo.
+  for (const correo of [undefined, "ana@example.com"]) {
+    test(`altura a 360 × 740 ${correo ? "con correo (casilla 4)" : "sin correo"}: M1 = etiqueta de la casilla 1 → botón ≤ U − 16`, async ({ page }) => {
+      await page.setViewportSize({ width: 360, height: 740 });
+      if (correo) {
+        await sembrar(page);
+        await page.goto("/pedido/");
+        await page.getByLabel("Nombre completo").fill("Ana Rueda");
+        await page.getByLabel("Celular").fill("300 123 4567");
+        await page.getByLabel("Departamento").selectOption("Santander");
+        await page.getByLabel("Municipio").selectOption("Bucaramanga");
+        await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
+        await page.getByLabel(/Correo/).fill(correo);
+        await page.getByRole("button", { name: /Ver el resumen/ }).click();
+        await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
+        await expect(page.locator("#c-promo-correo")).toBeVisible();
+      } else {
+        await alResumen(page);
+      }
+      await page.evaluate(() => document.fonts.ready);
+      const m = await page.evaluate(() => {
+        const etiqueta = (sel: string) => document.querySelector(sel)!.closest("label")!;
+        const b = [...document.querySelectorAll("button")].find((e) => e.textContent?.includes("Enviar por WhatsApp"))!;
+        const fin = b.getBoundingClientRect().bottom + window.scrollY;
+        const arriba = (sel: string) => etiqueta(sel).getBoundingClientRect().top + window.scrollY;
+        const enc = document.querySelector("header")!.getBoundingClientRect().height;
+        return {
+          m1: Math.round(fin - arriba("#c-ter")),
+          m2: Math.round(fin - arriba("#c-aut")),
+          desdeInput: Math.round(fin - (document.querySelector("#c-ter")!.getBoundingClientRect().top + window.scrollY)),
+          u: Math.round(740 - enc),
+          interlineado: getComputedStyle(etiqueta("#c-ter")).lineHeight,
+          tope: arriba("#c-ter"),
+          enc,
+        };
+      });
+      test.info().annotations.push({ type: `qa-023-m1-${correo ? "con" : "sin"}-correo`, description: JSON.stringify(m) });
+      // Diseño pide anotar el interlineado calculado de las etiquetas (text-sm debería dar 20 px).
+      expect(m.interlineado).toBe("20px");
+      if (!correo) {
+        await page.evaluate(([t, h]) => window.scrollTo(0, t - h), [m.tope, m.enc]);
+        await page.screenshot({ path: "docs/qa/capturas/2026-11-18-a1-resumen-360-casilla1.png" });
+      }
+      expect(m.m1, "QA-023: M1 debe ser ≤ U − 16").toBeLessThanOrEqual(m.u - 16);
+    });
+  }
 
   for (const ancho of [360, 1280]) {
     for (const t of ["light", "dark"] as const) {
