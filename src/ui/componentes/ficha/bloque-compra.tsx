@@ -13,9 +13,11 @@ import { useCatalogo } from "@/ui/hooks/use-catalogo";
 
 function Pildora({ nombre, valor, marcado, alElegir, deshabilitado, children }: { nombre: string; valor: string; marcado: boolean; alElegir: () => void; deshabilitado?: boolean; children: React.ReactNode }) {
   return (
-    <label className={deshabilitado ? "cursor-not-allowed opacity-50" : "cursor-pointer"}>
+    // Agotado (diseño 2026-11-18, media): sin opacidad; borde punteado line-strong y texto ink-muted (≈ 7:1), para que
+    // «Agotado» se lea y el estado no dependa del color (WCAG 1.4.1 y 1.4.3). Los «!» ganan a .ds-tag--outline, que no está en una capa.
+    <label className={deshabilitado ? "cursor-not-allowed" : "cursor-pointer"}>
       <input type="radio" name={nombre} value={valor} checked={marcado} disabled={deshabilitado} onChange={alElegir} className="peer sr-only" />
-      <span className="ds-tag ds-tag--outline min-h-11 flex-col items-start !gap-0 !rounded-lg !px-4 !py-2 text-sm font-semibold peer-checked:!border-monte-900 peer-checked:!bg-monte-900 peer-checked:!text-pergamino-50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">
+      <span className="ds-tag ds-tag--outline min-h-11 flex-col items-start !gap-0 !rounded-lg !px-4 !py-2 text-sm font-semibold peer-checked:!border-monte-900 peer-checked:!bg-monte-900 peer-checked:!text-pergamino-50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-disabled:!border-dashed peer-disabled:!border-line-strong peer-disabled:!bg-transparent peer-disabled:!text-ink-muted">
         {children}
       </span>
     </label>
@@ -65,9 +67,9 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
         <legend className="overline mb-2 text-ink-muted">Tamaño</legend>
         <div className="flex flex-wrap gap-2">
           {cafe.presentaciones.map((p) => (
-            <Pildora key={p.gramos} nombre="gramos" valor={String(p.gramos)} marcado={gramos === p.gramos} alElegir={() => setGramos(p.gramos)} deshabilitado={!p.disponible}>
+            <Pildora key={p.gramos} nombre="gramos" valor={String(p.gramos)} marcado={gramos === p.gramos && p.disponible} alElegir={() => setGramos(p.gramos)} deshabilitado={!p.disponible}>
               {p.gramos} g
-              <small className="text-xs font-medium opacity-80">{p.disponible ? formatearCOP(p.precioCop) : "Agotado"}</small>
+              <small className={p.disponible ? "text-xs font-medium opacity-80" : "text-xs font-medium"}>{p.disponible ? formatearCOP(p.precioCop) : "Agotado"}</small>
             </Pildora>
           ))}
         </div>
