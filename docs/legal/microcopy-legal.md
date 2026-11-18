@@ -1,6 +1,8 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.10 — 2026-11-18.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.11 — 2026-11-18.
 
 # Microcopy legal
+
+**Aviso de la v1.11 (2026-11-18, LEG-178 a LEG-182).** §5.9: nueva variante de una frase. Orden de las casillas en el resumen: se admite promociones (3 y 4) encima de las obligatorias (1 y 2), con leyenda visible `Promociones (opcional)`, sujeto a validación del abogado (LEG-178).
 
 **Aviso de la v1.10 (2026-11-18, LEG-171 a LEG-176).** Flujo del pedido en tres pasos (Pedido · Envío · Resumen): «Enviar por WhatsApp» del resumen valida y abre `wa.me` en el mismo clic, y se retira el panel de Confirmación de D5 §6.3. El dueño comunicó el 2026-11-18 que el abogado responsable aprobó los textos de LEG-171 y el retiro del panel (constancia escrita pendiente). Los textos del flujo están en la **§9**, que manda sobre §2 (filas «Confirmación…», retiradas), §5.5 (regla de apertura del enlace) y §5.9 (reescrita). D1, D2, D3, D4, la plantilla D5 §6.4 y la constancia del mensaje **no cambian**.
 
@@ -298,7 +300,7 @@ Respuesta al «ACEPTO» (operación, no código): antes de procesar, la tienda e
 | Mismo lugar | Faltan solo los términos | `Para enviar tu pedido, falta que aceptes los términos y condiciones.` |
 | Mismo lugar | Falta solo la autorización de datos | `Para enviar tu pedido, falta que autorices el tratamiento de tus datos.` |
 | Mismo lugar | Las dos marcadas | *(la microayuda desaparece y el botón deja de tener `aria-disabled`)* |
-| Variante de una sola frase (si diseño prefiere no cambiar el texto según el caso) | Falta una o las dos | `Para enviar tu pedido, marca las dos casillas.` |
+| Variante de una sola frase (si diseño prefiere no cambiar el texto según el caso; v1.11, LEG-181) | Falta una o las dos | `Para enviar tu pedido, acepta los términos y autoriza tus datos.` (Se retira «Para enviar tu pedido, marca las dos casillas.»: no dice cuáles, y las casillas de promociones quedan junto a ella.) |
 | Error bajo la casilla de datos, al pulsar el botón si no está marcada (`aria-invalid="true"` y `aria-describedby` en la casilla) | — | `Debes autorizar el tratamiento de tus datos para continuar.` (sin cambio) |
 | Error bajo la casilla de términos, al pulsar el botón si no está marcada (igual) | — | `Debes aceptar los términos para continuar.` (sin cambio) |
 
