@@ -3,7 +3,7 @@
 //   npm run fotos                    → public/fotos-optimizadas/ (no versionada) + src/data/fotos-responsivas.json
 //   tsx tools/fotos-responsivas.ts --limpiar-out
 //                                    → después del build: quita de out/ los originales que ya tienen variantes
-//                                      (el sitio no los usa) y falla si alguna página aún los enlaza.
+//                                      (el sitio no los usa) y falla si algún HTML o CSS aún los enlaza.
 //
 // Por cada foto: 400/800/1200 px de ancho en AVIF y WebP, sin ampliar (una foto más angosta usa su ancho real),
 // y un JPEG de respaldo del ancho mayor. Solo regenera lo que falte o sea más viejo que el original.
@@ -19,6 +19,7 @@ import {
   type ExtensionVariante,
   type ManifiestoFotos,
 } from "../src/ui/fotos-responsivas";
+import { referenciasAOriginales } from "./referencias-originales";
 
 // Como los demás scripts, corre desde la raíz del repositorio (npm run …).
 const RAIZ = process.cwd();
@@ -120,7 +121,7 @@ async function generar(): Promise<void> {
   );
 }
 
-/** Quita de out/ los originales con variantes. Antes comprueba que ningún HTML los cargue (src, srcset, href, content). */
+/** Quita de out/ los originales con variantes. Antes comprueba que ningún HTML ni CSS los enlace (QA-019); si alguno lo hace, falla sin borrar nada. */
 function limpiarOut(): void {
   if (!existsSync(OUT)) {
     console.error("✗ No existe out/: ejecuta `npm run build` primero.");
@@ -128,14 +129,12 @@ function limpiarOut(): void {
   }
   const manifiesto = JSON.parse(readFileSync(MANIFIESTO, "utf8")) as ManifiestoFotos;
   const originales = Object.keys(manifiesto);
-  const html = listarArchivos(OUT).filter((a) => a.endsWith(".html"));
+  // HTML (atributos, JSON-LD, style y <style>) y CSS; los .txt y .js del payload RSC solo traen las rutas como datos.
+  const revisables = listarArchivos(OUT).filter((a) => a.endsWith(".html") || a.endsWith(".css"));
   const errores: string[] = [];
-  for (const pagina of html) {
-    const texto = readFileSync(pagina, "utf8");
-    for (const original of originales) {
-      const escapada = original.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const atributo = new RegExp(`(?:src|srcset|href|content)="[^"]*${escapada}[\\s",]`, "i");
-      if (atributo.test(texto)) errores.push(`out/${relative(OUT, pagina)} enlaza ${original}`);
+  for (const archivo of revisables) {
+    for (const original of referenciasAOriginales(readFileSync(archivo, "utf8"), originales)) {
+      errores.push(`out/${relative(OUT, archivo).split(sep).join("/")} enlaza ${original}`);
     }
   }
   for (const original of originales) {
