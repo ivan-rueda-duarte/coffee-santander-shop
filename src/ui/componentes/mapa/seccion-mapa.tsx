@@ -6,10 +6,27 @@ import { BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
 import { Textura } from "../marca/superficies";
 
+/**
+ * Hueco del mapa mientras no está: misma caja que el mapa (ancho máximo y proporción del viewBox de
+ * mapa-santander.json, escrita aquí para no meter el JSON en el JS inicial). Con el mapa justo bajo la portada (M4),
+ * un hueco de otro alto movería la página al cargar (CLS).
+ */
+function HuecoMapa({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="mx-auto grid aspect-[1048/1246.5] w-full max-w-[640px] place-items-center rounded-lg bg-surface" aria-hidden={children ? undefined : true}>
+      {children}
+    </div>
+  );
+}
+
 // El mapa pesa más que el resto de la página: se descarga cuando su sección está por entrar en pantalla.
 const MapaProvincias = dynamic(() => import("./mapa-provincias"), {
   ssr: false,
-  loading: () => <p className="body py-24 text-center text-ink-muted">Cargando el mapa…</p>,
+  loading: () => (
+    <HuecoMapa>
+      <p className="body text-ink-muted">Cargando el mapa…</p>
+    </HuecoMapa>
+  ),
 });
 
 export function SeccionMapa({ fuente }: { fuente: string }) {
@@ -49,11 +66,11 @@ export function SeccionMapa({ fuente }: { fuente: string }) {
         </div>
         <div>
           {cerca ? (
-            <Suspense fallback={null}>
+            <Suspense fallback={<HuecoMapa />}>
               <MapaProvincias />
             </Suspense>
           ) : (
-            <div className="mx-auto aspect-[1048/1246] w-full max-w-[640px] rounded-lg bg-surface" aria-hidden="true" />
+            <HuecoMapa />
           )}
         </div>
       </div>
