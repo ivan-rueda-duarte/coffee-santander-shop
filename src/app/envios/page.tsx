@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { fechaEnLetras } from "@/domain/comun/fecha";
 import { slugify } from "@/domain/comun/slug";
 import { coberturaPorZona } from "@/domain/envio/envio";
 import { ANCLA_ENVIO_GRATIS, avisoTerminacion, notaVigenciaTerminada, TEXTOS_ENVIO_GRATIS } from "@/domain/envio/envio-gratis";
-import { EMPAQUE_G, type TarifaEnvio } from "@/domain/envio/tipos";
+import { EMPAQUE_G, ESCALONES_KG, type TarifaEnvio } from "@/domain/envio/tipos";
 import { leyendaIvaTarifas } from "@/domain/pedido/iva";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { DOCUMENTOS_LEGALES } from "@/infrastructure/legal/legal-md";
@@ -64,7 +65,43 @@ export default async function PaginaEnvios() {
       <p className="body mt-2 text-ink-muted">
         El peso incluye las bolsas más {EMPAQUE_G} g de empaque, y el escalón también lo cuenta: hasta 1 kg de café paga el escalón de 1 kg, hasta 2 kg el de 2 kg y hasta 5 kg el de 5 kg. Una bolsa suelta, dos de 250 g o dos de 500 g pagan el escalón de 1 kg.
       </p>
-      <div className="mt-4 overflow-x-auto rounded-lg border border-line bg-surface" role="region" aria-label="Tarifas de envío" tabIndex={0}>
+      {/* M8: por debajo de lg, una tarjeta por zona con los mismos datos, orden y textos que la tabla (LEG-183). */}
+      <ul aria-label="Tarifas de envío por zona" className="mt-4 space-y-3 lg:hidden" data-testid="tarjetas-envios">
+        {tarifas.map((t) => (
+          <li key={t.clave} className="rounded-lg border border-line bg-surface p-4" data-testid={`tarjeta-zona-${t.clave}`}>
+            <h4 className="body font-bold text-ink-title">Zona {t.zona}</h4>
+            {t.zona === 1 || t.zona === 2 ? (
+              <p className="small mt-1 text-ink" data-testid="cubre">{cubre(t)}</p>
+            ) : (
+              <details className="mt-1">
+                <summary className="small flex min-h-11 cursor-pointer items-center font-bold text-ink-title underline underline-offset-4">
+                  Qué cubre la zona {t.zona}
+                </summary>
+                <p className="small pb-2 text-ink" data-testid="cubre">{cubre(t)}</p>
+              </details>
+            )}
+            <p className="small text-ink-muted">{MEDIOS[t.medio] ?? t.medio}</p>
+            {t.clave === clavePromo && (
+              <a href={`#${ANCLA_ENVIO_GRATIS}`} className="small mt-1 block text-ink-muted underline underline-offset-4" data-testid="nota-envio-gratis-tarjeta">
+                {TEXTOS_ENVIO_GRATIS.notaTabla}
+              </a>
+            )}
+            {t.escalones ? (
+              <dl className="small mt-3 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-t border-line pt-3">
+                {t.escalones.map((valor, i) => (
+                  <Fragment key={i}>
+                    <dt className="text-ink-muted">Hasta {ESCALONES_KG[i]} kg</dt>
+                    <dd className="text-right font-semibold tabular-nums text-ink">{formatearCOP(valor)}</dd>
+                  </Fragment>
+                ))}
+              </dl>
+            ) : (
+              <p className="small mt-3 border-t border-line pt-3 font-semibold text-ink">Por cotizar por WhatsApp antes de que pagues</p>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-4 hidden overflow-x-auto rounded-lg border border-line bg-surface lg:block" role="region" aria-label="Tarifas de envío" tabIndex={0}>
         <table className="w-full min-w-[44rem] border-collapse text-left text-sm" data-testid="tabla-envios">
           <caption className="sr-only">Tarifas de envío en pesos colombianos por zona y escalón de peso</caption>
           <thead className="bg-surface-sunken">
