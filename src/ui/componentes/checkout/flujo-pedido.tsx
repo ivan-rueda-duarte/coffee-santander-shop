@@ -311,7 +311,7 @@ function Contenido() {
           <fieldset className="mt-6 space-y-3" data-testid="casillas-obligatorias">
             <legend className="sr-only">Autorizaciones obligatorias</legend>
             <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input id="c-ter" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900 aria-[invalid=true]:outline aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-offset-2 aria-[invalid=true]:outline-danger" aria-invalid={errorTerminos ? true : undefined} aria-describedby={errorTerminos ? "e-ter" : undefined} />
+              <input id="c-ter" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="ds-casilla mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorTerminos ? true : undefined} aria-describedby={errorTerminos ? "e-ter" : undefined} />
               <span>
                 {casillaTerminos(legal)[0]}
                 <Link className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">{casillaTerminos(legal)[1]}</Link>
@@ -325,7 +325,7 @@ function Contenido() {
               </p>
             )}
             <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900 aria-[invalid=true]:outline aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-offset-2 aria-[invalid=true]:outline-danger" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
+              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="ds-casilla mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
               <span>
                 {casillaDatos(legal, razonSocial)[0]}
                 <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">{casillaDatos(legal, razonSocial)[1]}</Link>

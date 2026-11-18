@@ -78,6 +78,11 @@
 /* M9 · Caja de errores (resumen del formulario, líneas del pedido): borde e ícono grana, texto en tinta. */
 .ds-alerta{display:flex;align-items:flex-start;gap:var(--space-3);padding:var(--space-3) var(--space-4);border:1.5px solid var(--danger);border-left-width:4px;border-radius:var(--radius-md);background:var(--surface-raised);color:var(--ink);font-size:14px;line-height:22px}
 .ds-alerta__icon{flex:none;width:20px;height:20px;margin-top:1px;color:var(--danger)}
+/* M9 / QA-021 · Casilla con error: anillo grana pegado a la casilla (sin separación). El contorno separado es solo del foco.
+   Con error y foco se ven los dos: anillo grana pegado + contorno de foco a 4 px, con una franja de fondo entre ambos.
+   El outline grana con offset 0 cubre los navegadores que no pintan box-shadow en la casilla nativa. */
+.ds-casilla[aria-invalid="true"]{outline:2px solid var(--danger);outline-offset:0;box-shadow:0 0 0 2px var(--danger)}
+.ds-casilla[aria-invalid="true"]:focus-visible{outline-color:var(--focus);outline-offset:4px}
 .ds-badge--overline{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800}
 /* Compatibilidad v4: --process y --score ya no se usan; migran a ds-tag--outline y ds-seal. */
 .ds-badge--process{background:transparent;color:var(--ink);border-color:var(--line)}

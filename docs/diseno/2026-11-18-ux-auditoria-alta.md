@@ -325,10 +325,17 @@ Los dos son decorativos (`aria-hidden`, que `Base` ya pone): el significado lo l
 | 1 | `formulario-envio.tsx:107`, error de campo | `text-sm font-semibold text-danger` | `<p id="{id}-error" class="ds-error mt-1"><IconoAlerta class="ds-error__icon" /><span>{error}</span></p>` |
 | 2 | `formulario-envio.tsx:68`, campo inválido | `aria-[invalid=true]:border-danger` | Se mantiene y se agrega `aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-inset aria-[invalid=true]:ring-danger`: el borde visible queda en 2 px sin mover el diseño. Aplica también a los `select` superpuestos |
 | 3 | `flujo-pedido.tsx:236`, resumen de errores de Envío | `border border-danger … text-danger` | `<p role="alert" class="ds-alerta mt-4 font-semibold"><IconoAlerta class="ds-alerta__icon" /><span>…texto actual…</span></p>` |
-| 4 | `flujo-pedido.tsx:319` y `:328`, errores de casillas | `text-sm font-semibold text-danger` | `ds-error pl-8` (alineado con el texto de la etiqueta: 20 px de casilla + 12 px de separación), con el ícono. Texto [LEGAL §5.9], sin cambio. La casilla con `aria-invalid` lleva `outline outline-2 outline-offset-2 outline-danger` mientras haya error |
+| 4 | `flujo-pedido.tsx:319` y `:328`, errores de casillas | `text-sm font-semibold text-danger` | `ds-error pl-8` (alineado con el texto de la etiqueta: 20 px de casilla + 12 px de separación), con el ícono. Texto [LEGAL §5.9], sin cambio. La casilla con `aria-invalid` lleva la clase `ds-casilla` (anillo grana pegado, ver la regla de foco y error abajo; sustituye a `outline-offset-2 outline-danger`, QA-021) |
 | 5 | `flujo-pedido.tsx:354`, error de líneas | `border border-danger … text-danger` | `<div role="alert" tabIndex={-1} class="ds-alerta mt-4">` con el ícono. Dentro: título en `font-semibold`, lista en `text-ink` y el botón enlace «Editar el pedido» (A1) |
 | 6 | `componentes.css:73`, `.ds-badge--soldout` | texto y borde `--danger` | Clase de arriba. En `Pastilla` con `variante="agotado"` (`etiquetas.tsx`), anteponer `<IconoNoDisponible width={12} height={12} />` a los hijos. No cambian las props públicas |
 | 7 | `bloque-compra.tsx:104-107`, ficha agotada | botón deshabilitado «Agotado» y, al lado, la pastilla «Agotado» | Quitar la pastilla: el botón deshabilitado ya lo dice y la pastilla repetía la palabra. Queda solo el `Boton` deshabilitado de ancho completo (`ink-muted` sobre `surface-sunken` ≈ 5,8:1) |
+
+**Regla de foco y error (QA-021, 2026-11-18).** El contorno separado (2 px con offset) es solo del foco; el error nunca lo imita, porque `--focus` y `--danger` están demasiado cerca en el tema claro (1,16:1) y en el oscuro (oro y rosa claro). El error se marca pegado al control y el foco convive con él sin reemplazarlo:
+
+- Casilla con error (`.ds-casilla[aria-invalid="true"]`, `componentes.css`): anillo grana de 2 px pegado a la casilla (`box-shadow 0 0 0 2px` + `outline` grana con offset 0, para navegadores que no pintan sombras en la casilla nativa).
+- Casilla con error y foco: el mismo anillo grana más el contorno de foco a 4 px, con 2 px de fondo entre ambos. La forma distingue los estados; no depende de comparar dos colores.
+- Campo de texto o `select` con error: borde grana + `ring-inset` (dentro de la caja); el foco es el contorno de `globals.css`, fuera de la caja. Ya cumplía la regla, sin cambio.
+- Cualquier control nuevo con estado de error sigue la misma regla: error dentro o pegado; foco separado.
 
 Observación (baja, fuera de M9): las píldoras de tamaño agotado usan `opacity-50` (`bloque-compra.tsx:17`). Los controles inactivos están exentos del 1.4.3, pero el texto «Agotado» de la píldora es información. Se propone después borde punteado `border-dashed border-line-strong` y texto `text-ink-muted` sin opacidad. No se incluye aquí.
 
