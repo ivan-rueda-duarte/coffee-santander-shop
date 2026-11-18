@@ -78,9 +78,9 @@ Sin verificar: Firefox (no está instalado) y WebKit/Safari iOS (no arranca sin 
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
 | QA-020 | Media | Build / dependencias | `sharp` no está declarado como dependencia | desarrollador-fullstack | **Cerrado** |
-| QA-022 | Media | Pedido / LEG-173 | El respaldo «¿No se abrió WhatsApp?» reaparece sin un clic nuevo al deshacer un cambio | desarrollador-fullstack | Abierto |
+| QA-022 | Media | Pedido / LEG-173 | El respaldo «¿No se abrió WhatsApp?» reaparece sin un clic nuevo al deshacer un cambio | desarrollador-fullstack | Corregido — pendiente verificación (`dd5a13a`) |
 | QA-023 | Media | Diseño / Resumen 360 px | La casilla 1 y «Enviar por WhatsApp» no caben en una pantalla de 360 × 740 (789 px de 665) | disenador-marca (especificación), luego desarrollador-fullstack | Abierto |
-| QA-024 | Baja | Accesibilidad / indicador | El nombre accesible del paso hecho es «Pedido , hecho» | desarrollador-fullstack | Abierto |
+| QA-024 | Baja | Accesibilidad / indicador | El nombre accesible del paso hecho es «Pedido , hecho» | desarrollador-fullstack | Corregido — pendiente verificación (`290ee55`) |
 
 ### QA-022 — El respaldo «¿No se abrió WhatsApp?» reaparece sin un clic nuevo al deshacer un cambio
 - Severidad: Media
@@ -91,6 +91,7 @@ Sin verificar: Firefox (no está instalado) y WebKit/Safari iOS (no arranca sin 
 - Evidencia: `e2e/qa-2026-11-18-flujo-tres-pasos.spec.ts`, pruebas «LEG-173: el respaldo no reaparece sin un nuevo clic al deshacer un cambio (casilla opcional)» y «… al desmarcar y volver a marcar la casilla 1»: `Expected: 0, Received: 1` (4 de 4 repeticiones). Traza: `test-results/qa-2026-11-18-flujo-tres-p-c207a-un-cambio-casilla-opcional--chromium/trace.zip`.
 - Prueba de cierre: esas dos pruebas. También debe seguir pasando «§4 bis 1: segundo clic sin cambios, mismo enlace y mismo número» de `e2e/flujo-tres-pasos.spec.ts`.
 - Responsable sugerido: desarrollador-fullstack
+- Estado: Corregido — pendiente verificación. Commit `dd5a13a`. Causa raíz: `resultado` solo se ocultaba cuando la firma cambiaba, sin borrarse; al deshacer el cambio la firma volvía a coincidir. Ahora se descarta al primer cambio, así que tras deshacerlo el siguiente clic genera número DS y texto nuevos (microcopy §9.4); sin cambios, el segundo clic sigue dando el mismo DS (§4 bis 1).
 
 ### QA-023 — La casilla 1 y «Enviar por WhatsApp» no caben en una pantalla de 360 × 740
 - Severidad: Media (el flujo funciona; falla una condición de diseño que legal pidió: «sin separar el botón de las casillas» a 360 × 740)
@@ -111,6 +112,7 @@ Sin verificar: Firefox (no está instalado) y WebKit/Safari iOS (no arranca sin 
 - Evidencia: prueba «indicador: árbol de accesibilidad de los pasos (nombre del paso hecho)» (falla con el árbol `button "Pedido , hecho"` en el mensaje).
 - Prueba de cierre: esa prueba.
 - Responsable sugerido: desarrollador-fullstack
+- Estado: Corregido — pendiente verificación. Commit `290ee55`. Causa raíz: el sufijo iba en un `span.sr-only` absoluto que se separa con un espacio al calcular el nombre. El botón y el enlace llevan `aria-label={`${titulo}, hecho`}` y el span queda `aria-hidden` (conserva el texto del `listitem` que leen `e2e/pedido.spec.ts` y `e2e/flujo-tres-pasos.spec.ts`).
 
 ## Paridad v1
 
