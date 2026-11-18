@@ -53,6 +53,14 @@ relative before:absolute before:content-[''] before:inset-x-{X} before:-inset-y-
 
 El pseudo-elemento recibe el toque y el clic (es parte del elemento), no tiene color, no cambia el flujo y no aparece en el árbol de accesibilidad. El anillo de foco sigue siendo el del control (`:focus-visible` de `globals.css`), no el del área ampliada.
 
+**Cálculo del desplazamiento (corregido por QA-025):** un `::before` absoluto se coloca respecto a la **caja de relleno** (por dentro del borde), no respecto a la caja exterior. Por eso el valor de `inset` se calcula así, en cada eje:
+
+```
+desplazamiento = (44 − medida exterior del control) / 2 + ancho del borde
+```
+
+Sin borde (migas, pines, enlaces, `<summary>`) el último término es 0. Con el borde de 1 px de `.ds-tag--outline`, un chip de 36 px necesita `(44 − 36) / 2 + 1 = 5 px`, no 4. Si el resultado no es entero se redondea hacia arriba. Detalle completo en «QA-025 y QA-026».
+
 Los enlaces **dentro de una frase** (p. ej. «Zonas, tarifas y plazos» en el pie, «Ver plazos» en la ficha, el correo del vendedor) quedan como están: la excepción «en línea» de WCAG 2.5.5/2.5.8 los cubre y agrandarlos rompería el renglón.
 
 ### Tabla de cambios
@@ -60,7 +68,7 @@ Los enlaces **dentro de una frase** (p. ej. «Zonas, tarifas y plazos» en el pi
 | # | Control | Hoy | Corrección | Forma |
 |---|---|---|---|---|
 | 1 | `.ds-btn--sm` (todos: «Pedido», «Agregar», «Filtros», «Limpiar filtros», «Deshacer», «Vaciar pedido», «Editar», «Editar el pedido», acción de avisos, «Ver cafés de…», «Agregar/Quitar del filtro», «Ver todo Santander», «Seguir viendo cafés») | `min-height: 40px` (`globals.css:23`) | `min-height: 44px`. Se conserva el tipo de 13/16 y el relleno `8px 16px`: el botón gana 4 px de alto y sigue siendo «pequeño» por su tipo y su ancho. El comentario de la línea 21 pasa a «44 px todos» | (a) |
-| 2 | Chips de filtro (`GrupoChips`, `GrupoOpcionUnica`, filtros activos) | `min-h-9` = 36 px | Se queda `min-h-9` visual y se agrega `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-1` (36 + 4 + 4 = 44). Con `gap-2` (8 px) entre filas, las áreas de dos filas se tocan sin solaparse. En `GrupoOpcionUnica` las clases van en el `<span>` dentro del `<label>` | (b) |
+| 2 | Chips de filtro (`GrupoChips`, `GrupoOpcionUnica`, filtros activos) | `min-h-9` = 36 px | Se queda `min-h-9` visual y se agrega `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-[5px]` (36 − 2 de borde + 5 + 5 = 44; con `-inset-y-1` daba 42, QA-025). Con `gap-2` (8 px) entre filas, las áreas de dos filas se tocan sin solaparse. En `GrupoOpcionUnica` las clases van en el `<span>` dentro del `<label>` | (b) |
 | 3 | Selects «Ordenar» (`explorador.tsx:86`) y de tamaño/presentación de cada línea (`linea-pedido.tsx:13`) | `px-3 py-2 text-sm` ≈ 38 px | `h-11 px-3 text-base md:text-sm` (44 px). **`text-base` en celular**: con menos de 16 px, Safari de iOS hace zoom al enfocar el select y descoloca la página | (a) |
 | 4 | Migas (`Migas`, `ficha-cafe.tsx:28`) | `caption` 12/18, ≈ 18 px | En el `<Link>`: `relative before:absolute before:content-[''] before:-inset-x-1.5 before:-inset-y-[13px]` (18 + 26 = 44 de alto; «Cafés» ≈ 32 + 12 = 44 de ancho). La fila de migas no cambia de alto. Por debajo, el área entra 13 px en el `mt-6` (24 px) que la separa del antetítulo: no lo toca | (b) |
 | 5 | Enlaces de «Información legal» del pie (`pie.tsx:62`) | `inline-block py-1` ≈ 30 px | `inline-flex min-h-11 items-center` y la lista pasa de `space-y-1` a `space-y-0`. La columna crece ≈ 44 px; el pie tiene aire de sobra | (a) |
@@ -92,6 +100,53 @@ PROVINCIA                                      ← overline ink-muted
 ( ● Comunera 2 ) ( ● Guanentá 1 ) ( ● García Rovira 1 )   ← 36 visibles; área táctil 44 (líneas punteadas no se ven)
 ( ● Soto Norte 0 ) …
 ( ⚲ Filtros )                                  ← sm, 44
+```
+
+---
+
+## QA-025 y QA-026. Áreas táctiles que faltaban en M1
+
+Mismo criterio de M1: área táctil ≥ 44 × 44 a 360 px, forma (a) o (b), sin tokens ni clases nuevas. Líneas verificadas el 2026-11-18 en `bbd2923`.
+
+### QA-025: regla general del área ampliada
+
+La regla de cálculo de M1 («Cálculo del desplazamiento») se aplica a todo `::before` de área ampliada: **el área se mide desde el borde exterior del control y el desplazamiento suma el ancho del borde**. Controles afectados hoy:
+
+| Control | Borde | Medida exterior | Desplazamiento vertical | Resultado |
+|---|---|---|---|---|
+| Chips de filtro y filtros activos (`.ds-tag--outline`) | 1 px | 36 | `before:-inset-y-[5px]` | 34 + 10 = 44 |
+| Migas | 0 | 18 | `before:-inset-y-[13px]` (sin cambio) | 44 |
+| Pines del mapa | 0 | 26 | 9 px (sin cambio) | 44 |
+
+El eje horizontal de los chips se queda en `before:inset-x-0`: el chip ya mide más de 44 de ancho y su propio borde también recibe el toque. Si en el futuro un control con borde necesita área ampliada también a lo ancho, la regla es la misma (`-inset-x-[(44 − ancho)/2 + borde]`).
+
+### QA-026: forma de cada control
+
+| # | Control | Hoy | Corrección | Forma |
+|---|---|---|---|---|
+| 1 | «Cómo calculamos el envío» (`totales-pedido.tsx:125`), en el cajón, `/pedido/` (envío) y el resumen | 159 × 15, enlace dentro de un `<p class="caption">` | En el `<Link>`: `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-[15px]` (15 + 30 = 45). **No está exento:** es el único contenido de su párrafo, no un enlace dentro de una frase, así que la excepción «en línea» de M1 no lo cubre (sí pasa 2.5.8 por espaciado, pero el criterio de M1 es 44). Se elige (b) para no mover el botón «Continuar con el envío» del cajón ni el tramo del resumen que mide QA-023. Holguras: debajo, 16 px hasta «Continuar con el envío» en el cajón (`mt-4`), 12 hasta el aviso de «por cotizar» y 32 hasta los botones del envío; arriba, la línea del total, que no es interactiva. Ninguna área se solapa con otro control | (b) |
+| 2 | `<summary>` «¿Qué significa cada dato?» (`ficha-cafe.tsx:136`) | 288 × 20 (`text-sm`, 20 de interlineado) | En el `<summary>`: `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-3` (20 + 24 = 44). El área entra 12 px en el relleno `p-4` de la caja: no sale de ella cerrada y, abierta, toca 0 px de la lista (`mt-3` = 12). **No se cambia el `display` del `<summary>`** (nada de `flex` ni `block`): con otro valor que `list-item`, Chromium quita el triángulo nativo, que es la señal de que se despliega | (b) |
+| 3 | Pulgares de «Altitud» y «Precio desde» (`filtro-rango.tsx:51`), raíz `h-6` (`:37`) | pulgar 20 × 20, raíz 24 | La que recibe el toque es la **raíz** del Slider de Radix (cualquier punto de la raíz mueve el pulgar más cercano), así que se amplía la raíz y no el pulgar: `h-6` pasa a **`h-11`** (44). El riel y los pulgares no cambian de tamaño ni de dibujo (riel de 4 px, pulgar de 20 con borde `monte-900` de 2 px). Para que el bloque no crezca de más: la leyenda pasa de `mb-2` a `mb-0` (leyenda → riel: 18 → 20 px) y los valores se quedan en `mt-1` (riel → valores: 14 → 24 px). **Sin margen negativo** en los valores: el `<p>` se pintaría encima de la raíz y le quitaría área. Ojo: la raíz es `touch-none`, así que la franja de 44 px no desplaza la hoja de filtros al deslizar en vertical sobre ella; es lo esperado en un deslizador, y el resto de la hoja sigue desplazándose | (a) sobre la raíz, pulgar sin cambio visual |
+| 4 | Índice «En este documento» (`documento-legal.tsx:81`), en `/envios/` y las páginas legales | `inline-block py-1`, 30 de alto, lista `space-y-1` | En el `<a>`: `inline-flex min-h-11 items-center py-1` (sustituye a `inline-block`). En el `<ol>`: `space-y-1` pasa a `space-y-0`. Con un renglón el enlace mide 44; con dos (títulos largos a 360 px) mide 44 + 8 = 52 y el `py-1` deja 8 px entre un título y el siguiente, para que dos subrayados seguidos no se lean como uno. **No está exento:** es una lista de enlaces, no un enlace dentro de una frase. Se elige (a) porque los enlaces van uno debajo de otro: con (b) las áreas de dos títulos seguidos se solaparían. Solo presentación: ni el texto ni el orden de los títulos cambian (el índice sale de los títulos del documento, letra por letra). El índice de `/envios/` crece ≈ 10 px por título | (a) |
+| 5 | «Cerrar» de la tarjeta de provincia en hoja (`tarjeta-provincia.tsx:65`) | `h-11 w-11` encogido por flex a 42,5 | Se agrega **`shrink-0`** al botón y **`min-w-0`** al `<h3>` (`:60`), para que un nombre largo («García Rovira») parta renglón en vez de empujar el botón. El botón queda en 44 × 44 | (a) |
+
+Controles con el mismo problema que QA no midió (no estaban en los escenarios) y se corrigen con la misma regla:
+
+| # | Control | Hoy | Corrección | Forma |
+|---|---|---|---|---|
+| 6 | `<summary>` «Ver el mensaje» del respaldo de WhatsApp (`flujo-pedido.tsx:465`) | `text-sm`, 20 de alto | Igual que el n.º 2: `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-3`. Arriba hay 16 px (`mt-4`) hasta «Copiar mensaje»: no se solapan | (b) |
+| 7 | `<summary>` «Cómo consulto de qué comuna soy» (`formulario-envio.tsx:241`), solo con municipio Bucaramanga | `caption`, 18 de alto, a 4 px (`mt-1`) del select «Comuna» | Aquí no sirve (b): el área se metería 9 px en el select. En el `<summary>`: `py-3.5` (18 + 28 = 46) y el `<details>` pasa de `mt-1` a `mt-0`. El texto se separa 14 px del select en lugar de 4, que además lo despega del borde del campo. Sin cambio de `display` (n.º 2) | (a) |
+
+Sin exentos en esta ronda. Siguen exentos, como dice M1, los enlaces **dentro de una frase**: «Escríbenos por WhatsApp» del café agotado, «Zonas, tarifas y plazos» del pie, «Ver plazos» de la ficha, el correo del vendedor y los enlaces del cuerpo de los documentos legales.
+
+### Wireframe, hoja de filtros a 360 px (deslizador)
+
+```
+ALTITUD                                     ← overline ink-muted, mb-0
+┆                                       ┆   ← raíz del Slider, 44 px (no se ve)
+┆   ○━━━━━━━━━━━━━━━━━━━━━━━━━━━━○      ┆   ← riel 4 px, pulgares 20 px (sin cambio)
+┆                                       ┆
+1.450 m                          1.900 m   ← text-sm, mt-1
 ```
 
 ---
@@ -461,7 +516,7 @@ Esta especificación no necesita datos nuevos: usa los CSV y textos que ya exist
 
 1. **M1**
    - `globals.css:23`: `.ds-btn--sm { min-height: 44px; }` y el comentario de la línea 21.
-   - Chips (`controles-filtro.tsx:42`, `:79`; `explorador.tsx:107`): `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-1`.
+   - Chips (`controles-filtro.tsx:42`, `:79`; `explorador.tsx:123`): `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-[5px]` (QA-025).
    - Selects (`explorador.tsx:86`, `linea-pedido.tsx:13`): `h-11 px-3 text-base md:text-sm`, sin `py-2`.
    - `Migas` (`ficha-cafe.tsx:28`): `relative before:absolute before:content-[''] before:-inset-x-1.5 before:-inset-y-[13px]` en el `Link`.
    - Pie (`pie.tsx:62` y `:36`): `inline-flex min-h-11 items-center`; la lista, `space-y-0`.
@@ -484,6 +539,14 @@ Esta especificación no necesita datos nuevos: usa los CSV y textos que ya exist
    - con `!estaDisponible(cafe)`, presentaciones como `ds-tags`, sin cantidad, total, notas de máximo y plazo, y con el texto nuevo y el enlace `wa.me`;
    - la leyenda de IVA espera [CONSULTAR-LEGAL] 2.
 8. Los commits citan M1, M2, M3, M4 y M8 (y el QA-### que abra QA para la ficha agotada).
+9. **QA-025** (cita el ID): chips de filtro y filtros activos, `before:-inset-y-1` pasa a `before:-inset-y-[5px]` (`controles-filtro.tsx:42`, `:79`; `explorador.tsx:123`).
+10. **QA-026** (cita el ID):
+    - `totales-pedido.tsx:125`, el `<Link>` «Cómo calculamos el envío»: `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-[15px]`.
+    - `ficha-cafe.tsx:136` y `flujo-pedido.tsx:465`, los `<summary>`: `relative before:absolute before:content-[''] before:inset-x-0 before:-inset-y-3`, sin cambiar su `display`.
+    - `formulario-envio.tsx:240-241`: `<details>` de `mt-1` a `mt-0`; `<summary>` con `py-3.5`.
+    - `filtro-rango.tsx`: raíz `h-6` pasa a `h-11`; leyenda `mb-2` pasa a `mb-0`; pulgar y valores sin cambio.
+    - `documento-legal.tsx:78-81`: `<ol>` `space-y-0`; `<a>` `inline-flex min-h-11 items-center py-1` en lugar de `inline-block py-1`.
+    - `tarjeta-provincia.tsx`: `shrink-0` en «Cerrar» (`:65`) y `min-w-0` en el `<h3>` (`:60`).
 
 ## Entrega para qa-pruebas
 
@@ -517,3 +580,12 @@ Esta especificación no necesita datos nuevos: usa los CSV y textos que ya exist
   - axe sin violaciones y la palabra «Agotado» de las píldoras con contraste ≥ 4,5:1;
   - con agotado parcial, la primera disponible sale marcada.
 - **axe:** sin violaciones serias ni críticas a 360 y 1.280 px en todas las páginas tocadas, claro y oscuro (pie).
+- **QA-025:** con `elementFromPoint`, cada chip da 44 px de alto en el inicio, la hoja de filtros y la tarjeta de provincia.
+- **QA-026:**
+  - repetir los escenarios M1; todos los controles de la tabla QA-026 dan ≥ 44 × 44;
+  - en los deslizadores se mide la **raíz** (44 de alto), no el pulgar;
+  - las áreas de «Cómo calculamos el envío», de los `<summary>` y de los títulos del índice no se solapan con otro control;
+  - el `<summary>` de la ficha conserva el triángulo nativo en Chromium y Firefox;
+  - en la hoja, «Cerrar» mide 44 × 44 con «García Rovira», y el nombre parte renglón sin desbordar a 360 y 320 px;
+  - QA-023 (B3) sigue pasando: el resumen no cambia de alto, porque el n.º 1 es (b);
+  - casos no medidos: «Ver el mensaje» (resumen con el mensaje preparado) y «Cómo consulto de qué comuna soy» (municipio Bucaramanga).
