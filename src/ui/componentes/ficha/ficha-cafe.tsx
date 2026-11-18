@@ -68,31 +68,10 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
       <div className="mx-auto max-w-6xl">
         <Migas items={[{ texto: "Cafés", href: "/cafes/" }, ...(provincia ? [{ texto: provincia.nombreCorto, href: `/provincias/${provincia.slug}/` }] : []), { texto: cafe.nombre }]} />
 
-        <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
-          <div className="space-y-8">
-            <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
-              {foto ? (
-                <Foto src={foto.url} alt={foto.alt} credito={foto.credito} ancho={900} alto={1200} tamanos="(min-width: 1216px) 520px, (min-width: 1024px) 42vw, 100vw" prioridad className="absolute inset-0 h-full" />
-              ) : (
-                <BolsaIlustrada tueste={grupoDeTueste(cafe.tueste)} nombre={cafe.nombre} />
-              )}
-              {mostrarSelloSca(cafe) && <SelloSCA puntaje={cafe.puntajeSca!} tamano="lg" className="absolute right-4 top-4 z-10" />}
-            </div>
-            {fotos.length > 1 && (
-              <ul className="grid grid-cols-3 gap-3" aria-label={`Más fotos de ${cafe.nombre}`}>
-                {fotos.slice(1).map((f) => (
-                  <li key={f.url} className="relative aspect-square overflow-hidden rounded-lg">
-                    <Foto src={f.url} alt={f.alt} credito={f.credito} ancho={400} alto={400} tamanos="(min-width: 1216px) 165px, (min-width: 1024px) 14vw, 33vw" className="absolute inset-0 h-full" />
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="max-w-xs">
-              <MapaMunicipio municipio={municipio} provincia={provincia} />
-            </div>
-          </div>
-
-          <div>
+        {/* A2: el DOM sigue el orden móvil (A cabecera, B foto, D+E compra y resto, G medios);
+            en escritorio las áreas de la cuadrícula recomponen las dos columnas de siempre. */}
+        <div className="mt-6 grid gap-6 md:mt-8 lg:grid-cols-[1fr_1.1fr] lg:grid-rows-[auto_auto_1fr] lg:items-start lg:gap-x-16 lg:gap-y-8">
+          <div className="lg:col-start-2 lg:row-start-1">
             <Antetitulo>{[cafe.municipio, provincia?.nombre].filter(Boolean).join(" · ")}</Antetitulo>
             <h1 className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]">{cafe.nombre}</h1>
             {cafe.notasCata.length > 0 && <p className="quote mt-3 text-ink">{cafe.notasCata.join(", ")}</p>}
@@ -100,10 +79,20 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
               <BarraAcento color="terracota" />
               Tueste {ETIQUETA_TUESTE[cafe.tueste].toLowerCase()}
             </p>
+          </div>
 
-            <div className="mt-8">
-              <BloqueCompra cafe={cafe} />
-            </div>
+          {/* Foto 4:3 con tope de 55vh solo en móvil; el escritorio conserva el 3:4. */}
+          <div className="relative aspect-[4/3] max-h-[55vh] w-full overflow-hidden rounded-lg lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:aspect-[3/4] lg:max-h-none">
+            {foto ? (
+              <Foto src={foto.url} alt={foto.alt} credito={foto.credito} ancho={900} alto={1200} tamanos="(min-width: 1216px) 520px, (min-width: 1024px) 42vw, 100vw" prioridad className="absolute inset-0 h-full" />
+            ) : (
+              <BolsaIlustrada tueste={grupoDeTueste(cafe.tueste)} nombre={cafe.nombre} />
+            )}
+            {mostrarSelloSca(cafe) && <SelloSCA puntaje={cafe.puntajeSca!} tamano="lg" className="absolute right-4 top-4 z-10" />}
+          </div>
+
+          <div className="lg:col-start-2 lg:row-span-2 lg:row-start-2">
+            <BloqueCompra cafe={cafe} />
 
             {cafe.perfiles.length > 0 && (
               <section className="mt-12" aria-labelledby="perfil">
@@ -166,6 +155,21 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
                 </div>
               </section>
             )}
+          </div>
+
+          <div className="space-y-8 lg:col-start-1 lg:row-start-3">
+            {fotos.length > 1 && (
+              <ul className="grid grid-cols-3 gap-3" aria-label={`Más fotos de ${cafe.nombre}`}>
+                {fotos.slice(1).map((f) => (
+                  <li key={f.url} className="relative aspect-square overflow-hidden rounded-lg">
+                    <Foto src={f.url} alt={f.alt} credito={f.credito} ancho={400} alto={400} tamanos="(min-width: 1216px) 165px, (min-width: 1024px) 14vw, 33vw" className="absolute inset-0 h-full" />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="max-w-xs">
+              <MapaMunicipio municipio={municipio} provincia={provincia} />
+            </div>
           </div>
         </div>
 

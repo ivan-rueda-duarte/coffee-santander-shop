@@ -132,6 +132,7 @@ Revisión: `docs/legal/revisiones/2026-11-14-paquete-abogado-v1.md` (LEG-140 a L
 - TODO(dato): usuario de Instagram real de la marca (campo en «Ajustes del sitio» de Sanity); mientras no exista no se muestra.
 - TODO(dato): proyecto de Sanity (crearlo con `sanity login` / `sanity init`) y el webhook de despliegue (docs/DEPLOY.md).
 - TODO(dato): fotografías de producto en contexto (yute, madera, piedra). Hasta entonces las tarjetas usan una bolsa ilustrada.
+- TODO(dato): guía de encuadre de las fotos de producto. En la ficha móvil el original 3:4 se recorta a 4:3 (tope de 55vh), así que el producto va centrado, con aire arriba y abajo (`docs/diseno/2026-11-18-ux-auditoria-alta.md`, A2). Depende de que existan fotos reales.
 
 ## Textos del inicio y la confirmación (LEG-013 a LEG-020)
 - Decidido (2026-11-05): el descriptor del sitio es «café de origen», no «café de especialidad» (inicio, pie, metadatos, Historia). Quedan las menciones de la escala SCA en la ficha y las de `PRODUCT.md`/`CLAUDE.md` como descripción interna.
