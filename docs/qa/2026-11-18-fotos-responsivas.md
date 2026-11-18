@@ -58,7 +58,7 @@ En todos los casos se elige el menor candidato que cubre ancho CSS × DPR: el `s
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
 | QA-020 | Media | Build / dependencias | `sharp` no está declarado: el build depende de una dependencia opcional y transitiva de `next` | desarrollador-fullstack | Abierto |
-| QA-019 | Baja | Build / fotos | La comprobación del postbuild no revisa JSON-LD ni estilos en línea antes de borrar originales | desarrollador-fullstack | Corregido — pendiente verificación |
+| QA-019 | Baja | Build / fotos | La comprobación del postbuild no revisa JSON-LD ni estilos en línea antes de borrar originales | desarrollador-fullstack | Cerrado (2026-11-18, commit `3246fb5`) |
 | QA-017 | Baja | Accesibilidad | «Agregar» dice «en grano entero» | desarrollador-fullstack | Abierto (sin cambios en esta ronda) |
 | QA-018 | Media | Rendimiento | JS inicial de inicio > 150 KB gzip | desarrollador-fullstack | Abierto; ahora 193.909 B (+533 B por el manifiesto) |
 
@@ -83,6 +83,7 @@ En todos los casos se elige el menor candidato que cubre ancho CSS × DPR: el `s
 - Prueba de cierre: esas dos pruebas.
 - Responsable sugerido: desarrollador-fullstack.
 - Estado: Corregido — pendiente verificación (rama `fix/qa-019`, commit: ver `git log --grep QA-019`, `fix(fotos)`). Causa raíz: `limpiarOut()` buscaba la ruta solo dentro de cuatro atributos con un delimitador fijo; ahora busca la ruta como texto en todo el HTML y el CSS de `out/` (`tools/referencias-originales.ts`, con pruebas en `tools/referencias-originales.test.ts`), con basePath o dominio delante y `?`, `#`, comillas, `)` o espacio detrás, y excluye solo los datos del payload RSC que no cargan nada: las listas `"fotos":[…]` y las llaves de React (`["$","li","/fotos/…",…]`, que hoy aparecen en las miniaturas de la ficha). Si algo enlaza un original, falla sin borrar.
+- Estado: **Cerrado** el 2026-11-18. Pasan las dos pruebas de cierre y cinco nuevas de verificación (CSS real de `out/_next/static/chunks/`, CSS con basePath y `?v=`, `<img>` con `?v=`, enlace con dominio y `#`, y control negativo sin referencias). Sin falsos positivos en el build normal ni con `GITHUB_PAGES=true`. Detalle en `docs/qa/2026-11-18-verificacion-qa-019-qa-021.md`.
 
 ## Observaciones (no son defectos)
 - `serve` (local) no envía `Content-Type` para `.avif`; Chromium lo decodifica igual y GitHub Pages sí envía `image/avif`. La prueba de tipos MIME cubre WebP y JPEG.
