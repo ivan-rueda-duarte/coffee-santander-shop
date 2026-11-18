@@ -172,7 +172,7 @@ Detalle:
   - Los textos T5 y T6 «Pulsa «Enviar por WhatsApp»…» (`flujo-pedido.tsx:387`, `:391`) se retiran con el panel.
 - **Microayuda §5.9**: misma posición, clase y `aria-describedby` de hoy, entre el texto de LEG-171 y el botón. Por LEG-172 (4), el arranque «Para preparar tu pedido» cambia a **«Para enviar tu pedido»**, en los tres casos y en la variante de una sola frase. El resto del texto, sin cambio.
 - **Botones** (360 px): `flex flex-col gap-3`, el principal primero. Desde `sm`: `flex-row-reverse justify-end`, con «Volver al envío» a la izquierda y el principal a la derecha. El orden del DOM es: principal, secundario.
-- **El botón no se separa de las casillas (pedido de legal, a 360 × 740).** Entre la casilla 2 y el botón solo van, en este orden: las casillas de promociones, la línea del vendedor, el error de líneas (solo si lo hay), el texto de LEG-171 y la microayuda. Presupuesto a 360 px sin errores, desde el borde superior de la casilla 1 hasta el borde inferior del botón: casillas 1 y 2 ≈ 180 px, promociones ≈ 150 px, vendedor ≈ 40 px, LEG-171 ≈ 110 px (5 líneas de `small`), microayuda ≈ 50 px, botón 54 px, más separaciones ≈ 80 px: **≈ 660 px**. Cabe en la altura útil de 740 px menos el encabezado fijo (≈ 676 px). Por eso: (a) entre bloques se usan `mt-5`/`mt-6` y no `mt-8`; (b) ningún elemento nuevo entra en ese tramo; (c) el respaldo va **debajo** del botón, nunca entre las casillas y el botón.
+- **El botón no se separa de las casillas (pedido de legal, a 360 × 740).** Entre la casilla 2 y el botón solo van, en este orden: las casillas de promociones, la línea del vendedor, el error de líneas (solo si lo hay), el texto de LEG-171 y la microayuda. Presupuesto a 360 px sin errores, desde el borde superior de la casilla 1 hasta el borde inferior del botón: casillas 1 y 2 ≈ 180 px, promociones ≈ 150 px, vendedor ≈ 40 px, LEG-171 ≈ 110 px (5 líneas de `small`), microayuda ≈ 50 px, botón 54 px, más separaciones ≈ 80 px: **≈ 660 px**. Cabe en la altura útil de 740 px menos el encabezado fijo (≈ 676 px). Por eso: (a) entre bloques se usan `mt-5`/`mt-6` y no `mt-8`; (b) ningún elemento nuevo entra en ese tramo; (c) el respaldo va **debajo** del botón, nunca entre las casillas y el botón. *Corregido el 2026-11-18 (QA-023):* el presupuesto subestimó las casillas (medido: 789 px). Rige la sección «QA-023» de este documento.
 - **Panel de respaldo (LEG-173)**: `<div class="mt-6 rounded-lg bg-surface-sunken p-5">`. Sin borde de color, porque no es un error (`ink` sobre `surface-sunken` ≥ 13:1).
   - Primera línea: `<p role="status" class="small font-semibold text-ink">¿No se abrió WhatsApp? Copia el mensaje y envíalo al {formatearWhatsapp(tienda.whatsapp)}.</p>`. El número sale de `config.csv` y no se escribe a mano. La línea se anuncia una sola vez, al aparecer. Reemplaza la nota de hoy, «Si WhatsApp no se abre, copia el mensaje y envíalo al …» (`:403`).
   - «Copiar mensaje» copia `resultado.texto`, el mismo objeto que dio `resultado.enlace`. Mismo texto y mismo número DS.
@@ -343,6 +343,167 @@ QA: después del cambio no debe quedar `text-danger` en `src/` (`grep -rn "text-
 
 ---
 
+## QA-023. Casilla 1 y «Enviar por WhatsApp» a 360 × 740
+
+Defecto: `docs/qa/2026-11-18-verificacion-a1-fotos-qa-020.md`, QA-023 (Media). Captura: `docs/qa/capturas/2026-11-18-a1-resumen-360-casilla1.png`. Componente: `src/ui/componentes/checkout/flujo-pedido.tsx` (Resumen).
+
+### Diagnóstico
+
+El presupuesto de A1 («El botón no se separa de las casillas», ≈ 660 px) subestimó las casillas legales: calculó 180 px para las casillas 1 y 2, y miden ≈ 292 px (3 + 9 líneas); calculó 150 px para promociones, y miden ≈ 161 px (6 líneas). Medido: **789 px** desde el borde superior de la casilla 1 hasta el borde inferior del botón, con **665 px** útiles (740 − 75 del encabezado fijo). Sobran 124 px.
+
+Reparto medido (360 px, sin correo, por lo tanto sin casilla 4; envío con tarifa; casillas sin marcar; sin errores):
+
+| Bloque | Alto | Separación previa |
+|---|---|---|
+| Casillas 1 y 2 (`text-sm`, 3 + 9 líneas, `space-y-3`) | 292 | — |
+| Promociones (borde 1 px + `pt-5` + casilla 3 de 6 líneas ≈ 140) | 161 | `mt-5` = 20 |
+| Línea del vendedor (`caption`, 2 líneas) | 36 | `mt-4` = 16 |
+| Texto de LEG-171 (`small` 14/22, 5 líneas) | 110 | `mt-6` = 24 |
+| Microayuda §5.9, variante «faltan las dos» (`caption`, 3 líneas) | 54 | `mt-2` = 8 |
+| «Enviar por WhatsApp» (`lg`: 16 + 22 + 16) | 54 | `mt-4` = 16 |
+| **Total** | **789** (≈ 791 sumado) | |
+
+Ningún bloque sobra: todos son legales o los pidió legal en ese lugar (§5.4, §5.9, §9.3). Los textos no se tocan.
+
+**Sobre el criterio.** La condición de legal (revisión 2026-11-18, «Para disenador-marca») es «sin separar el botón de las casillas»: que entre las casillas y el botón no se interponga nada ajeno. Eso **ya se cumple** (QA lo verificó por orden). «La casilla 1 y el botón en la misma pantalla» fue una traducción de diseño a una medida, no una exigencia literal de legal. Aun así es una buena medida: quien marca las casillas ve el botón sin buscarlo. La propuesta la conserva donde se puede y, donde no, la sustituye por otra medida con salvaguardas.
+
+### Propuesta en dos partes
+
+**Parte 1. Compactar sin tocar textos ni orden (diseño; se implementa ya).** Ganancia ≈ 58 px.
+
+| # | Cambio | Clases | Ganancia | Tipo |
+|---|---|---|---|---|
+| 1 | Microayuda en la **variante de una sola frase** de §5.9: `Para enviar tu pedido, marca las dos casillas.` (46 caracteres; cabe en una línea de `caption` en 320 px). §5.9 la autoriza tal cual («si diseño prefiere no cambiar el texto según el caso»). Qué casilla falta ya lo dicen los errores bajo cada una al pulsar | `caption mt-2 text-ink-muted` (sin cambio) | 54 → 18: **−36** | [LEGAL: §5.9, variante aprobada]. Exige cambiar `microayudaCasillas` (`src/domain/pedido/flujo.ts`): lo hace el desarrollador |
+| 2 | Separación sobre el bloque de promociones | `mt-5 pt-5` → `mt-4 pt-4` (sigue el filete `border-t border-line`: separación visual clara, LEG-145) | **−8** | [UI] |
+| 3 | Línea del vendedor | `mt-4` → `mt-3` | **−4** | [UI] |
+| 4 | Texto de LEG-171 | `mt-6` → `mt-4` | **−8** | [UI] |
+| 5 | Contenedor de los botones | `mt-4` → `mt-3` | **−4** | [UI] |
+| 6 | Casillas 1 y 2: al enfocarlas (clic con casillas faltantes) no deben quedar bajo el encabezado fijo | `scroll-mt-24` en los dos `<input>` (96 px; el encabezado mide 75) | 0 (salvaguarda) | [UI] |
+
+Ritmo resultante, de arriba abajo: casillas → 16 → filete → 16 → promociones → 12 → vendedor → 16 → [LEG-171 → 8 → microayuda → 12 → botón]. El texto de LEG-171, la microayuda y el botón quedan como una unidad (8 y 12 px), separada del vendedor (16 px). Todo con la escala de `--space-*` (12, 16) y las clases de tipo de la marca; no hay tokens nuevos.
+
+Con la parte 1 sola: casilla 1 → botón ≈ **731 px** (sigue sin caber en 665) y casilla 2 → botón ≈ **649 px** (cabe, con 16 px de aire).
+
+**Parte 2. Las casillas de promociones encima de las obligatorias [CONSULTAR-LEGAL] (opción B3, recomendada).** Ganancia ≈ 173 px más dentro del tramo.
+
+Orden visual y del DOM en el Resumen: … «Envío a» → **casillas 3 y 4 (promociones)** → filete → **casillas 1 y 2 (obligatorias)** → vendedor → LEG-171 → microayuda → botón. Los nombres «Casilla 1 … 4», los textos, el estado sin marcar, los errores y la lógica no cambian; solo cambia el orden en pantalla.
+
+- Las obligatorias quedan pegadas a la acción que habilitan; las opcionales, antes y apartadas por el filete. Es más claro que hoy: lo que bloquea el botón está junto al botón.
+- Nada queda oculto: las cuatro casillas se ven completas, sin desplegables.
+- La casilla 4 (solo con correo) aparece encima del tramo, así que tampoco lo alarga. Hoy, con correo, el tramo crece ≈ 120 px más.
+- Clases: promociones `<fieldset class="mt-6 space-y-3 border-b border-line pb-4">`; obligatorias `<fieldset class="mt-4 space-y-3">`. El resto, como en la parte 1.
+
+Con las partes 1 y 2: casilla 1 → botón ≈ **558 px** (107 px de aire en 665), con o sin casilla 4.
+
+**Alternativas si legal no acepta B3** (también [CONSULTAR-LEGAL]; ninguna se implementa sin respuesta):
+
+| Opción | Qué hace | Ganancia en el tramo | Casilla 1 → botón (con la parte 1) | Contra |
+|---|---|---|---|---|
+| B2 | Promociones en `<details>` cerrado, `<summary>` «Promociones (opcional)» [UI] de 44 px, dentro del mismo filete | ≈ −112 | ≈ 619 | Oculta un consentimiento opcional: probablemente menos autorizaciones (lo debe saber el dueño). Si una casilla está marcada, el `<details>` debe quedar abierto (lógica del desarrollador) |
+| B1 | Línea del vendedor debajo de los botones (sigue «bajo las casillas», §5.4, y antes del respaldo) | ≈ −48 | ≈ 683 | No basta sola para la casilla 1; sí deja casilla 2 → botón ≈ 601 |
+
+**Descartadas:**
+- Promociones **después** del botón: entran en el mensaje (D5 §6.4); marcarlas después del clic invalida el envío (LEG-173) y obliga a reenviar. Además pondría un consentimiento después de la acción.
+- Casillas en `caption` (12 px): ganancia incierta (≈ 12 a 30 px, según cómo partan las líneas) a costa de la legibilidad de un consentimiento.
+- Barra fija inferior con el botón: separa el texto de LEG-171 del botón (§9.3: «justo encima»).
+- Botón de tamaño medio: −10 px a cambio de restar jerarquía al CTA final.
+- Quitar la microayuda o el texto de LEG-171: §5.9 y §9.3 los exigen.
+
+### Wireframe a 360 × 740, partes 1 y 2 (B3), con la casilla 1 justo bajo el encabezado
+
+```
+y=0    ┌──────────────────────────────────────┐
+       │ De Santander              [Pedido 1] │  encabezado fijo, 75 px
+y=75   ├──────────────────────────────────────┤
+       │ [ ] Leí y acepto los Términos y      │  casilla 1, text-sm, 3 líneas ≈ 70
+       │     condiciones versión 1.0 del 17   │
+       │     de noviembre de 2026.            │
+       │                                      │  space-y-3 = 12
+       │ [ ] Autorizo a De Santander SAS a    │  casilla 2, 9 líneas ≈ 210
+       │     tratar mis datos personales …    │
+       │     … versión 1.0 del 17 de          │
+       │     noviembre de 2026.               │
+       │                                      │  mt-3 = 12
+       │ Te vende De Santander SAS · NIT …    │  vendedor, caption, 2 líneas = 36
+       │ Información del vendedor             │
+       │                                      │  mt-4 = 16
+       │ Al pulsar «Enviar por WhatsApp» se   │  LEG-171, small 14/22, 5 líneas = 110
+       │ abre WhatsApp con tu pedido escrito. │
+       │ …                                    │
+       │                                      │  mt-2 = 8
+       │ Para enviar tu pedido, marca las dos │  microayuda §5.9, 1 línea = 18
+       │ casillas.  (una sola línea)          │
+       │                                      │  mt-3 = 12
+       │ [ (wa)  Enviar por WhatsApp        ] │  primario lg, 54
+y≈633  │                                      │  gap-3 = 12
+       │ [ ←  Volver al envío               ] │  secundario, 44
+y≈689  │                                      │
+y=740  └──────────────────────────────────────┘
+Arriba (desplazando hacia arriba): «Envío a» → mt-6 → casilla 3 (6 líneas) [→ casilla 4 si hay correo] → pb-4 → filete.
+```
+
+### Wireframe a 360 × 740, solo la parte 1 (si legal no responde o no acepta B1–B3), con la casilla 2 justo bajo el encabezado
+
+```
+y=75   ├──────────────────────────────────────┤  (la casilla 1 queda ≈ 82 px arriba, fuera de la pantalla)
+       │ [ ] Autorizo a De Santander SAS …    │  casilla 2, 9 líneas ≈ 210
+       │                                      │  mt-4 = 16
+       │ ──────────────────────────────────── │  filete
+       │                                      │  pt-4 = 16
+       │ [ ] Quiero recibir novedades … BAJA  │  casilla 3, 6 líneas ≈ 140
+       │                                      │  mt-3 = 12
+       │ Te vende De Santander SAS · NIT …    │  36
+       │                                      │  mt-4 = 16
+       │ Al pulsar «Enviar por WhatsApp» …    │  110
+       │                                      │  mt-2 = 8
+       │ Para enviar tu pedido, marca las dos casillas. │  18
+       │                                      │  mt-3 = 12
+       │ [ (wa)  Enviar por WhatsApp        ] │  54
+y≈724  └──── (Volver al envío, debajo del borde) ┘
+```
+
+En este caso, que la casilla 1 quede fuera de la pantalla se acepta con estas **salvaguardas, que ya existen o entran en la parte 1**: (a) la microayuda, justo encima del botón, dice que faltan las dos casillas y está enlazada al botón con `aria-describedby`; (b) el botón lleva `aria-disabled` y su estilo de inactivo mientras falte una; (c) al pulsarlo sin las dos, no se genera nada (LEG-172), aparece el error bajo cada casilla y el foco va a la primera sin marcar; (d) con `scroll-mt-24`, esa casilla queda visible bajo el encabezado y no tapada por él.
+
+### Presupuesto final por bloque (360 px, sin errores)
+
+| Bloque | Hoy | Parte 1 | Partes 1 + B3 |
+|---|---|---|---|
+| Casillas 1 y 2 | 292 | 292 | 292 |
+| Separación + filete + promociones (casilla 3) | 20 + 161 | 16 + 157 | fuera del tramo |
+| Vendedor | 16 + 36 | 12 + 36 | 12 + 36 |
+| LEG-171 | 24 + 110 | 16 + 110 | 16 + 110 |
+| Microayuda | 8 + 54 | 8 + 18 | 8 + 18 |
+| Botón | 16 + 54 | 12 + 54 | 12 + 54 |
+| **Casilla 1 → botón** | **789** | **≈ 731** | **≈ 558** |
+| **Casilla 2 → botón** | ≈ 707 | **≈ 649** | ≈ 476 |
+| Con correo (casilla 4, ≈ +122) | ≈ 911 | ≈ 853 | ≈ 558 (sin cambio) |
+
+### Criterio de aceptación para qa-pruebas
+
+Condiciones de medida: Chromium, 360 × 740, DPR 1, tema claro, después de `document.fonts.ready`; Resumen con envío a Bucaramanga (variante de LEG-171 con tarifa, la más larga); sin correo (sin casilla 4) salvo donde se indique; casillas sin marcar; sin errores. `U` = 740 − alto del encabezado (hoy 75 → 665). `M1` = borde inferior del botón «Enviar por WhatsApp» − borde superior de la etiqueta de la casilla 1. `M2` = lo mismo desde la etiqueta de la casilla 2.
+
+Siempre (parte 1):
+1. La microayuda dice exactamente `Para enviar tu pedido, marca las dos casillas.` (con una o con las dos casillas sin marcar) y mide una línea (alto ≤ 19 px). Desaparece con las dos marcadas.
+2. Separaciones calculadas: filete de promociones a 16 px por encima y por debajo; vendedor `margin-top` 12; LEG-171 16; microayuda 8; contenedor de botones 12.
+3. Los textos de las casillas, la línea del vendedor, LEG-171 y los errores siguen letra por letra (`toHaveText` contra la microcopy v1.10).
+4. Entre la última casilla y el botón solo están, en este orden del DOM, los bloques de la tabla de presupuesto: promociones (solo sin B3), vendedor, error de líneas (si lo hay), LEG-171, microayuda.
+5. Al pulsar con las dos casillas sin marcar: el foco queda en la casilla 1 y el borde superior de su etiqueta queda en `y ≥ 75` (visible bajo el encabezado), con su error visible.
+6. axe sin violaciones serias ni críticas en el Resumen a 360 y 1.280 px, claro y oscuro.
+
+Si legal acepta B3 (prueba de cierre de QA-023 tal como está hoy):
+7. `M1 ≤ U − 16` (≤ 649), esperado ≈ 558. También con correo (casilla 4 visible): `M1 ≤ U − 16`.
+8. Orden del DOM: `casillas-promociones` antes de `casillas-obligatorias`; filete entre los dos.
+
+Si legal no acepta B3 ni B2 (criterio sustituto, con la decisión citada en la aserción):
+7'. `M2 ≤ U` (≤ 665), esperado ≈ 649. `M1` se registra como anotación, sin aserción (esperado ≈ 731).
+8'. Se mantienen las salvaguardas 1 y 5.
+
+Si legal acepta B2 en vez de B3: `M1 ≤ U − 16`, esperado ≈ 619, con el `<details>` cerrado; con una casilla de promociones marcada, el `<details>` sigue abierto tras recargar el paso.
+
+Antes de medir, QA anota el `line-height` calculado de las etiquetas de las casillas. La suma de 292 px para 12 líneas (más 12 de separación) da ≈ 23 px por línea, y `text-sm` debería dar 20. Si el calculado no es 20 px, se reporta aparte: esa diferencia (≈ 40 px en las casillas 1 y 2) no la crea esta propuesta y conviene entenderla antes de fijar el criterio.
+
+---
+
 ## Decisiones y su razón en la marca
 
 | Decisión | Razón |
@@ -358,6 +519,7 @@ QA: después del cambio no debe quedar `text-danger` en `src/` (`grep -rn "text-
 | Foto 4:3 con tope de 55vh solo en móvil | Recupera ≈ 190 px sin quitar la foto; el escritorio conserva el 3:4 |
 | Error en tinta con ícono grana | Marca v4.1: grana nunca como texto; WCAG 1.4.1 y 1.4.11 |
 | «Agotado» en contorno `line-strong`, sin grana | La pastilla grana significa «edición limitada» en la marca; agotado no es un error |
+| QA-023: compactar con la escala `--space-*` y la microayuda de una frase; proponer las promociones encima de las obligatorias | Celular primero (principio 4): lo que bloquea el botón queda junto al botón, sin ocultar ni recortar ningún texto legal (principio 3) |
 
 ## TODO(dato)
 
@@ -369,7 +531,10 @@ Esta especificación no inventa datos. Para que `desarrollador-fullstack` o la s
 **[CONSULTAR-LEGAL]** (las tramita la sesión principal con `legal-cumplimiento`):
 LEG-171 a LEG-175 ya respondieron las preguntas sobre el panel, la microayuda, el texto del respaldo y los botones. Quedan dos:
 1. **Reintento y número DS (P39)**: si el cliente pulsa otra vez «Enviar por WhatsApp» sin cambiar nada, se abre el **mismo** enlace con el **mismo** número DS. LEG-173 lo pide para «Copiar mensaje», pero no lo dice para el segundo clic. ¿Es correcto?
-2. **Orden de la microayuda §5.9**: el código (`flujo-pedido.tsx:121`) dice «los términos y condiciones y la autorización de tus datos»; §5.9 v1.1 dice el orden inverso. Con el cambio de LEG-172 (4) a «Para enviar tu pedido», ¿qué orden rige? (Lo puede fijar la microcopy v1.10, LEG-176.)
+2. **Orden de la microayuda §5.9**: el código (`flujo-pedido.tsx:121`) dice «los términos y condiciones y la autorización de tus datos»; §5.9 v1.1 dice el orden inverso. Con el cambio de LEG-172 (4) a «Para enviar tu pedido», ¿qué orden rige? (Lo puede fijar la microcopy v1.10, LEG-176.) *Con QA-023, parte 1, la microayuda pasa a la variante de una sola frase y la pregunta deja de afectar a la interfaz.*
+3. **QA-023, B3**: ¿se pueden mostrar las casillas 3 y 4 (promociones) **encima** de las casillas 1 y 2, separadas por un filete, sin cambiar textos, numeración ni comportamiento? D5 §6.3 y LEG-145 fijan el orden 1-2-3-4.
+4. **QA-023, si no B3**: ¿se acepta B2 (promociones dentro de un `<details>` cerrado «Promociones (opcional)») o B1 (línea del vendedor debajo de los botones, que sigue «bajo las casillas», §5.4)?
+5. **QA-023, criterio**: la condición «sin separar el botón de las casillas» se cumple por orden. Si no se acepta ninguna opción B, ¿basta con que la casilla 2 y el botón quepan en una pantalla, con las salvaguardas de la parte 1?
 
 **Bloqueo de implementación:** LEG-171 necesita que **el abogado** valide la adaptación de los textos de D5 §6.3 y el retiro del panel. Hasta entonces, A1 no se publica. Si el abogado no lo valida, rige la alternativa (a) (ver «Salvaguarda»).
 
@@ -397,7 +562,7 @@ LEG-171 a LEG-175 ya respondieron las preguntas sobre el panel, la microayuda, e
 - Indicador de pasos en una línea a 360 px; a 320 px solo se ve el rótulo del paso actual.
 - Un solo clic en «Enviar por WhatsApp» abre `wa.me` (pestaña nueva, sin bloqueo de ventanas emergentes en Chrome, Safari iOS y Firefox), con la constancia v1.0 y el número DS en `text`. Sin las casillas 1 y 2: no se abre `wa.me`, no aparece el respaldo, no se copia nada y el foco va a la primera sin marcar. El segundo clic abre el mismo mensaje.
 - «Copiar mensaje» copia un texto idéntico al del enlace. Si después cambia una casilla, un dato de envío o el carrito, el respaldo se oculta.
-- A 360 × 740, sin errores: la casilla 1 y el botón caben en la misma pantalla.
+- A 360 × 740, sin errores: la casilla 1 y el botón caben en la misma pantalla. *Sustituido por el criterio de la sección «QA-023».*
 - Con envío por cotizar, el texto de LEG-171 sale en su variante. El aviso de privacidad sigue en Envío. No queda ningún «Finalizar» ni paso «Confirmación».
 - No hay «Abrir WhatsApp» ni un segundo «Enviar por WhatsApp» en la página.
 - Ficha a 360 px: orden A, B, D, E, G y orden de Tab igual al visual; a 1.280 px, comparación visual con `main` (sin cambios).
