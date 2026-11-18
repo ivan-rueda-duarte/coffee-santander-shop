@@ -49,6 +49,27 @@ test.describe("7. celular (360 × 740)", () => {
     }
   });
 
+  test("M2: al final de la página la barra «Tu pedido» no tapa el ©, el vendedor ni la franja; sin bolsas ni en /pedido/ no hay espaciador", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("espaciador-barra-pedido")).toHaveCount(0);
+    await page.getByRole("button", { name: /Agregar Café Arreboles/ }).click();
+    const barra = page.locator("div.fixed.inset-x-0.bottom-0");
+    await expect(barra).toContainText("Tu pedido · 1 bolsa");
+    const espaciador = page.getByTestId("espaciador-barra-pedido");
+    await expect(espaciador).toHaveCount(1);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const cajaBarra = (await barra.boundingBox())!;
+    const cajaEspaciador = (await espaciador.boundingBox())!;
+    expect(Math.abs(cajaEspaciador.height - cajaBarra.height), "espaciador y barra miden lo mismo").toBeLessThanOrEqual(1);
+    const pieFin = await page.evaluate(() => document.querySelector("footer")!.getBoundingClientRect().bottom);
+    expect(pieFin, "la franja termina encima de la barra").toBeLessThanOrEqual(cajaBarra.y + 1);
+    const copy = (await page.getByTestId("pie-copyright").boundingBox())!;
+    expect(copy.y + copy.height).toBeLessThanOrEqual(cajaBarra.y);
+    await page.goto("/pedido/");
+    await expect(page.getByTestId("espaciador-barra-pedido")).toHaveCount(0);
+    await expect(page.locator("div.fixed.inset-x-0.bottom-0")).toHaveCount(0);
+  });
+
   test("tocar una provincia del mapa abre una hoja con su botón", async ({ page }) => {
     await page.goto("/");
     await page.locator("#mapa").scrollIntoViewIfNeeded();

@@ -34,6 +34,9 @@ export const metadata: Metadata = {
   openGraph: { siteName: "De Santander", locale: "es_CO", type: "website", title: "De Santander · Café de origen", description: DESCRIPCION },
 };
 
+// Sin viewportFit: "cover" (M2): con «cover», en un iPhone de lado el contenido entra bajo la muesca y cada bloque a sangre
+// (encabezado, portada, pie, franja) necesitaría safe-area-inset-left/right. La barra «Tu pedido» y su espaciador ya suman
+// env(safe-area-inset-bottom), que vale 0 sin «cover»: si algún día se declara, quedan listos.
 export const viewport: Viewport = { themeColor: "#f7f1e6" };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
