@@ -8,9 +8,22 @@ import { Antetitulo, BarraAcento } from "../marca/etiquetas";
 import { Foto, Franja, Hoja, Textura } from "../marca/superficies";
 
 /** Titular Fraunces con una sola palabra o frase de remate en itálica 400. */
-export function Titular({ nivel: Nivel = "h2", antes, remate, className }: { nivel?: "h1" | "h2"; antes: string; remate?: string | null; className?: string }) {
+export function Titular({
+  nivel: Nivel = "h2",
+  id,
+  antes,
+  remate,
+  className,
+}: {
+  nivel?: "h1" | "h2";
+  /** Destino del aria-labelledby de la sección (M5). */
+  id?: string;
+  antes: string;
+  remate?: string | null;
+  className?: string;
+}) {
   return (
-    <Nivel className={className}>
+    <Nivel id={id} className={className}>
       {antes}
       {remate && (
         <>
@@ -39,6 +52,7 @@ export function Portada({ catalogo, contenido }: { catalogo: VistaCatalogo; cont
           <Antetitulo>Café de origen · Santander</Antetitulo>
           <Titular
             nivel="h1"
+            id="titulo-portada"
             antes={contenido?.titular ?? "El café que crece entre cañones y"}
             remate={contenido ? contenido.remate : "montañas de Santander"}
             className="display-xl mt-4 max-w-3xl text-ink-title max-md:!text-[40px] max-md:!leading-[46px]"
@@ -75,7 +89,7 @@ export function ComoPedir({ catalogo, contenido }: { catalogo: VistaCatalogo; co
     <section id="pedir" aria-labelledby="titulo-pedir" className="scroll-mt-20 bg-surface px-5 py-16 md:px-8 md:py-20">
       <div className="mx-auto max-w-6xl">
         <Antetitulo>Tres pasos</Antetitulo>
-        <Titular antes="Cómo" remate="pedir" className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]" />
+        <Titular id="titulo-pedir" antes="Cómo" remate="pedir" className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]" />
         <ol className="mt-10 grid gap-10 md:grid-cols-3">
           {pasos.slice(0, 3).map((p, i) => (
             <li key={p.titulo}>
@@ -120,7 +134,7 @@ export function Historia({ catalogo, contenido }: { catalogo: VistaCatalogo; con
         <div className="mx-auto grid max-w-6xl items-start gap-12 lg:grid-cols-2">
           <div>
             <Antetitulo>Nuestra historia</Antetitulo>
-            <Titular antes={contenido?.titular ?? "Santander"} remate={contenido ? contenido.remate : "en cada taza"} className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]" />
+            <Titular id="titulo-historia" antes={contenido?.titular ?? "Santander"} remate={contenido ? contenido.remate : "en cada taza"} className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]" />
             <div className="body-l mt-6 max-w-xl space-y-4 text-ink-muted">
               {parrafos.map((p) => (
                 <p key={p}>{p}</p>
