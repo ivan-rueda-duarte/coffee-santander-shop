@@ -25,7 +25,7 @@ export function Migas({ items }: { items: { texto: string; href?: string }[] }) 
         {items.map((i, n) => (
           <li key={i.texto} className="flex items-center gap-2">
             {i.href ? (
-              <Link href={i.href} className="underline-offset-4 hover:underline">
+              <Link href={i.href} className="relative underline-offset-4 hover:underline before:absolute before:content-[''] before:-inset-x-1.5 before:-inset-y-[13px]">
                 {i.texto}
               </Link>
             ) : (

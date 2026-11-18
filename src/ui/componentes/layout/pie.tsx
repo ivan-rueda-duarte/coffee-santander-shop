@@ -33,7 +33,7 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
             <div>
               <dt className="overline text-eyebrow">Pedidos</dt>
               <dd className="mt-1">
-                <a className="font-semibold underline underline-offset-4" href={`https://wa.me/${tienda.whatsapp}`} target="_blank" rel="noopener noreferrer">
+                <a className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4" href={`https://wa.me/${tienda.whatsapp}`} target="_blank" rel="noopener noreferrer">
                   WhatsApp {formatearWhatsapp(tienda.whatsapp)}
                 </a>
               </dd>
@@ -56,10 +56,10 @@ export function Pie({ tienda, anio }: { tienda: ConfigTienda; anio: number }) {
 
           <div className="text-sm">
             <p className="overline text-eyebrow">Información legal</p>
-            <ul className="mt-2 space-y-1">
+            <ul className="mt-2 space-y-0">
               {LEGALES.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="inline-block py-1 underline-offset-4 hover:underline">
+                  <Link href={l.href} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
                     {l.texto}
                   </Link>
                 </li>

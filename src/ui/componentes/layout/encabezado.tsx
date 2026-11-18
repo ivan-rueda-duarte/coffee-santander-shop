@@ -25,7 +25,7 @@ export function Encabezado() {
   const bolsas = totales.bolsas;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur-sm" data-theme="light">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3 md:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-3 sm:gap-4 md:px-8">
         <Marca />
         <nav aria-label="Principal" className="hidden items-center gap-7 text-sm font-semibold text-ink md:flex">
           {ENLACES.map((e) => (
@@ -41,7 +41,7 @@ export function Encabezado() {
           className="ds-btn ds-btn--secondary ds-btn--sm"
         >
           <IconoBolsa className="ds-btn__icon" />
-          <span>Pedido</span>
+          <span className="max-[359px]:sr-only">Pedido</span>
           {bolsas > 0 && (
             <span className="grid min-w-5 place-items-center rounded-pill bg-monte-900 px-1.5 text-xs font-bold text-pergamino-50 tabular-nums">
               {bolsas}

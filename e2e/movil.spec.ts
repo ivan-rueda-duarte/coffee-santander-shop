@@ -32,7 +32,7 @@ test.describe("7. celular (360 × 740)", () => {
     await expect(page.locator("#resultados-catalogo")).toHaveText("1 café en Guanentá");
   });
 
-  test("barra inferior «Tu pedido» y botones con tamaño táctil de al menos 40 px", async ({ page }) => {
+  test("barra inferior «Tu pedido» y botones con tamaño táctil de al menos 44 px (M1)", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByText(/^Tu pedido ·/)).toBeHidden();
     await page.getByRole("button", { name: /Agregar Café Arreboles/ }).click();
@@ -45,7 +45,7 @@ test.describe("7. celular (360 × 740)", () => {
     await expect(barra).toBeHidden();
     for (const boton of await cajon.getByRole("button").all()) {
       const caja = await boton.boundingBox();
-      if (caja) expect(Math.min(caja.width, caja.height), await boton.innerText()).toBeGreaterThanOrEqual(40);
+      if (caja) expect(Math.min(caja.width, caja.height), await boton.innerText()).toBeGreaterThanOrEqual(44);
     }
   });
 

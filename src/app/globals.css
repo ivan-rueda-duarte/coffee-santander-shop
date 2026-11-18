@@ -18,6 +18,6 @@ body {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 
-/* Botones de la marca: tamaño táctil cómodo (44 px; 40 px los pequeños) */
+/* Botones de la marca: tamaño táctil cómodo (44 px todos; M1, docs/diseno/2026-11-18-ux-auditoria-media.md) */
 .ds-btn { min-height: 44px; }
-.ds-btn--sm { min-height: 40px; }
+.ds-btn--sm { min-height: 44px; }

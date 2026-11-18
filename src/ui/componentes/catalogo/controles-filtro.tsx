@@ -39,7 +39,7 @@ export function GrupoChips({
               disabled={o.conteo === 0 && !activa}
               onClick={() => alAlternar(o.valor)}
               className={clsx(
-                "ds-tag ds-tag--outline min-h-9 cursor-pointer text-sm font-semibold transition-colors",
+                "ds-tag ds-tag--outline relative min-h-9 cursor-pointer text-sm font-semibold transition-colors before:absolute before:content-[''] before:inset-x-0 before:-inset-y-1",
                 activa ? "!border-monte-900 !bg-monte-900 !text-pergamino-50" : "hover:border-ink",
                 "disabled:cursor-not-allowed disabled:opacity-45",
               )}
@@ -76,7 +76,7 @@ export function GrupoOpcionUnica({
         {opciones.map((o) => (
           <label key={o.valor} className="cursor-pointer">
             <input type="radio" name={nombre} value={o.valor} checked={valor === o.valor} onChange={() => alElegir(o.valor)} className="peer sr-only" />
-            <span className="ds-tag ds-tag--outline min-h-9 text-sm font-semibold peer-checked:!border-monte-900 peer-checked:!bg-monte-900 peer-checked:!text-pergamino-50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">
+            <span className="ds-tag ds-tag--outline relative min-h-9 text-sm font-semibold before:absolute before:content-[''] before:inset-x-0 before:-inset-y-1 peer-checked:!border-monte-900 peer-checked:!bg-monte-900 peer-checked:!text-pergamino-50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2">
               {o.etiqueta}
             </span>
           </label>

@@ -22,6 +22,8 @@
 .mapa-marca { position: absolute; left: 0; top: 0; pointer-events: none; font: 500 10px/12px var(--font-sans); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 
 .mapa-pin { position: absolute; left: 0; top: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 26px; padding: 0; white-space: nowrap; color: var(--tostado-900); font: 700 12px/16px var(--font-sans); text-decoration: none; }
+.mapa-pin::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; bottom: -9px; } /* M1: área táctil de 44 px (26 + 18) sin cambio visual */
+.mapa-pin--compacto::before { left: -9px; right: -9px; }
 .mapa-pin__punto { flex: none; width: 16px; height: 16px; margin: 5px 5px; border-radius: 50%; background: var(--grana-600); border: 3px solid var(--pergamino-0); box-shadow: 0 0 0 1px var(--grana-600); }
 .mapa-pin__nombre { padding: 1px 6px; border-radius: 6px; background: color-mix(in oklab, var(--pergamino-0) 88%, transparent); }
 .mapa-pin--izquierda { flex-direction: row-reverse; }

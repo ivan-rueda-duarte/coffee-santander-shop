@@ -89,7 +89,7 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
             onBlur={(e) => {
               if (!e.currentTarget.contains(e.relatedTarget)) reanudar("foco");
             }}
-            className="pointer-events-auto flex max-w-md items-center gap-4 rounded-pill bg-tostado-900 py-3 pl-5 pr-3 text-sm font-medium text-pergamino-50 shadow-md"
+            className={`pointer-events-auto flex max-w-md items-center gap-4 rounded-pill bg-tostado-900 pl-5 text-sm font-medium text-pergamino-50 shadow-md ${aviso.accion ? "py-2 pr-2" : "py-3 pr-3"}`}
           >
             <span>{aviso.mensaje}</span>
             {aviso.accion && (

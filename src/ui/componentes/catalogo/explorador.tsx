@@ -67,7 +67,7 @@ function Explorador({ f, tarjetas }: { f: EstadoFiltros; tarjetas: TarjetasPorSl
         </div>
       </aside>
 
-      <div>
+      <div className="min-w-0">
         {/* Celular: provincias a mano y el resto en una hoja */}
         <div className="mb-6 space-y-4 lg:hidden">
           {mostrarProvincias && <GrupoChips leyenda="Provincia" opciones={op.provincias} seleccion={filtros.provincias} alAlternar={f.alternarProvincia} />}
@@ -94,12 +94,12 @@ function Explorador({ f, tarjetas }: { f: EstadoFiltros; tarjetas: TarjetasPorSl
           <p id={ID_CONTADOR} tabIndex={-1} aria-live="polite" className="h3 text-ink-title outline-none">
             {textoContador(resultados.length, nombresElegidas)}
           </p>
-          <label className="flex items-center gap-2 text-sm font-semibold">
+          <label className="flex max-w-full items-center gap-2 text-sm font-semibold">
             Ordenar
             <select
               value={filtros.orden}
               onChange={(e) => f.cambiarOrden(e.target.value as Orden)}
-              className="rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-sm font-medium"
+              className="h-11 min-w-0 max-w-full rounded-md border border-line-strong bg-surface-raised px-3 text-base font-medium md:text-sm"
             >
               {ORDENES.filter((o) => o.valor !== "sca" || catalogo.filtrosVisibles.includes("sca")).map((o) => (
                 <option key={o.valor} value={o.valor}>
@@ -120,7 +120,7 @@ function Explorador({ f, tarjetas }: { f: EstadoFiltros; tarjetas: TarjetasPorSl
                   type="button"
                   onClick={() => f.quitar(a)}
                   aria-label={`Quitar filtro ${texto}`}
-                  className="ds-tag ds-tag--outline min-h-9 cursor-pointer gap-1.5 text-sm font-semibold hover:border-ink"
+                  className="ds-tag ds-tag--outline relative min-h-9 cursor-pointer gap-1.5 text-sm font-semibold hover:border-ink before:absolute before:content-[''] before:inset-x-0 before:-inset-y-1"
                 >
                   {texto}
                   <IconoCerrar width={14} height={14} />
