@@ -6,6 +6,9 @@ import { BotonAgregar } from "../carrito/boton-agregar";
 import { BarraAcento, Pastilla, SelloSCA } from "../marca/etiquetas";
 import { BolsaIlustrada, Foto } from "../marca/superficies";
 
+/** `sizes` de la foto: una columna en celular, dos desde sm y ≈360 px desde lg (rejillas de 2–3 columnas en max-w-6xl). */
+const TAMANOS_TARJETA = "(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw";
+
 /** Tarjeta de café (page_style/components/ProductCard): ilustración 3:4, pastilla de provincia, sello SCA verificado, datos en silencio y un solo botón. */
 export function TarjetaCafe({ cafe }: { cafe: Cafe }) {
   const desde = precioDesde(cafe);
@@ -21,7 +24,7 @@ export function TarjetaCafe({ cafe }: { cafe: Cafe }) {
     <article className="ds-card relative h-full">
       <div className="ds-card__media">
         {cafe.fotos[0] ? (
-          <Foto src={cafe.fotos[0]} alt={cafe.fotoDescripcion ?? cafe.nombre} ancho={600} alto={800} redondeada={false} className="absolute inset-0 h-full" />
+          <Foto src={cafe.fotos[0]} alt={cafe.fotoDescripcion ?? cafe.nombre} ancho={600} alto={800} tamanos={TAMANOS_TARJETA} redondeada={false} className="absolute inset-0 h-full" />
         ) : (
           <BolsaIlustrada tueste={grupoDeTueste(cafe.tueste)} nombre={cafe.nombre} />
         )}

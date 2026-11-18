@@ -95,6 +95,7 @@
 /* ---------- Fotografía (v4.1): tratamiento cálido ---------- */
 .ds-photo{position:relative;overflow:hidden;background:var(--surface-sunken)}
 .ds-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.ds-photo picture{display:contents}
 .ds-photo::after{content:"";position:absolute;inset:0;background:var(--photo-warm);mix-blend-mode:multiply;pointer-events:none}
 .ds-photo--scrim::before{content:"";position:absolute;inset:0;background:var(--scrim);z-index:1;pointer-events:none}
 .ds-photo--round{border-radius:var(--radius-lg)}

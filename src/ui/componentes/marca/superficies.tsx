@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import type { CSSProperties, ElementType, ReactNode } from "react";
 import { asset } from "@/ui/asset";
+import { fuentesFoto } from "@/ui/fotos-responsivas";
+import { MANIFIESTO_FOTOS } from "@/ui/manifiesto-fotos";
 
 /** Franja de bandera: bloque grana al 20 % y cinco líneas. A sangre, pegada al borde inferior. */
 export function Franja({ variante = "normal", className }: { variante?: "normal" | "fina" | "regla"; className?: string }) {
@@ -46,12 +48,18 @@ export function Textura({
   );
 }
 
-/** Foto de origen o de producto con el velo cálido terracota de la marca. */
+/**
+ * Foto de origen o de producto con el velo cálido terracota de la marca.
+ * Las fotos de public/fotos/ salen en <picture> con variantes AVIF/WebP de 400/800/1200 px (tools/fotos-responsivas.ts);
+ * `tamanos` es el `sizes` del layout donde se muestra. `ancho`/`alto` dan la proporción de la caja (evitan saltos de layout).
+ * `prioridad` solo para la foto principal visible al cargar (LCP): carga inmediata y fetchpriority alta.
+ */
 export function Foto({
   src,
   alt,
   ancho,
   alto,
+  tamanos = "100vw",
   credito,
   redondeada = true,
   scrim,
@@ -62,17 +70,31 @@ export function Foto({
   alt: string;
   ancho: number;
   alto: number;
+  tamanos?: string;
   credito?: string;
   redondeada?: boolean;
   scrim?: boolean;
   prioridad?: boolean;
   className?: string;
 }) {
-  const ruta = src.startsWith("/") ? asset(src) : src;
+  const local = src.startsWith("/");
+  const variantes = local ? fuentesFoto(src, MANIFIESTO_FOTOS, asset) : null;
+  const carga = prioridad
+    ? ({ loading: "eager", fetchPriority: "high" } as const)
+    : ({ loading: "lazy", decoding: "async" } as const);
   return (
     <figure className={clsx("ds-photo", redondeada && "ds-photo--round", scrim && "ds-photo--scrim", className)}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- exportación estática: sin optimizador de imágenes */}
-      <img src={ruta} alt={alt} width={ancho} height={alto} loading={prioridad ? "eager" : "lazy"} decoding="async" />
+      {variantes ? (
+        <picture>
+          {variantes.fuentes.map((f) => (
+            <source key={f.tipo} type={f.tipo} srcSet={f.srcSet} sizes={tamanos} />
+          ))}
+          <img src={variantes.src} alt={alt} width={ancho} height={alto} {...carga} />
+        </picture>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element -- exportación estática: sin optimizador de imágenes
+        <img src={local ? asset(src) : src} alt={alt} width={ancho} height={alto} {...carga} />
+      )}
       {credito && <figcaption className="ds-photo__caption">{credito}</figcaption>}
     </figure>
   );

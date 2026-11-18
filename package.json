@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "predev": "npm run fotos",
     "dev": "next dev",
     "build": "next build",
     "start": "serve out",
@@ -12,8 +13,10 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "datos": "tsx tools/validar-datos.ts",
+    "fotos": "tsx tools/fotos-responsivas.ts",
     "mapa": "python3 -I tools/build_mapa.py",
-    "prebuild": "npm run datos"
+    "prebuild": "npm run datos && npm run fotos",
+    "postbuild": "tsx tools/fotos-responsivas.ts --limpiar-out"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.20",

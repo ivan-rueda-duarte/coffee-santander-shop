@@ -72,7 +72,7 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
           <div className="space-y-8">
             <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
               {foto ? (
-                <Foto src={foto.url} alt={foto.alt} credito={foto.credito} ancho={900} alto={1200} className="absolute inset-0 h-full" />
+                <Foto src={foto.url} alt={foto.alt} credito={foto.credito} ancho={900} alto={1200} tamanos="(min-width: 1216px) 520px, (min-width: 1024px) 42vw, 100vw" prioridad className="absolute inset-0 h-full" />
               ) : (
                 <BolsaIlustrada tueste={grupoDeTueste(cafe.tueste)} nombre={cafe.nombre} />
               )}
@@ -82,7 +82,7 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
               <ul className="grid grid-cols-3 gap-3" aria-label={`Más fotos de ${cafe.nombre}`}>
                 {fotos.slice(1).map((f) => (
                   <li key={f.url} className="relative aspect-square overflow-hidden rounded-lg">
-                    <Foto src={f.url} alt={f.alt} credito={f.credito} ancho={400} alto={400} className="absolute inset-0 h-full" />
+                    <Foto src={f.url} alt={f.alt} credito={f.credito} ancho={400} alto={400} tamanos="(min-width: 1216px) 165px, (min-width: 1024px) 14vw, 33vw" className="absolute inset-0 h-full" />
                   </li>
                 ))}
               </ul>

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { obtenerFichaCafe } from "@/application/casos-uso/obtener-ficha-cafe";
 import { PaginaFichaCafe } from "@/ui/componentes/ficha/ficha-cafe";
+import { rutaRespaldo } from "@/ui/fotos-responsivas";
+import { MANIFIESTO_FOTOS } from "@/ui/manifiesto-fotos";
 import { canonica, cargarCatalogo, repositorioCatalogo, repositorioContenido, URL_SITIO } from "../../_datos/catalogo";
 
 // GitHub Pages es estático: solo existen las páginas de los cafés que están en data/catalogo.csv.
@@ -9,8 +11,9 @@ export const dynamicParams = false;
 
 /** URL absoluta de la foto principal: la del CSV (public/) o, si no hay, la de Sanity. */
 function imagenPrincipal(ficha: NonNullable<Awaited<ReturnType<typeof obtenerFichaCafe>>>): string | undefined {
+  // JPEG de respaldo de 1200 px (tools/fotos-responsivas.ts): el original no se publica en out/.
   const propia = ficha.cafe.fotos[0];
-  if (propia) return URL_SITIO ? `${URL_SITIO}${propia}` : undefined;
+  if (propia) return URL_SITIO ? `${URL_SITIO}${rutaRespaldo(propia, MANIFIESTO_FOTOS)}` : undefined;
   return ficha.contenido?.fotos[0]?.url;
 }
 

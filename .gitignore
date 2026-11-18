@@ -9,3 +9,6 @@ coverage/
 playwright-report/
 test-results/
 .DS_Store
+
+# Variantes de fotos: las genera `npm run fotos` (corre antes de build y dev)
+/public/fotos-optimizadas/
