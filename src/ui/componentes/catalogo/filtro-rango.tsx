@@ -32,9 +32,9 @@ export default function FiltroRango({
 
   return (
     <fieldset>
-      <legend id={id} className="overline mb-2 text-ink-muted">{leyenda}</legend>
+      <legend id={id} className="overline mb-0 text-ink-muted">{leyenda}</legend>
       <Slider.Root
-        className="relative flex h-6 w-full touch-none select-none items-center"
+        className="relative flex h-11 w-full touch-none select-none items-center"
         min={limites[0]}
         max={limites[1]}
         step={paso}

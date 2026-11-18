@@ -122,7 +122,7 @@ export function TotalesPedido({
         )}
       </dl>
       <p className="caption mt-2 text-ink-muted">
-        <Link href="/envios/" className="underline underline-offset-4" onClick={alNavegar}>
+        <Link href="/envios/" className="relative underline underline-offset-4 before:absolute before:content-[''] before:inset-x-0 before:-inset-y-[15px]" onClick={alNavegar}>
           Cómo calculamos el envío
         </Link>
       </p>

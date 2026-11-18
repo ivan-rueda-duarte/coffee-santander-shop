@@ -57,12 +57,12 @@ export function TarjetaProvincia({ provincia, cafes, elegida, ancla, comoHoja, a
       }
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="h3 flex items-center gap-2 text-ink-title">
+        <h3 className="h3 flex min-w-0 items-center gap-2 text-ink-title">
           <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full border border-black/20" style={{ background: provincia.colorHex }} />
           {provincia.nombre}
         </h3>
         {comoHoja && (
-          <button type="button" onClick={alCerrar} aria-label="Cerrar" className="-mr-2 -mt-2 grid h-11 w-11 place-items-center rounded-pill hover:bg-surface-sunken">
+          <button type="button" onClick={alCerrar} aria-label="Cerrar" className="-mr-2 -mt-2 grid h-11 w-11 shrink-0 place-items-center rounded-pill hover:bg-surface-sunken">
             <IconoCerrar />
           </button>
         )}

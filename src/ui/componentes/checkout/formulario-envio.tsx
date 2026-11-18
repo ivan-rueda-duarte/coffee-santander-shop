@@ -237,8 +237,8 @@ export function FormularioEnvio({
               <option value={OPCION_OTRA_COMUNA}>{TEXTOS_ENVIO_GRATIS.otraComuna}</option>
             </SelectSuperpuesto>
           </Campo>
-          <details className="caption mt-1 text-ink-muted" data-testid="como-consultar-comuna">
-            <summary className="cursor-pointer underline underline-offset-4">Cómo consulto de qué comuna soy</summary>
+          <details className="caption mt-0 text-ink-muted" data-testid="como-consultar-comuna">
+            <summary className="cursor-pointer py-3.5 underline underline-offset-4">Cómo consulto de qué comuna soy</summary>
             <span className="mt-1 block">Escríbenos tu dirección por WhatsApp y te decimos a qué comuna pertenece.</span>
           </details>
         </div>

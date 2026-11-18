@@ -133,7 +133,7 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
                 ))}
               </dl>
               <details className="mt-4 rounded-lg bg-surface-sunken p-4">
-                <summary className="cursor-pointer text-sm font-bold">¿Qué significa cada dato?</summary>
+                <summary className="relative cursor-pointer text-sm font-bold before:absolute before:content-[''] before:inset-x-0 before:-inset-y-3">¿Qué significa cada dato?</summary>
                 <dl className="mt-3 space-y-3 text-sm">
                   {GLOSARIO.map((g) => (
                     <div key={g.dato}>

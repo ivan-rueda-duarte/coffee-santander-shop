@@ -462,7 +462,7 @@ function Contenido() {
                 <IconoCopiar className="ds-btn__icon" /> Copiar mensaje
               </Boton>
               <details ref={detallesMensaje} className="mt-4">
-                <summary className="cursor-pointer text-sm font-bold">Ver el mensaje</summary>
+                <summary className="relative cursor-pointer text-sm font-bold before:absolute before:content-[''] before:inset-x-0 before:-inset-y-3">Ver el mensaje</summary>
                 <pre id="mensaje-pedido" className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-surface-raised p-4 text-sm">{vigente.texto}</pre>
               </details>
               {vigente.indicacionesResumidas && <p className="caption mt-3 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}

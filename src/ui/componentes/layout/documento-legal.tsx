@@ -75,10 +75,10 @@ export function DocumentoLegal({
       {indice.length >= MINIMO_TITULOS_INDICE && (
         <nav aria-labelledby="indice-legal" className="mt-8 max-w-[68ch] rounded-lg bg-surface-raised p-5 [overflow-wrap:anywhere]" data-testid="indice-legal">
           <h2 id="indice-legal" className="small font-bold! text-ink-title">En este documento</h2>
-          <ol className="small mt-2 space-y-1">
+          <ol className="small mt-2 space-y-0">
             {indice.map((t) => (
               <li key={t.id}>
-                <a className="inline-block py-1 underline underline-offset-4" href={`#${t.id}`}>{t.texto}</a>
+                <a className="inline-flex min-h-11 items-center py-1 underline underline-offset-4" href={`#${t.id}`}>{t.texto}</a>
               </li>
             ))}
           </ol>
