@@ -5,8 +5,9 @@ import { puntoEnProvincia } from "./ayudas";
 // Ronda QA 2026-11-18: verificación de la severidad media de la auditoría UX.
 // Fuentes: docs/diseno/2026-11-18-ux-auditoria-media.md («Entrega para qa-pruebas»: M1, M2, M3, leyenda de promociones y
 // ficha agotada) y los commits c738edf (M5), f7ce7cb (M6), abe255a (M10), 9925886 (M7), 5bbf1f8 (QA-018), ec4b442 (M1),
-// 1e579b9 (M2), 19fe7bc (M3), 8072c37 (leyenda) y bbd2923 (píldoras agotadas). M4 y M8 los trabaja otro desarrollador y no
-// se verifican aquí. Reporte: docs/qa/2026-11-18-ux-auditoria-media.md.
+// 1e579b9 (M2), 19fe7bc (M3), 8072c37 (leyenda) y bbd2923 (píldoras agotadas). M4 y M8 se verifican en
+// e2e/qa-2026-11-18-cierre-media.spec.ts (ronda de cierre, que también actualizó aquí los titulares de M4 y la medida de los
+// deslizadores por su raíz). Reporte: docs/qa/2026-11-18-ux-auditoria-media.md.
 // Variables opcionales:
 // - E2E_AGOTADO_URL: build de una copia con data/catalogo.csv modificado (arreboles agotado 250|500, casa-martinez 250).
 //   Nunca se commitea.
@@ -110,6 +111,16 @@ function medirTactil(): Control[] {
           el = lab;
           r = lr;
         }
+      }
+    }
+    // QA-026 n.º 3 (especificación, «Entrega para qa-pruebas»): en los deslizadores el toque lo recibe la raíz del Slider de
+    // Radix (touch-action: none; cualquier punto mueve el pulgar más cercano), así que se mide la raíz y no el pulgar.
+    if (el0.getAttribute("role") === "slider") {
+      let raiz: HTMLElement | null = el0.parentElement;
+      while (raiz && getComputedStyle(raiz).touchAction !== "none") raiz = raiz.parentElement;
+      if (raiz) {
+        el = raiz;
+        r = raiz.getBoundingClientRect();
       }
     }
     if (r.width === 0 || r.height === 0 || el.getClientRects().length === 0) continue;
@@ -514,7 +525,8 @@ test.describe("M5 · referencias ARIA", () => {
   });
 
   test("las secciones del inicio se llaman como su titular (también en el HTML sin JavaScript)", async ({ browser }) => {
-    const esperado = ["El café que crece entre cañones y montañas de Santander", "Explora por provincia", "Elige por origen", "Cómo pedir"];
+    // M4 (2643d92): titulares nuevos del mapa y del catálogo.
+    const esperado = ["El café que crece entre cañones y montañas de Santander", "Santander, provincia a provincia", "Elige por provincia", "Cómo pedir"];
     for (const js of [true, false]) {
       const ctx = await browser.newContext({ javaScriptEnabled: js });
       const page = await ctx.newPage();
@@ -536,8 +548,8 @@ test.describe("M6 · un H1 por página", () => {
       await expect(page.locator("h1"), ruta).toHaveCount(1);
     }
     await page.goto("/cafes/");
-    await expect(page.locator("h1#titulo-catalogo")).toHaveText("Elige por origen");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Elige por origen");
+    await expect(page.locator("h1#titulo-catalogo")).toHaveText("Elige por provincia");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Elige por provincia");
     await page.goto("/");
     await expect(page.locator("h2#titulo-catalogo")).toHaveCount(1);
     await expect(page.locator("h1")).toHaveText(/El café que crece/);
@@ -796,14 +808,15 @@ test.describe("Ficha con tamaños agotados (copia con CSV temporal)", () => {
             spans.map((s) => {
               const c = getComputedStyle(s);
               const lab = s.parentElement!;
-              const small = s.querySelector("small")!;
+              // Con todo agotado (1ec9f29) la píldora lleva el precio y debajo «Agotado»: se mide el último <small>.
+              const small = [...s.querySelectorAll("small")].at(-1)!;
               return { borde: c.borderTopStyle, opLabel: getComputedStyle(lab).opacity, opSpan: c.opacity, opSmall: getComputedStyle(small).opacity, texto: small.textContent };
             }),
           );
           for (const p of pildoras) {
             expect(p).toMatchObject({ borde: "dashed", opLabel: "1", opSpan: "1", opSmall: "1", texto: "Agotado" });
           }
-          const c = await contraste(page, 'main article form input[name="gramos"]:disabled + span small');
+          const c = await contraste(page, 'main article form input[name="gramos"]:disabled + span small:last-of-type');
           test.info().annotations.push({ type: `contraste-${slug}-${t}-${ancho}`, description: JSON.stringify(c) });
           expect(c.ratio, `${slug} ${t}`).toBeGreaterThanOrEqual(4.5);
           expect(await axeSerio(page, t === "dark"), `${slug} ${t} ${ancho}`).toEqual([]);
