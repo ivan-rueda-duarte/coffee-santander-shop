@@ -1,0 +1,83 @@
+import { describe, expect, it } from "vitest";
+import type { LineaCarrito } from "./carrito";
+import { firmaSolicitud, microayudaCasillas, resumenCompacto, textoRespaldo, textoSiguientePaso, type EstadoSolicitud } from "./flujo";
+
+const A: LineaCarrito = { cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 2 };
+const B: LineaCarrito = { cafeSlug: "cafe-arreboles", gramos: 500, molienda: "molido", cantidad: 1 };
+
+const base: EstadoSolicitud = {
+  lineas: [A, B],
+  envio: { nombre: "Ana Rueda", municipio: "Bucaramanga" },
+  terminos: true,
+  autorizacion: true,
+  promoWhatsapp: false,
+  promoCorreo: false,
+};
+
+describe("microayuda de las casillas (§5.9; LEG-172 (4), §4 bis)", () => {
+  it("dice «Para enviar tu pedido» y nombra primero los términos", () => {
+    expect(microayudaCasillas(false, false)).toBe("Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.");
+    expect(microayudaCasillas(true, false)).toBe("Para enviar tu pedido, falta que autorices el tratamiento de tus datos.");
+    expect(microayudaCasillas(false, true)).toBe("Para enviar tu pedido, falta que aceptes los términos y condiciones.");
+  });
+  it("desaparece con las dos casillas marcadas", () => {
+    expect(microayudaCasillas(true, true)).toBeNull();
+  });
+  it("no habla de comprar, confirmar, finalizar ni pagar (§5.9, regla 3)", () => {
+    for (const [t, a] of [[false, false], [true, false], [false, true]] as const) {
+      expect(microayudaCasillas(t, a)).not.toMatch(/compr|confirm|finaliz|pag/i);
+    }
+  });
+});
+
+describe("cómo sigue la compra (LEG-171)", () => {
+  it("con tarifa", () => {
+    expect(textoSiguientePaso(false)).toBe(
+      "Al pulsar «Enviar por WhatsApp» se abre WhatsApp con tu pedido escrito. Con ese mensaje nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.",
+    );
+  });
+  it("por cotizar", () => {
+    expect(textoSiguientePaso(true)).toBe(
+      "Al pulsar «Enviar por WhatsApp» se abre WhatsApp con tu pedido escrito. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.",
+    );
+  });
+});
+
+describe("respaldo (LEG-173 (3))", () => {
+  it("lleva el número que recibe", () => {
+    expect(textoRespaldo("+57 300 112 9874")).toBe("¿No se abrió WhatsApp? Copia el mensaje y envíalo al +57 300 112 9874.");
+  });
+});
+
+describe("firma de la solicitud (LEG-173 (2), §4 bis 1)", () => {
+  const f = firmaSolicitud(base);
+  it("es la misma sin cambios, aunque cambie el orden de líneas o llaves", () => {
+    expect(firmaSolicitud({ ...base, lineas: [B, A], envio: { municipio: "Bucaramanga", nombre: "Ana Rueda" } })).toBe(f);
+  });
+  it("cambia con el carrito", () => {
+    expect(firmaSolicitud({ ...base, lineas: [A] })).not.toBe(f);
+    expect(firmaSolicitud({ ...base, lineas: [{ ...A, cantidad: 3 }, B] })).not.toBe(f);
+    expect(firmaSolicitud({ ...base, lineas: [{ ...A, molienda: "molido" }, B] })).not.toBe(f);
+  });
+  it("cambia con un dato de envío", () => {
+    expect(firmaSolicitud({ ...base, envio: { ...base.envio, nombre: "Ana R." } })).not.toBe(f);
+  });
+  it("cambia con cualquiera de las cuatro casillas", () => {
+    expect(firmaSolicitud({ ...base, terminos: false })).not.toBe(f);
+    expect(firmaSolicitud({ ...base, autorizacion: false })).not.toBe(f);
+    expect(firmaSolicitud({ ...base, promoWhatsapp: true })).not.toBe(f);
+    expect(firmaSolicitud({ ...base, promoCorreo: true })).not.toBe(f);
+  });
+});
+
+describe("bloque compacto «Tu pedido» (A1)", () => {
+  const nombre = (s: string) => ({ "cafe-casa-martinez": "Café Casa Martínez", "cafe-arreboles": "Café Arreboles" })[s] ?? s;
+  it("una línea por café con gramos, presentación en minúscula y cantidad", () => {
+    expect(resumenCompacto([A, B], nombre)).toEqual({ lineas: ["Café Casa Martínez · 250 g · grano × 2", "Café Arreboles · 500 g · molido × 1"], resto: 0 });
+  });
+  it("con más de tres líneas muestra tres y cuenta el resto", () => {
+    const r = resumenCompacto([A, B, { ...A, gramos: 500 }, { ...B, gramos: 250 }, { ...A, molienda: "molido" }], nombre);
+    expect(r.lineas).toHaveLength(3);
+    expect(r.resto).toBe(2);
+  });
+});
