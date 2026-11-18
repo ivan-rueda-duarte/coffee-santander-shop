@@ -1,4 +1,6 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.1 — 2026-11-18.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.2 — 2026-11-18.
+
+**Cambios de la v0.2 (2026-11-18):** §6 nueva, con la aprobación del abogado responsable comunicada por el dueño (LEG-171 y retiro del panel de D5 §6.3), el estado de cada hallazgo y la confirmación de que D1 a D4 no cambian. Se emite la microcopy v1.10 (LEG-176).
 
 # Revisión LEG-171 a LEG-177: flujo de pedido simplificado (cajón → Envío → Resumen con «Enviar por WhatsApp» que abre wa.me) y leyenda de IVA en la tarjeta del catálogo
 
@@ -66,6 +68,25 @@ Con el cajón → Envío, quien compra no pasa por el paso Carrito. No falta inf
 - **Pregunta 3: aprobado.** Basta así en lo legal. Se recomienda una línea de IVA por listado (LEG-177).
 
 **Dictamen del cambio: Conforme con observaciones**, siempre que se implemente con LEG-171 a LEG-173. Si se implementa sin LEG-172, el dictamen es **No conforme**.
+
+## 6. Aprobación del abogado y estado (v0.2, 2026-11-18)
+
+**Aprobación.** El dueño informó el 2026-11-18 que **el abogado responsable aprobó** (a) los textos de LEG-171 en sus dos variantes (con tarifa y por cotizar), encima de «Enviar por WhatsApp», y (b) el retiro del panel de D5 §6.3 (pantalla de Confirmación: título «Tu pedido está listo para enviar por WhatsApp» y sus dos textos). Se registra como **aprobación comunicada por el dueño en esa fecha**. En el repositorio no hay documento del abogado. **Pendiente:** constancia escrita del abogado (correo o nota firmada con fecha y textos aprobados), que se recomienda guardar con el paquete (`docs/legal/paquete-abogado/`). Legal no marca como aprobado ningún otro documento por esta comunicación.
+
+Con esa aprobación la salvaguarda de LEG-171 (alternativa a de LEG-159) ya no aplica: A1 se puede implementar como dice `docs/diseno/2026-11-18-ux-auditoria-alta.md`.
+
+| # | Estado al 2026-11-18 |
+|---|---|
+| LEG-159 | Se cierra cuando QA verifique A1 (el botón del resumen abre `wa.me`, como dice D1 §5). |
+| LEG-171 | Textos **aprobados** (aprobación comunicada por el dueño; falta constancia escrita). Pendiente de implementación y verificación de QA. |
+| LEG-172 | Abierto hasta verificación de QA. **Bloqueante** si no se cumple. |
+| LEG-173 | Abierto hasta verificación de QA. |
+| LEG-174 | Resuelto en diseño: cajón «Continuar con el envío», Envío «Ver el resumen», Resumen «Volver al envío». Legal conforme. |
+| LEG-175 | Resuelto en diseño con una variante: indicador **«Pedido · Envío · Resumen»** (paso 1 «Pedido» = el cajón, siempre presente y marcado como hecho) en lugar de «Carrito» solo para quien entra directo; el paso Carrito se retira y lo reemplaza el bloque «Tu pedido» con «Editar» en Envío. **Legal conforme:** no se anuncia ningún paso que no exista, y el resumen conserva líneas, totales e IVA antes del clic (§2). |
+| LEG-176 | **Emitida:** microcopy v1.10 (§9). |
+| LEG-177 | Recomendación abierta, no bloqueante. |
+
+**Documentos D1 a D4.** Revisados de nuevo `terminos-y-condiciones.md`, `politica-tratamiento-datos.md`, `envios-devoluciones-retracto.md` e `informacion-vendedor.md`: ninguno menciona el panel de Confirmación, «Preparar pedido», «Finalizar» ni el paso Carrito. D1 §5 ya describe el flujo nuevo. Las menciones a «tu carrito y el resumen» (D1 §4, D3 §3) siguen siendo ciertas: el cajón es el carrito y el resumen sigue existiendo. **No requieren cambio** ni nueva versión; `config.csv` sigue en 1.0 / 2026-11-17.
 
 ## 4 bis. Precisiones pedidas por diseño (A1 de `docs/diseno/2026-11-18-ux-auditoria-alta.md`)
 

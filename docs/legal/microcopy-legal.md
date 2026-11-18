@@ -1,12 +1,14 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.9 — 2026-11-14.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.10 — 2026-11-18.
 
 # Microcopy legal
+
+**Aviso de la v1.10 (2026-11-18, LEG-171 a LEG-176).** Flujo del pedido en tres pasos (Pedido · Envío · Resumen): «Enviar por WhatsApp» del resumen valida y abre `wa.me` en el mismo clic, y se retira el panel de Confirmación de D5 §6.3. El dueño comunicó el 2026-11-18 que el abogado responsable aprobó los textos de LEG-171 y el retiro del panel (constancia escrita pendiente). Los textos del flujo están en la **§9**, que manda sobre §2 (filas «Confirmación…», retiradas), §5.5 (regla de apertura del enlace) y §5.9 (reescrita). D1, D2, D3, D4, la plantilla D5 §6.4 y la constancia del mensaje **no cambian**.
 
 **Aviso de la v1.9 (2026-11-14, LEG-140 a LEG-167).** Desde la publicación del 17/11/2026 mandan los textos de la sección 6 (D5) de «De Santander SAS — Textos legales v1.0 para publicación» (`docs/legal/paquete-abogado/`) y las casillas y el aviso de privacidad de D2 (copiados en `politica-tratamiento-datos.md`, secciones «Aviso de privacidad» y «Textos de las casillas»). Donde este documento diga otra cosa, **queda sin efecto**; en particular: §1 (leyendas de IVA y envío), §2 (portada, pie, metadatos, `/cafes/` e Historia: rige D5 §6.1), §3 (ficha: D5 §6.2), §4.3 y §5.1 (casillas: ahora cuatro), §5.2 y §5.5 (mensaje: D5 §6.4), §5.3 (retracto del resumen: D5 §6.3), §5.4 (vendedor: D4), §5.6 y §5.8 (plazos: D3 §6 y D5 §6.3), §5.7 (respuestas del chat: D5 §6.5), §6 (configuración: paquete §7.1 y §7.2, con los ajustes de LEG-151 y LEG-152) y §8 (envío gratis: el dueño lo mantiene; condiciones en el numeral 13 de D3 versión 1.0, vigente desde el 17 de noviembre de 2026, y textos del sitio ajustados en la sección 2 bis de LEG-167, que mandan sobre §8 donde difieran). Siguen vigentes, mientras no contradigan el paquete: §4 (documento y código postal), §5.9 (microayuda del botón) y las reglas de §7 que coinciden con D5 §6.6. Este archivo se reescribirá cuando el abogado valide LEG-167 y el dueño decida LEG-150.
 
 Textos exactos del sitio que tienen fundamento legal. El desarrollador los copia sin cambios; `{}` son variables que pone el código y salen de `data/config.csv` o de los CSV de datos. Cada texto distingue **exige la norma** y **se recomienda**.
 
-Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran; **§8** envío gratis en comunas de Bucaramanga.
+Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran; **§8** envío gratis en comunas de Bucaramanga; **§9** flujo del pedido en tres pasos (v1.10).
 
 Cambios de la v1.8 (2026-11-12, QA-013; LEG-139): §2, párrafos 1 y 2 de la Historia reescritos sobre el texto pedido por el dueño, con dos variantes según que todos los cafés activos traigan marca y fabricante (LEG-070) y regla de la lista de datos; §7 retira el texto del dueño. El texto público de los documentos versión 2 no cambia.
 
@@ -106,9 +108,7 @@ Decisión del dueño (2026-11-06): sin número de solicitud («N.° DS-…» del
 | «Cómo pedir», paso 2 | `Completas tus datos de envío y se abre WhatsApp con tu solicitud de compra ya escrita. Con ese mensaje nos pides el pedido; queda en firme cuando aceptas el total en el chat.` |
 | «Cómo pedir», paso 3 | `Despachamos desde {ciudad_despacho} a todo Colombia. Ves el envío en tu carrito; si hay que cotizarlo, te lo confirmamos antes de que pagues. Pagas con {formas de pago}.` Con la configuración actual (v1.7), exacto: `… Pagas con transferencia Bre-B.` Regla de `{formas de pago}` (v1.1, LEG-103): cada forma tal como está en `formas_pago` de `data/config.csv`, con **solo la primera letra** en minúscula (nunca `toLowerCase` del texto completo: «Bre-B» es nombre propio); se unen con «o», no con «y» («a o b»; con tres o más, «a, b o c»), porque el cliente paga con una de ellas |
 | Historia, foto de respaldo (`secciones-inicio.tsx`, cuando Sanity no trae foto) | Texto alternativo: `Montañas verdes con cultivos en ladera, un camino de tierra y nubes bajas.` Crédito: **ninguno** (`credito: ""`, sin `figcaption`). Mientras el dueño no confirme autor, lugar y permiso de uso (LEG-104, P24), no se dice «Santander», «cafetal», «finca», «niebla de la mañana» ni «De Santander» como crédito. Cuando lo confirme: `Foto: {autor} · {municipio}, Santander · {año}` (solo con los tres datos) |
-| Confirmación, título | `Tu pedido está listo para enviar por WhatsApp` |
-| Confirmación con tarifa | `Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos para confirmarlo y acordar la forma de pago.` |
-| Confirmación por cotizar | `Pulsa «Enviar por WhatsApp» y manda el mensaje en el chat. Con ese mensaje nos pides el pedido. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.` |
+| Confirmación (título y textos con tarifa y por cotizar) | **Retirados en la v1.10** con el panel de Confirmación (D5 §6.3; LEG-171, aprobación del abogado comunicada por el dueño el 2026-11-18). Su contenido pasa al resumen: §9.3. |
 
 Exige la norma información veraz sobre el origen empresarial (Ley 1480, arts. 23, 24, 29 y 30). Modelo C decidido el 2026-11-06 (LEG-069 a LEG-072); el paquete v1 no lo cambia.
 
@@ -252,7 +252,7 @@ Quedo atento al valor del envío para confirmar mi pedido.   ← solo si es por 
 Acepto los Términos y condiciones versión {version_terminos} y autorizo el tratamiento de mis datos según la Política de tratamiento de datos versión {version_politica_datos} del {fecha_politica_datos en letras}.
 ```
 
-Reglas: límite de 2.000 caracteres (si se pasa, se recortan las indicaciones y se avisa, como hoy); el enlace `wa.me` se abre con un clic del cliente, no con `window.open` tras una espera; las versiones y fechas salen de `data/config.csv`. Diferencias con la plantilla del paquete (LEG-090): sin «N.° DS-[número]» (decisión del dueño), se conservan `Total`, `Correo`, `Documento`, `Código postal`, el departamento en `Ciudad` y la línea de «por cotizar», que el paquete omitía y que exige el resumen del art. 50 o ya recoge el formulario.
+Reglas: límite de 2.000 caracteres (si se pasa, se recortan las indicaciones y se avisa, como hoy); el enlace `wa.me` se abre con un clic del cliente, no con `window.open` tras una espera (v1.10: se admite `window.open` **síncrono** dentro del mismo manejador del clic, sin `await`, `setTimeout` ni `requestAnimationFrame` antes; §9.5); las versiones y fechas salen de `data/config.csv`. Diferencias con la plantilla del paquete (LEG-090): sin «N.° DS-[número]» (decisión del dueño), se conservan `Total`, `Correo`, `Documento`, `Código postal`, el departamento en `Ciudad` y la línea de «por cotizar», que el paquete omitía y que exige el resumen del art. 50 o ya recoge el formulario.
 
 ### 5.6 Plazo de entrega en el resumen y en el paso de envío
 
@@ -288,24 +288,24 @@ Respuesta al «ACEPTO» (operación, no código): antes de procesar, la tienda e
 | `metadata.description` | `Cómo calculamos el envío de tu pedido: zonas, tarifas por peso con IVA incluido y plazos de entrega desde Bucaramanga.` |
 | Enlace final | `Lee la política completa de envíos, devoluciones, retracto y garantía.` (a `/legal/envios-devoluciones/`) |
 
-### 5.9 Botón «Preparar pedido para WhatsApp» mientras falta una casilla (v1.1; LEG-101, LEG-102; QA-006)
+### 5.9 Botón «Enviar por WhatsApp» del resumen mientras falta una casilla (v1.1; reescrita en la v1.10: LEG-101, LEG-102, LEG-172; QA-006)
 
-**Vía recomendada: botón activo para el foco con `aria-disabled="true"` + microayuda visible + errores al pulsar.** No se usa el atributo `disabled`.
+**Vía recomendada: botón activo para el foco con `aria-disabled="true"` + microayuda visible + errores al pulsar.** No se usa el atributo `disabled`. Desde la v1.10 el botón es «Enviar por WhatsApp» del resumen (ya no existe «Preparar pedido para WhatsApp») y el orden es el de las casillas del paquete: **primero los términos (casilla 1), después los datos (casilla 2)** (LEG-145).
 
 | Dónde | Caso | Texto exacto |
 |---|---|---|
-| Microayuda, texto visible justo encima o debajo del botón, `caption`, enlazada al botón con `aria-describedby` | Faltan las dos casillas | `Para preparar tu pedido, marca las dos casillas: la autorización de tus datos y los términos y condiciones.` |
-| Mismo lugar | Falta solo la autorización de datos | `Para preparar tu pedido, falta que autorices el tratamiento de tus datos.` |
-| Mismo lugar | Faltan solo los términos | `Para preparar tu pedido, falta que aceptes los términos y condiciones.` |
+| Microayuda, texto visible entre el texto de §9.3 y el botón, `caption`, enlazada al botón con `aria-describedby` | Faltan las dos casillas | `Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.` |
+| Mismo lugar | Faltan solo los términos | `Para enviar tu pedido, falta que aceptes los términos y condiciones.` |
+| Mismo lugar | Falta solo la autorización de datos | `Para enviar tu pedido, falta que autorices el tratamiento de tus datos.` |
 | Mismo lugar | Las dos marcadas | *(la microayuda desaparece y el botón deja de tener `aria-disabled`)* |
-| Variante de una sola frase (si diseño prefiere no cambiar el texto según el caso) | Falta una o las dos | `Para preparar tu pedido, marca las dos casillas.` |
+| Variante de una sola frase (si diseño prefiere no cambiar el texto según el caso) | Falta una o las dos | `Para enviar tu pedido, marca las dos casillas.` |
 | Error bajo la casilla de datos, al pulsar el botón si no está marcada (`aria-invalid="true"` y `aria-describedby` en la casilla) | — | `Debes autorizar el tratamiento de tus datos para continuar.` (sin cambio) |
 | Error bajo la casilla de términos, al pulsar el botón si no está marcada (igual) | — | `Debes aceptar los términos para continuar.` (sin cambio) |
 
 Reglas:
-1. Al pulsar el botón con `aria-disabled="true"`: no se arma el resumen ni el enlace `wa.me`, no se marca ninguna casilla por el cliente, se muestran los errores de las casillas que falten y el foco va a la primera casilla sin marcar. Al marcarla, su error desaparece.
+1. Al pulsar el botón con `aria-disabled="true"`: no se genera número DS, texto ni enlace `wa.me`, no aparece el respaldo de §9.4, no se marca ninguna casilla por el cliente, se muestran los errores de las casillas que falten y el foco va a la primera casilla sin marcar. Al marcarla, su error desaparece.
 2. La microayuda no se anuncia con `aria-live` en cada cambio (sería ruidosa); basta `aria-describedby`. Los errores sí se anuncian al aparecer (`role="alert"` o el patrón de errores que ya usa el formulario).
-3. Ningún texto de este bloque dice «compra», «confirmar», «finalizar» ni «pagar»: el botón solo prepara el mensaje; el pedido existe al enviarlo por WhatsApp y queda en firme al aceptar el total en el chat (términos §6).
+3. Ningún texto de este bloque dice «compra», «confirmar», «finalizar» ni «pagar»: el botón solo abre WhatsApp con el mensaje escrito; el pedido existe al enviarlo por WhatsApp y queda en firme al aceptar el total en el chat (términos §6).
 
 Fundamento. **Exige la norma** que la autorización de datos y la aceptación de los términos sean expresas, separadas y sin premarcar (Ley 1581, arts. 9 y 12; Ley 1480, art. 50; Ley 527, art. 14: VERIFICAR artículo), y que la información al consumidor sea clara y comprensible (Ley 1480, art. 23). Las dos vías (`disabled` con microayuda, o `aria-disabled` con microayuda y errores) cumplen esas normas si el botón no avanza sin las dos casillas. **Se recomienda** `aria-disabled` porque: (a) un botón `disabled` no recibe foco y quien navega con teclado o lector de pantalla no lo encuentra o no sabe por qué no responde; (b) conserva los errores junto a cada casilla, que indican exactamente cuál falta (WCAG 2.2, criterios 3.3.1, 3.3.2 y 4.1.2, como buena práctica: no es norma colombiana obligatoria para particulares; VERIFICAR la aplicabilidad de la NTC 5854); (c) resuelve la contradicción de la v1.0, que pedía a la vez «error sin cambio» y «botón deshabilitado».
 
@@ -354,6 +354,7 @@ Páginas legales: el contenido público de cada documento (`terminos-y-condicion
 - `Cafetal entre montañas de Santander con niebla de la mañana` (texto alternativo de la foto de respaldo de la Historia) y el crédito `De Santander` de esa foto (v1.1, LEG-104; reemplazados por §2).
 - `transferencia bre-b` y la unión de las formas de pago con «y» en «Cómo pedir» (v1.1, LEG-103).
 - Atributo `disabled` en «Preparar pedido para WhatsApp» sin explicación (v1.1, LEG-101; reemplazado por §5.9).
+- Flujo del pedido (v1.10, LEG-171 a LEG-175): `Preparar pedido para WhatsApp`, `Revisar el pedido` (cajón), `Finalizar el pedido` (Envío), `← Volver al carrito`, `← Volver` (resumen), el paso `Confirmación` del indicador y `?paso=confirmacion`, el título `Tu pedido está listo para enviar por WhatsApp`, los textos `Pulsa «Enviar por WhatsApp» y manda el mensaje…` (con tarifa y por cotizar), el segundo botón «Enviar por WhatsApp» del panel, `Si WhatsApp no se abre, copia el mensaje y envíalo al …` y el arranque `Para preparar tu pedido` de la microayuda. Tampoco se usa `Abrir WhatsApp` en botones, nombres accesibles ni pruebas.
 - Historia de portada (v1.8, LEG-139, QA-013): `De Santander es mucho más una tienda: es un puente directo entre los mejores caficultores de nuestra tierra y tu taza. Reunimos una selección exclusiva de cafés de origen santandereano, tostados y empacados directamente por sus productores —tal como lo ves en cada bolsa y ficha técnica—.` y `Desde {ciudad_despacho} enviamos este sabor de origen a todo Colombia. En cada café te contamos su historia: la provincia, el municipio, la altitud, la variedad y el proceso que lo hicieron único.` (reemplazados por §2). Tampoco se usan sueltas: `más que una tienda`, `puente directo`, `los mejores`, `selección exclusiva`, `directamente por sus productores`, `lo hicieron único`.
 
 ## 8. Envío gratis en comunas de Bucaramanga (v1.2; LEG-106 a LEG-117)
@@ -478,3 +479,57 @@ Pasados los 30 días, el aviso puede retirarse en un despliegue posterior; la se
 ### 8.7 Fundamento
 
 **Exige la norma:** condiciones de la promoción completas en la publicidad y vigencia (Ley 1480, arts. 5 num. 10 y 33; VERIFICAR la letra oficial); información veraz y no engañosa (arts. 23, 29 y 30); precio total, envío y plazo antes de comprar (art. 50); interpretación favorable en la duda (art. 34); no contradecir lo ya publicado en los términos (LEG-106). **Se recomienda:** mostrar la tarifa y el total alternativos (LEG-109), aplicar el envío gratis en la duda (P29 a) y al cliente cubierto que no eligió comuna (P28 b), y la lista cerrada del campo.
+
+## 9. Flujo del pedido en tres pasos (v1.10; LEG-171 a LEG-176)
+
+Revisión: `docs/legal/revisiones/2026-11-18-flujo-pedido-un-clic.md` (v0.2). Especificación de diseño: `docs/diseno/2026-11-18-ux-auditoria-alta.md`, A1. Flujo: cajón → `/pedido/` (Envío) → `/pedido/?paso=resumen` (Resumen, con «Enviar por WhatsApp» que valida y abre `wa.me` en el mismo clic). No hay pantalla Carrito ni panel de Confirmación. Las casillas, el aviso de privacidad (se queda en Envío), el retracto, el IVA, la nota de precio total, la línea del vendedor y la plantilla del mensaje (D5 §6.4, con número DS y constancia 1.0) **no cambian**.
+
+**Estado:** textos de §9.3 aprobados por el abogado responsable según comunicación del dueño del 2026-11-18 (constancia escrita pendiente). El resto de §9 son textos de interfaz que legal revisó: conforme.
+
+### 9.1 Botones
+
+| Dónde | Texto exacto | Tipo |
+|---|---|---|
+| Cajón «Tu pedido», pie (`href="/pedido/"`) | `Continuar con el envío →` | UI, conforme (LEG-174) |
+| Paso Envío, envío del formulario | `Ver el resumen →` | UI, conforme (LEG-174). Nunca «Finalizar» |
+| Paso Envío, bloque «Tu pedido» | `Editar` (nombre accesible `Editar el pedido`; abre el cajón) | UI |
+| Paso Envío, enlace bajo el botón | `Seguir viendo cafés` | UI |
+| Resumen, botón principal (valida y abre `wa.me`) | `Enviar por WhatsApp` | **Legal: D1 §5** («Pulsas «Enviar por WhatsApp». Se abre WhatsApp con el pedido escrito»). Sin cambio |
+| Resumen, secundario | `← Volver al envío` | UI, conforme |
+| Resumen, respaldo (§9.4) | `Copiar mensaje` · `Ver el mensaje` (`summary`) · `Vaciar pedido` | Legal (LEG-173) / UI |
+
+Ningún botón, nombre accesible ni prueba dice `Abrir WhatsApp`. El reintento es el mismo botón «Enviar por WhatsApp».
+
+### 9.2 Indicador de pasos
+
+`Pedido` · `Envío` · `Resumen` (`aria-label="Pasos del pedido"`). Sin `Confirmación` (LEG-175) y sin `Carrito`. «Pedido» es el cajón y aparece siempre como hecho al llegar a `/pedido/`. WhatsApp no es un paso. Fundamento: no anunciar un paso que no existe (Ley 1480, art. 23).
+
+### 9.3 Cómo sigue la compra, encima del botón (LEG-171; D5 §6.3 adaptado)
+
+`data-testid="texto-siguiente-paso"`, justo encima de la microayuda y del botón. La variante sale de si el envío es por cotizar.
+
+| Caso | Texto exacto |
+|---|---|
+| Envío con tarifa (incluido el envío gratis por comunas) | `Al pulsar «Enviar por WhatsApp» se abre WhatsApp con tu pedido escrito. Con ese mensaje nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.` |
+| Envío por cotizar (zona 5 o más de 5 kg) | `Al pulsar «Enviar por WhatsApp» se abre WhatsApp con tu pedido escrito. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.` |
+
+**Exige la norma** que el consumidor sepa, antes de mandar el mensaje, que todavía no ha comprado y qué sigue (Ley 1480, art. 23; D1 §5 y §6). Sustituye al panel de Confirmación de D5 §6.3, retirado con la aprobación del abogado.
+
+### 9.4 Respaldo tras un clic válido (LEG-173)
+
+Solo aparece después de un clic válido en «Enviar por WhatsApp», **debajo** del botón (nunca entre las casillas y el botón).
+
+| Dónde | Texto exacto |
+|---|---|
+| Primera línea (`role="status"`) | `¿No se abrió WhatsApp? Copia el mensaje y envíalo al {whatsapp}.` (`{whatsapp}` = `formatearWhatsapp` del número de `config.csv`; hoy `+57 300 112 9874`) |
+| Botón | `Copiar mensaje` |
+| Desplegable (se recomienda) | `Ver el mensaje`, con el texto completo del mensaje |
+
+Reglas: copia **el mismo texto y el mismo número DS** del enlace abierto; si cambia el carrito, un dato de envío o cualquiera de las cuatro casillas, se oculta y el siguiente clic genera número y texto nuevos. Sin cambios, un segundo clic abre el mismo enlace con el mismo número (recomendación de legal, §4 bis de la revisión).
+
+### 9.5 Reglas del clic (LEG-172, **bloqueante**)
+
+1. Sin la casilla 1 o la 2: no se genera número DS, texto ni enlace; errores bajo cada casilla (D5 §6.3, sin cambio) y foco a la primera sin marcar; microayuda de §5.9.
+2. Con las dos: número DS, texto y `window.open` del enlace `wa.me` **en el mismo manejador, de forma síncrona**, sin `await`, `setTimeout` ni `requestAnimationFrame` antes.
+3. Las casillas 3 y 4 nunca bloquean.
+4. El carrito no se vacía solo: el sitio no sabe si el cliente mandó el mensaje.
