@@ -12,7 +12,7 @@ import { useCarrito } from "./carrito-provider";
 const selector =
   "rounded-md border border-line-strong bg-surface-raised px-3 py-2 text-sm font-medium text-ink focus-visible:outline-2";
 
-/** Una línea del pedido: café, tamaño, molienda, cantidad y precio. Se edita en el cajón y en el paso 1 de /pedido. */
+/** Una línea del pedido: café, tamaño, molienda, cantidad y precio. Se edita en el cajón; el Resumen de /pedido la muestra sin editar. */
 export function LineaPedido({ linea, editable = true }: { linea: LineaConPrecio; editable?: boolean }) {
   const { buscarCafe } = useCatalogo();
   const { cambiarCantidad, actualizar, eliminar } = useCarrito();

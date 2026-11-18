@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
 import { avisoPrivacidad, casillaDatos, casillaPromocionesCorreo, casillaPromocionesWhatsapp, casillaTerminos } from "@/domain/legal/consentimientos";
+import { firmaSolicitud, microayudaCasillas, resumenCompacto, textoRespaldo, textoSiguientePaso } from "@/domain/pedido/flujo";
 import { generarNumeroSolicitud, LARGO_SUFIJO } from "@/domain/pedido/numero-solicitud";
 import { crearEsquemaEnvio, esquemaConsentimientos, SIGLA_DOCUMENTO, validar, type DatosEnvio } from "@/domain/pedido/envio";
 import { calcularEnvio } from "@/domain/envio/envio";
 import { anuncioEnvio } from "@/domain/envio/envio-gratis";
 import { formatearWhatsapp } from "@/domain/pedido/mensaje-whatsapp";
 import { lineaVendedor, TEXTOS_PAGO } from "@/domain/pedido/tienda";
+import { etiquetaBolsas } from "@/domain/pedido/totales";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 import { useAvisos } from "../layout/avisos";
 import { useCarrito } from "../carrito/carrito-provider";
@@ -18,18 +20,63 @@ import { LineaPedido } from "../carrito/linea-pedido";
 import { TotalesPedido } from "../carrito/totales-pedido";
 import { Boton, BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
-import { IconoAlerta, IconoCopiar, IconoFlecha, IconoFlechaAtras, IconoWhatsapp } from "../marca/iconos";
+import { IconoAlerta, IconoCheck, IconoCopiar, IconoFlecha, IconoFlechaAtras, IconoWhatsapp } from "../marca/iconos";
 import { CODIGOS_DEPARTAMENTO, ENVIO_VACIO, FormularioEnvio, type ValoresEnvio } from "./formulario-envio";
 
-const PASOS = [
-  { id: "carrito", titulo: "Carrito" },
+// Diseño 2026-11-18, A1: el paso Carrito se retira (la edición vive en el cajón) y no hay paso Confirmación (LEG-175).
+// /pedido/ es el paso Envío; ?paso=resumen, el Resumen. Cualquier otro ?paso= se reemplaza por /pedido/.
+type Paso = "envio" | "resumen";
+
+const PASOS_INDICADOR = [
+  { id: "pedido", titulo: "Pedido" },
   { id: "envio", titulo: "Envío" },
   { id: "resumen", titulo: "Resumen" },
-  { id: "confirmacion", titulo: "Confirmación" },
 ] as const;
-type Paso = (typeof PASOS)[number]["id"];
 
-const esPaso = (v: string | null): v is Paso => PASOS.some((p) => p.id === v);
+/**
+ * Indicador «Pedido · Envío · Resumen» (A1). «Pedido» es el cajón, que ya pasó: abre el cajón. «Envío», visto desde
+ * el Resumen, vuelve a /pedido/. Por debajo de 360 px solo se lee el rótulo del paso actual.
+ */
+function IndicadorPasos({ paso, alEditarPedido }: { paso: Paso; alEditarPedido: () => void }) {
+  const actual = paso === "envio" ? 1 : 2;
+  return (
+    <ol aria-label="Pasos del pedido" className="small mb-8 flex flex-nowrap items-center gap-x-4 whitespace-nowrap sm:gap-x-6 md:mb-10">
+      {PASOS_INDICADOR.map((p, i) => {
+        const hecho = i < actual;
+        const esActual = i === actual;
+        const circulo = esActual ? (
+          <span className="inline-grid h-6 w-6 shrink-0 place-items-center rounded-full bg-monte-900 text-xs font-extrabold tabular-nums text-pergamino-50">{i + 1}</span>
+        ) : hecho ? (
+          <span className="inline-grid h-6 w-6 shrink-0 place-items-center rounded-full border-[1.5px] border-monte-900 text-monte-900">
+            <IconoCheck width={14} height={14} />
+          </span>
+        ) : (
+          <span className="inline-grid h-6 w-6 shrink-0 place-items-center rounded-full border-[1.5px] border-line-strong text-xs tabular-nums text-ink-muted">{i + 1}</span>
+        );
+        const rotulo = (
+          <span className={esActual ? "font-extrabold text-ink-title" : hecho ? "font-semibold text-ink max-[359px]:sr-only" : "font-medium text-ink-muted max-[359px]:sr-only"}>
+            {p.titulo}
+            {hecho && <span className="sr-only">, hecho</span>}
+          </span>
+        );
+        const contenido = <>{circulo}{rotulo}</>;
+        const clase = "inline-flex items-center gap-2 py-2.5";
+        return (
+          <li key={p.id} aria-current={esActual ? "step" : undefined} className="flex items-center gap-x-4 sm:gap-x-6">
+            {i > 0 && <span aria-hidden="true" className="hidden h-px w-8 bg-line-strong sm:block" />}
+            {hecho && p.id === "pedido" ? (
+              <button type="button" onClick={alEditarPedido} className={`${clase} rounded-md underline-offset-4 hover:underline`}>{contenido}</button>
+            ) : hecho && p.id === "envio" ? (
+              <Link href="/pedido/" className={`${clase} rounded-md underline-offset-4 hover:underline`}>{contenido}</Link>
+            ) : (
+              <span className={clase}>{contenido}</span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 /**
  * Región viva del paso Envío (diseño 2026-11-09 §2): una sola frase con el envío y el total. Empieza vacía al
@@ -53,7 +100,8 @@ function Contenido() {
   const router = useRouter();
   const params = useSearchParams();
   const { catalogo } = useCatalogo();
-  const { lineas, totales, listo, vaciar } = useCarrito();
+  const { lineas, totales, listo, vaciar, abrirCajon } = useCarrito();
+  const { buscarCafe } = useCatalogo();
   const { avisar } = useAvisos();
   const tienda = catalogo.tienda;
   // Versión y fecha de los documentos aceptados: siempre de data/config.csv, nunca fijas en el código (LEG-088).
@@ -64,7 +112,7 @@ function Contenido() {
   const aviso = avisoPrivacidad(tienda.vendedor, formatearWhatsapp(tienda.whatsapp));
 
   const pedido = params.get("paso");
-  const paso: Paso = esPaso(pedido) ? pedido : "carrito";
+  const paso: Paso = pedido === "resumen" ? "resumen" : "envio";
 
   const [valores, setValores] = useState<ValoresEnvio>(ENVIO_VACIO);
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -77,18 +125,25 @@ function Contenido() {
   const [promoWhatsapp, setPromoWhatsapp] = useState(false);
   const [promoCorreo, setPromoCorreo] = useState(false);
   const [erroresResumen, setErroresResumen] = useState<{ errores: Record<string, string>; lineas: string[] } | null>(null);
-  const [resultado, setResultado] = useState<PedidoListo | null>(null);
+  // Solicitud preparada en el último clic válido, con la firma de lo que llevaba (LEG-173; §4 bis). Solo en memoria.
+  const [resultado, setResultado] = useState<{ pedido: PedidoListo; firma: string } | null>(null);
   const titulo = useRef<HTMLHeadingElement>(null);
+  const cajaLineas = useRef<HTMLDivElement>(null);
+  const detallesMensaje = useRef<HTMLDetailsElement>(null);
 
-  const irA = (p: Paso) => router.push(p === "carrito" ? "/pedido/" : `/pedido/?paso=${p}`);
+  const irA = (p: Paso) => router.push(p === "envio" ? "/pedido/" : "/pedido/?paso=resumen");
 
-  // Los pasos que dependen de datos que se pierden al recargar vuelven al anterior.
+  // ?paso=envio (compatibilidad), ?paso=carrito, ?paso=confirmacion u otro valor: se reemplazan por /pedido/ (A1, LEG-175).
+  useEffect(() => {
+    if (pedido !== null && pedido !== "resumen") router.replace("/pedido/");
+  }, [pedido, router]);
+
+  // El Resumen depende de datos que se pierden al recargar: sin ellos vuelve a Envío.
   const sinPedido = listo && lineas.length === 0;
   useEffect(() => {
     if (!listo || sinPedido) return;
-    if (paso === "resumen" && !envioValido) router.replace("/pedido/?paso=envio");
-    if (paso === "confirmacion" && !resultado) router.replace(envioValido ? "/pedido/?paso=resumen" : "/pedido/?paso=envio");
-  }, [listo, sinPedido, paso, envioValido, resultado, router]);
+    if (paso === "resumen" && !envioValido) router.replace("/pedido/");
+  }, [listo, sinPedido, paso, envioValido, router]);
 
   // Al cambiar de paso, el foco va al título para lectores de pantalla y teclado.
   useEffect(() => {
@@ -115,23 +170,31 @@ function Contenido() {
     irA("resumen");
   };
 
-  // Microcopy §5.9 (v1.1; LEG-101, LEG-102; QA-006): el botón sigue enfocable con aria-disabled y una microayuda dice qué falta.
+  // Microcopy §5.9 (LEG-101, LEG-102; QA-006; LEG-172 (4)): el botón sigue enfocable con aria-disabled y una microayuda dice qué falta.
   const faltanCasillas = !autorizacion || !terminos;
-  const microayuda = !autorizacion && !terminos
-    ? "Para preparar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos."
-    : !autorizacion
-      ? "Para preparar tu pedido, falta que autorices el tratamiento de tus datos."
-      : !terminos
-        ? "Para preparar tu pedido, falta que aceptes los términos y condiciones."
-        : null;
+  const microayuda = microayudaCasillas(terminos, autorizacion);
   // Errores bajo cada casilla: solo tras pulsar el botón y mientras esa casilla siga sin marcar (al marcarla, desaparece).
   const errorAutorizacion = !autorizacion ? erroresResumen?.errores.autorizacionDatos : undefined;
   const errorTerminos = !terminos ? erroresResumen?.errores.aceptaTerminos : undefined;
 
-  const finalizar = () => {
+  // Todo lo que entra en el mensaje. Si cambia el carrito (también desde otra pestaña), un dato de envío o una casilla,
+  // la solicitud preparada deja de valer: el respaldo se oculta y el siguiente clic genera número y texto nuevos (LEG-173 (2)).
+  const firma = firmaSolicitud({ lineas, envio: { ...valores }, terminos, autorizacion, promoWhatsapp, promoCorreo });
+  const vigente = resultado && resultado.firma === firma ? resultado.pedido : null;
+
+  /**
+   * «Enviar por WhatsApp» (LEG-172, bloqueante): sin las casillas 1 y 2 no hay número DS, texto ni enlace. Con las dos,
+   * se arma el mensaje y se abre wa.me en este mismo manejador, de forma síncrona: nada asíncrono antes de window.open
+   * (microcopy §5.5). Un segundo clic sin cambios reabre el mismo enlace con el mismo número (§4 bis 1).
+   */
+  const enviar = () => {
+    if (vigente) {
+      window.open(vigente.enlace, "_blank", "noopener,noreferrer");
+      return;
+    }
     const consentimientos = validar(esquemaConsentimientos, { autorizacionDatos: autorizacion, aceptaTerminos: terminos });
     if (!consentimientos.ok) {
-      // No se arma el mensaje ni el enlace wa.me y las casillas no se marcan solas: se muestran los errores y el foco va a la primera sin marcar.
+      // Las casillas no se marcan solas: errores bajo cada una y foco a la primera sin marcar (§5.9, regla 1).
       setErroresResumen({ errores: consentimientos.errores, lineas: [] });
       requestAnimationFrame(() => document.getElementById(!terminos ? "c-ter" : "c-aut")?.focus());
       return;
@@ -141,20 +204,24 @@ function Contenido() {
     const promociones = { whatsapp: promoWhatsapp, correo: promoCorreo && Boolean(datosEnvio?.correo) };
     const r = prepararPedido(catalogo, { lineas, envio: valores, autorizacionDatos: autorizacion, aceptaTerminos: terminos, promociones, numeroSolicitud }, CODIGOS_DEPARTAMENTO);
     if (!r.ok) {
+      // No se abre nada: caja de error con foco (M9, fila 5).
       setErroresResumen({ errores: r.errores, lineas: r.lineas });
+      requestAnimationFrame(() => cajaLineas.current?.focus());
       return;
     }
+    window.open(r.pedido.enlace, "_blank", "noopener,noreferrer");
+    // Con noopener, window.open devuelve null: el sitio no sabe si WhatsApp se abrió y por eso el respaldo aparece siempre.
     setErroresResumen(null);
-    setResultado(r.pedido);
-    irA("confirmacion");
+    setResultado({ pedido: r.pedido, firma });
   };
 
   const copiar = async () => {
-    if (!resultado) return;
+    if (!vigente) return;
     try {
-      await navigator.clipboard.writeText(resultado.texto);
+      await navigator.clipboard.writeText(vigente.texto);
       avisar("Mensaje copiado. Pégalo en WhatsApp.");
     } catch {
+      if (detallesMensaje.current) detallesMensaje.current.open = true;
       const pre = document.getElementById("mensaje-pedido");
       if (pre) {
         const rango = document.createRange();
@@ -167,21 +234,9 @@ function Contenido() {
     }
   };
 
-  const indice = PASOS.findIndex((p) => p.id === paso);
-  const encabezado = (
-    <ol className="mb-10 flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Pasos del pedido">
-      {PASOS.map((p, i) => (
-        <li key={p.id} aria-current={i === indice ? "step" : undefined} className={i === indice ? "font-extrabold text-ink-title" : i < indice ? "font-semibold text-ink" : "font-medium text-ink-muted"}>
-          <span className="mr-2 inline-grid h-6 w-6 place-items-center rounded-full border border-current text-xs tabular-nums">{i + 1}</span>
-          {p.titulo}
-        </li>
-      ))}
-    </ol>
-  );
-
   if (!listo) return <p className="body py-16 text-center text-ink-muted">Cargando tu pedido…</p>;
 
-  if (sinPedido && paso !== "confirmacion") {
+  if (sinPedido) {
     return (
       <div className="py-16 text-center">
         <h1 ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido está vacío</h1>
@@ -195,9 +250,10 @@ function Contenido() {
   const destino = valores.departamento && valores.municipio ? { departamento: valores.departamento, municipio: valores.municipio, comuna: valores.comuna } : null;
   const envioCalculado = destino !== null && totales.lineas.length > 0 ? calcularEnvio(totales.lineas, destino, catalogo.envios) : null;
   const envioPorCotizar = paso === "resumen" && envioCalculado?.tipo === "por_cotizar";
+  const compacto = resumenCompacto(totales.lineas, (slug) => buscarCafe(slug)?.nombre ?? slug);
   const resumenTotales = (
     <div className="rounded-lg bg-surface-raised p-5">
-      <TotalesPedido totales={totales} destino={paso === "carrito" ? null : destino} />
+      <TotalesPedido totales={totales} destino={destino} />
       {envioPorCotizar && (
         <p className="caption mt-3 text-ink-muted" data-testid="aviso-por-cotizar">
           Este valor no incluye el envío. Te lo informamos por WhatsApp y tú decides si lo aceptas antes de pagar.
@@ -208,30 +264,24 @@ function Contenido() {
 
   return (
     <>
-      {encabezado}
-
-      {paso === "carrito" && (
-        <section aria-labelledby="t-carrito">
-          <h1 id="t-carrito" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido</h1>
-          <ul className="mt-4 max-w-2xl">
-            {totales.lineas.map((l) => (
-              <LineaPedido key={`${l.cafeSlug}|${l.gramos}|${l.molienda}`} linea={l} />
-            ))}
-          </ul>
-          <div className="mt-6 max-w-2xl">{resumenTotales}</div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <BotonEnlace href="/cafes/" variante="secundario">Seguir viendo cafés</BotonEnlace>
-            <Boton tamano="lg" onClick={() => irA("envio")}>
-              Continuar con el envío <IconoFlecha className="ds-btn__icon" />
-            </Boton>
-          </div>
-        </section>
-      )}
+      <IndicadorPasos paso={paso} alEditarPedido={abrirCajon} />
 
       {paso === "envio" && (
         <section aria-labelledby="t-envio" className="max-w-2xl">
           <h1 id="t-envio" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">¿A dónde enviamos?</h1>
           <p className="body mt-2 text-ink-muted">Despachamos desde {tienda.ciudadDespacho} a todo Colombia.</p>
+          {/* A1: bloque compacto «Tu pedido»; se edita en el cajón. */}
+          <section aria-labelledby="t-mi-pedido" className="mt-6 rounded-lg border border-line bg-surface-raised p-4" data-testid="bloque-tu-pedido">
+            <div className="flex items-center justify-between gap-4">
+              <h2 id="t-mi-pedido" className="overline text-ink-muted">Tu pedido</h2>
+              <Boton variante="enlace" tamano="sm" aria-label="Editar el pedido" onClick={abrirCajon}>Editar</Boton>
+            </div>
+            <ul className="mt-2 space-y-1">
+              {compacto.lineas.map((t) => <li key={t} className="caption text-ink">{t}</li>)}
+            </ul>
+            {compacto.resto > 0 && <p className="caption mt-1 text-ink-muted">y {compacto.resto} más</p>}
+            <p className="caption mt-2 text-ink-muted">{etiquetaBolsas(totales.bolsas)}</p>
+          </section>
           {Object.keys(errores).length > 0 && (
             // M9: caja con borde e ícono grana; el texto va en tinta.
             <p role="alert" className="ds-alerta mt-4 font-semibold">
@@ -261,13 +311,12 @@ function Contenido() {
               <TotalesPedido totales={totales} destino={destino} />
             </div>
             <AnuncioEnvio frase={envioCalculado ? anuncioEnvio(envioCalculado, totales.subtotalCop) : ""} />
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Boton variante="secundario" onClick={() => irA("carrito")}>
-                <IconoFlechaAtras className="ds-btn__icon" /> Volver al carrito
+            {/* LEG-174: el botón nombra a dónde lleva; ninguno dice «finalizar». */}
+            <div className="mt-8 flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+              <Boton type="submit" tamano="lg" className="max-sm:w-full">
+                Ver el resumen <IconoFlecha className="ds-btn__icon" />
               </Boton>
-              <Boton type="submit" tamano="lg">
-                Finalizar el pedido <IconoFlecha className="ds-btn__icon" />
-              </Boton>
+              <BotonEnlace href="/cafes/" variante="enlace" tamano="sm" className="self-center md:self-auto">Seguir viendo cafés</BotonEnlace>
             </div>
           </form>
         </section>
@@ -363,74 +412,65 @@ function Contenido() {
           )}
 
           {erroresResumen && (erroresResumen.errores.lineas || erroresResumen.lineas.length > 0) && (
-            // M9: caja con borde e ícono grana; título y lista en tinta.
-            <div role="alert" className="ds-alerta mt-4">
+            // M9 (fila 5): caja con borde e ícono grana; título y lista en tinta; recibe el foco y ofrece editar el pedido.
+            <div ref={cajaLineas} role="alert" tabIndex={-1} className="ds-alerta mt-4" data-testid="error-lineas">
               <IconoAlerta className="ds-alerta__icon" />
               <div>
                 <p className="font-semibold">{erroresResumen.errores.lineas}</p>
                 <ul className="mt-1 list-disc pl-5 text-ink">{erroresResumen.lineas.map((l) => <li key={l}>{l}</li>)}</ul>
+                <Boton variante="enlace" tamano="sm" className="mt-2" onClick={abrirCajon}>Editar el pedido</Boton>
               </div>
             </div>
           )}
 
+          {/* LEG-171: cómo sigue la compra, justo encima del botón; la variante se conoce antes del clic. */}
+          <p className="small mt-6 text-ink" data-testid="texto-siguiente-paso">{textoSiguientePaso(envioPorCotizar)}</p>
           {/* Microcopy §5.9: microayuda visible encima del botón, sin aria-live (basta aria-describedby). */}
           {microayuda && (
-            <p id="ayuda-preparar" className="caption mt-8 text-ink-muted" data-testid="ayuda-preparar">{microayuda}</p>
+            <p id="ayuda-preparar" className="caption mt-2 text-ink-muted" data-testid="ayuda-preparar">{microayuda}</p>
           )}
-          <div className={microayuda ? "mt-3 flex flex-wrap gap-3" : "mt-8 flex flex-wrap gap-3"}>
-            <Boton variante="secundario" onClick={() => irA("envio")}>
-              <IconoFlechaAtras className="ds-btn__icon" /> Volver
-            </Boton>
-            {/* Sin `disabled` (no recibiría foco): aria-disabled mientras falte una casilla. prepararPedido vuelve a comprobarlas. */}
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row-reverse sm:justify-end">
+            {/* Sin `disabled` (no recibiría foco): aria-disabled mientras falte una casilla. enviar() vuelve a comprobarlas. */}
             <Boton
               tamano="lg"
               className="max-sm:w-full max-sm:!whitespace-normal"
-              onClick={finalizar}
+              onClick={enviar}
               aria-disabled={faltanCasillas ? true : undefined}
               aria-describedby={microayuda ? "ayuda-preparar" : undefined}
             >
-              Enviar por WhatsApp
-            </Boton>
-          </div>
-        </section>
-      )}
-
-      {paso === "confirmacion" && resultado && (
-        <section aria-labelledby="t-confirmacion" className="max-w-2xl">
-          <h1 id="t-confirmacion" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">Tu pedido está listo para enviar por WhatsApp</h1>
-          {resultado.envio.tipo === "por_cotizar" ? (
-            <p className="body mt-3" data-testid="texto-confirmacion">
-              Pulsa «Enviar por WhatsApp» y manda el mensaje. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.
-            </p>
-          ) : (
-            <p className="body mt-3" data-testid="texto-confirmacion">
-              Pulsa «Enviar por WhatsApp» y manda el mensaje. Con él nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.
-            </p>
-          )}
-          {resultado.indicacionesResumidas && <p className="caption mt-2 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <BotonEnlace href={resultado.enlace} tamano="lg" target="_blank" rel="noopener noreferrer">
               <IconoWhatsapp className="ds-btn__icon" /> Enviar por WhatsApp
-            </BotonEnlace>
-            <Boton variante="secundario" tamano="lg" className="max-sm:w-full" onClick={copiar}>
-              <IconoCopiar className="ds-btn__icon" /> Copiar mensaje
+            </Boton>
+            <Boton variante="secundario" className="max-sm:w-full" onClick={() => irA("envio")}>
+              <IconoFlechaAtras className="ds-btn__icon" /> Volver al envío
             </Boton>
           </div>
-          <p className="caption mt-3 text-ink-muted">Si WhatsApp no se abre, copia el mensaje y envíalo al {formatearWhatsapp(tienda.whatsapp)}.</p>
-          <pre id="mensaje-pedido" className="mt-6 overflow-x-auto whitespace-pre-wrap rounded-lg bg-surface-sunken p-5 text-sm">{resultado.texto}</pre>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Boton variante="secundario" onClick={() => irA("carrito")}>Editar pedido</Boton>
-            <Boton
-              variante="enlace"
-              onClick={() => {
-                vaciar();
-                setResultado(null);
-                router.replace("/pedido/");
-              }}
-            >
-              Vaciar pedido
-            </Boton>
-          </div>
+
+          {/* LEG-173: respaldo solo tras un clic válido, con el mismo texto y número DS del enlace abierto. */}
+          {vigente && (
+            <div className="mt-6 rounded-lg bg-surface-sunken p-5" data-testid="respaldo-whatsapp">
+              <p role="status" className="small font-semibold text-ink">{textoRespaldo(formatearWhatsapp(tienda.whatsapp))}</p>
+              <Boton variante="secundario" className="mt-3 max-sm:w-full" onClick={copiar}>
+                <IconoCopiar className="ds-btn__icon" /> Copiar mensaje
+              </Boton>
+              <details ref={detallesMensaje} className="mt-4">
+                <summary className="cursor-pointer text-sm font-bold">Ver el mensaje</summary>
+                <pre id="mensaje-pedido" className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-surface-raised p-4 text-sm">{vigente.texto}</pre>
+              </details>
+              {vigente.indicacionesResumidas && <p className="caption mt-3 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}
+              <Boton
+                variante="enlace"
+                tamano="sm"
+                className="mt-3"
+                onClick={() => {
+                  vaciar();
+                  setResultado(null);
+                  router.replace("/pedido/");
+                }}
+              >
+                Vaciar pedido
+              </Boton>
+            </div>
+          )}
         </section>
       )}
     </>
