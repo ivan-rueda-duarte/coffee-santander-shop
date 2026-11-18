@@ -354,7 +354,9 @@ test.describe("/envios/ verificación: aclaraciones en small y columna Zona sin 
         const c = await contraste(el);
         expect(c.ratio, id).toBeGreaterThanOrEqual(4.5);
       }
-      const zonas = await page.locator('tr[data-testid^="tarifa-"] > th').evaluateAll((ths) =>
+      // M8: por debajo de lg la tabla no se muestra; el rótulo «Zona n» es el h4 de cada tarjeta.
+      const tabla = vp.width >= 1024;
+      const zonas = await page.locator(tabla ? 'tr[data-testid^="tarifa-"] > th' : '[data-testid^="tarjeta-zona-"] > h4').evaluateAll((ths) =>
         ths.map((th) => {
           const r = document.createRange();
           r.selectNodeContents(th);
@@ -365,12 +367,12 @@ test.describe("/envios/ verificación: aclaraciones en small y columna Zona sin 
       expect(zonas.length).toBeGreaterThan(0);
       for (const z of zonas) {
         expect(z.lineas, `${z.texto}`).toBe(1);
-        expect(z.ws).toBe("nowrap");
+        if (tabla) expect(z.ws).toBe("nowrap");
       }
       expect(await sinDesborde(page)).toBe(true);
       expect(await graves(page)).toEqual([]);
       if (vp.width === 320) {
-        await page.locator("table").first().scrollIntoViewIfNeeded();
+        await page.getByTestId(tabla ? "tabla-envios" : "tarjetas-envios").scrollIntoViewIfNeeded();
         await page.screenshot({ path: "docs/qa/capturas/envios-tabla-320.png" });
       }
     });
