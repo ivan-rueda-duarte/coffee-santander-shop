@@ -173,7 +173,7 @@ function Contenido() {
     irA("resumen");
   };
 
-  // Microcopy §5.9 (LEG-101, LEG-102; QA-006; LEG-172 (4)): el botón sigue enfocable con aria-disabled y una microayuda dice qué falta.
+  // Microcopy §5.9 (LEG-101, LEG-102; QA-006; LEG-172 (4); v1.11, LEG-181): el botón sigue enfocable con aria-disabled y una microayuda nombra las casillas que faltan.
   const faltanCasillas = !autorizacion || !terminos;
   const microayuda = microayudaCasillas(terminos, autorizacion);
   // Errores bajo cada casilla: solo tras pulsar el botón y mientras esa casilla siga sin marcar (al marcarla, desaparece).
@@ -362,11 +362,29 @@ function Contenido() {
             <p className="text-ink-muted" data-testid="resumen-pago">{TEXTOS_PAGO.mensaje}</p>
           </div>
 
-          {/* Cuatro casillas sin marcar, en el orden de D5 §6.3 (LEG-145): 1 y 2 obligatorias; 3 y 4 opcionales, nunca bloquean. */}
-          <fieldset className="mt-6 space-y-3" data-testid="casillas-obligatorias">
+          {/* Cuatro casillas sin marcar (LEG-145). B3 (QA-023, LEG-178, pendiente de validación del abogado antes de publicar):
+              las de promociones (3 y 4, opcionales, nunca bloquean) van encima de las obligatorias (1 y 2), separadas por un
+              filete y con la leyenda visible. Textos, numeración, lógica y mensaje sin cambio. */}
+          <fieldset className="mt-6 space-y-3 border-b border-line pb-4" data-testid="casillas-promociones">
+            <legend className="caption font-semibold text-ink" data-testid="leyenda-promociones">Promociones (opcional)</legend>
+            <label className="flex cursor-pointer items-start gap-3 text-sm">
+              <input id="c-promo-wa" type="checkbox" checked={promoWhatsapp} onChange={(e) => setPromoWhatsapp(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" />
+              <span>{casillaPromocionesWhatsapp(razonSocial)}</span>
+            </label>
+            {datosEnvio?.correo && tienda.vendedor.correoContacto && (
+              <label className="flex cursor-pointer items-start gap-3 text-sm">
+                <input id="c-promo-correo" type="checkbox" checked={promoCorreo} onChange={(e) => setPromoCorreo(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" />
+                <span>{casillaPromocionesCorreo(razonSocial, tienda.vendedor.correoContacto)}</span>
+              </label>
+            )}
+          </fieldset>
+
+          {/* Casillas 1 y 2, obligatorias, pegadas a la acción que habilitan (B3, LEG-178). scroll-mt-24: al recibir el foco
+              tras un clic con casillas faltantes no quedan bajo el encabezado fijo (QA-023, punto 6). */}
+          <fieldset className="mt-4 space-y-3" data-testid="casillas-obligatorias">
             <legend className="sr-only">Autorizaciones obligatorias</legend>
             <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input id="c-ter" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="ds-casilla mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorTerminos ? true : undefined} aria-describedby={errorTerminos ? "e-ter" : undefined} />
+              <input id="c-ter" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="ds-casilla mt-1 h-5 scroll-mt-24 w-5 shrink-0 accent-monte-900" aria-invalid={errorTerminos ? true : undefined} aria-describedby={errorTerminos ? "e-ter" : undefined} />
               <span>
                 {casillaTerminos(legal)[0]}
                 <Link className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">{casillaTerminos(legal)[1]}</Link>
@@ -380,7 +398,7 @@ function Contenido() {
               </p>
             )}
             <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="ds-casilla mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
+              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="ds-casilla mt-1 h-5 scroll-mt-24 w-5 shrink-0 accent-monte-900" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
               <span>
                 {casillaDatos(legal, razonSocial)[0]}
                 <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">{casillaDatos(legal, razonSocial)[1]}</Link>
@@ -394,24 +412,9 @@ function Contenido() {
               </p>
             )}
           </fieldset>
-          {/* Promociones: opcionales, separadas de las obligatorias (LEG-145; separación visual pendiente de diseño). */}
-          <fieldset className="mt-5 space-y-3 border-t border-line pt-5" data-testid="casillas-promociones">
-            <legend className="sr-only">Promociones (opcional)</legend>
-            <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input id="c-promo-wa" type="checkbox" checked={promoWhatsapp} onChange={(e) => setPromoWhatsapp(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" />
-              <span>{casillaPromocionesWhatsapp(razonSocial)}</span>
-            </label>
-            {datosEnvio?.correo && tienda.vendedor.correoContacto && (
-              <label className="flex cursor-pointer items-start gap-3 text-sm">
-                <input id="c-promo-correo" type="checkbox" checked={promoCorreo} onChange={(e) => setPromoCorreo(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" />
-                <span>{casillaPromocionesCorreo(razonSocial, tienda.vendedor.correoContacto)}</span>
-              </label>
-            )}
-          </fieldset>
-
           {/* Vendedor (D5 §6.3): «Te vende De Santander SAS · NIT … · Información del vendedor». */}
           {vendedor && (
-            <p className="caption mt-4 text-ink-muted" data-testid="linea-vendedor">
+            <p className="caption mt-3 text-ink-muted" data-testid="linea-vendedor">
               {vendedor} ·{" "}
               <Link className="underline underline-offset-4" href="/legal/vendedor/" target="_blank" rel="noopener noreferrer">Información del vendedor</Link>
             </p>
@@ -430,12 +433,12 @@ function Contenido() {
           )}
 
           {/* LEG-171: cómo sigue la compra, justo encima del botón; la variante se conoce antes del clic. */}
-          <p className="small mt-6 text-ink" data-testid="texto-siguiente-paso">{textoSiguientePaso(envioPorCotizar)}</p>
+          <p className="small mt-4 text-ink" data-testid="texto-siguiente-paso">{textoSiguientePaso(envioPorCotizar)}</p>
           {/* Microcopy §5.9: microayuda visible encima del botón, sin aria-live (basta aria-describedby). */}
           {microayuda && (
             <p id="ayuda-preparar" className="caption mt-2 text-ink-muted" data-testid="ayuda-preparar">{microayuda}</p>
           )}
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row-reverse sm:justify-end">
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row-reverse sm:justify-end">
             {/* Sin `disabled` (no recibiría foco): aria-disabled mientras falte una casilla. enviar() vuelve a comprobarlas. */}
             <Boton
               tamano="lg"

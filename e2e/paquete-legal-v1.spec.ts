@@ -231,14 +231,15 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     expect(describedby, "el botón deshabilitado no tiene aria-describedby").toBeTruthy();
     const ayuda = page.locator(`[id="${describedby}"]`);
     await expect(ayuda).toBeVisible();
-    await expect(ayuda).toHaveText(/casilla/i);
+    // §5.9 v1.11 (LEG-181): la microayuda nombra lo que falta («los términos», «tus datos»), no «las casillas».
+    await expect(ayuda).toHaveText(/términos.+datos/i);
 
-    // Vía elegida (microcopy §5.9 v1.1, LEG-101/102): sin `disabled`, con aria-disabled; textos exactos por caso.
+    // Vía elegida (microcopy §5.9 v1.1, LEG-101/102): sin `disabled`, con aria-disabled. Microayuda: variante de una frase de v1.11 (LEG-181, QA-023).
     await expect(boton).not.toHaveAttribute("disabled", /.*/);
     await expect(boton).toHaveAttribute("aria-disabled", "true");
-    const AYUDA_DOS = "Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
-    const AYUDA_DATOS = "Para enviar tu pedido, falta que autorices el tratamiento de tus datos.";
-    const AYUDA_TERMINOS = "Para enviar tu pedido, falta que aceptes los términos y condiciones.";
+    const AYUDA_DOS = "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
+    const AYUDA_DATOS = "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
+    const AYUDA_TERMINOS = "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
     const ERROR_DATOS = "Debes autorizar el tratamiento de tus datos para continuar.";
     const ERROR_TERMINOS = "Debes aceptar los términos para continuar.";
     await expect(ayuda).toHaveText(AYUDA_DOS);
@@ -267,7 +268,7 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     }
     expect(await graves(page)).toEqual([]);
 
-    // Al marcar la de datos su error desaparece y la microayuda cambia al caso que falta.
+    // Al marcar la de datos su error desaparece; la microayuda sigue (v1.11: una sola frase para todos los casos, LEG-181).
     await autorizacion.check();
     await expect(autorizacion).not.toHaveAttribute("aria-invalid", /.*/);
     await expect(page.getByText(ERROR_DATOS)).toHaveCount(0);

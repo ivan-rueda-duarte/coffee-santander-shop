@@ -63,10 +63,10 @@ async function irAlResumen(page: Page, departamento: string, municipio: string, 
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
-// Orden de D5 §6.3 (casilla 1 términos, casilla 2 datos; LEG-145).
-const AYUDA_DOS = "Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
-const AYUDA_DATOS = "Para enviar tu pedido, falta que autorices el tratamiento de tus datos.";
-const AYUDA_TERMINOS = "Para enviar tu pedido, falta que aceptes los términos y condiciones.";
+// Orden de D5 §6.3 (casilla 1 términos, casilla 2 datos; LEG-145). Microayuda: variante de una frase de §5.9 v1.11 (LEG-181, QA-023).
+const AYUDA_DOS = "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
+const AYUDA_DATOS = "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
+const AYUDA_TERMINOS = "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
 const ERROR_DATOS = "Debes autorizar el tratamiento de tus datos para continuar.";
 const ERROR_TERMINOS = "Debes aceptar los términos para continuar.";
 

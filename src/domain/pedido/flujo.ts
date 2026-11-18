@@ -5,14 +5,13 @@ import type { LineaCarrito } from "./carrito";
 // Los textos van letra por letra desde docs/legal/revisiones/2026-11-18-flujo-pedido-un-clic.md.
 
 /**
- * Microayuda de §5.9 encima de «Enviar por WhatsApp» (LEG-172 (4) y §4 bis 2-3): «Para enviar tu pedido…»,
- * con los términos antes de los datos (orden de las casillas). null si las dos casillas obligatorias están marcadas.
+ * Microayuda de §5.9 encima de «Enviar por WhatsApp»: variante de una sola frase de la microcopy v1.11 (LEG-181), la
+ * misma si falta una casilla obligatoria o las dos; nombra las dos casillas que exige el botón para que no se confundan
+ * con las de promociones (QA-023). null si las dos casillas obligatorias están marcadas.
  */
 export function microayudaCasillas(terminos: boolean, autorizacion: boolean): string | null {
-  if (!terminos && !autorizacion) return "Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
-  if (!autorizacion) return "Para enviar tu pedido, falta que autorices el tratamiento de tus datos.";
-  if (!terminos) return "Para enviar tu pedido, falta que aceptes los términos y condiciones.";
-  return null;
+  if (terminos && autorizacion) return null;
+  return "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
 }
 
 /** LEG-171: cómo sigue la compra, encima del botón del resumen. La variante depende de si el envío va por cotizar. */

@@ -14,7 +14,7 @@ async function sembrar(page: Page, lineas: object[] = UNA_BOLSA) {
   await page.evaluate((l) => localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: l })), lineas);
 }
 
-async function alResumen(page: Page, lineas: object[] = UNA_BOLSA) {
+async function alResumen(page: Page, lineas: object[] = UNA_BOLSA, correo?: string) {
   await sembrar(page, lineas);
   await page.goto("/pedido/");
   await page.getByLabel("Nombre completo").fill("Ana Rueda");
@@ -22,6 +22,7 @@ async function alResumen(page: Page, lineas: object[] = UNA_BOLSA) {
   await page.getByLabel("Departamento").selectOption("Santander");
   await page.getByLabel("Municipio").selectOption("Bucaramanga");
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
+  if (correo) await page.getByLabel(/Correo/).fill(correo);
   await page.getByRole("button", { name: /Ver el resumen/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
@@ -189,7 +190,8 @@ test.describe("A1: flujo del pedido en tres pasos", () => {
       els.filter((e) => { const r = e.getBoundingClientRect(); const t = r.top + window.scrollY; return t > a && t < b; }).map((e) => e.getAttribute("data-testid") ?? e.tagName.toLowerCase()),
       [tope, fin] as const,
     );
-    expect(entre).toEqual(["casillas-promociones", "linea-vendedor", "texto-siguiente-paso", "ayuda-preparar", "div"]);
+    // B3 (QA-023, LEG-178): las promociones van encima de las obligatorias y ya no entran en el tramo.
+    expect(entre).toEqual(["linea-vendedor", "texto-siguiente-paso", "ayuda-preparar", "div"]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 
     await page.setViewportSize({ width: 320, height: 740 });
@@ -199,5 +201,77 @@ test.describe("A1: flujo del pedido en tres pasos", () => {
     for (const a of anchos) expect(a).toBeLessThanOrEqual(1);
     expect((await pasos.locator("li span.font-extrabold.text-ink-title").boundingBox())!.width).toBeGreaterThan(20);
     expect((await pasos.boundingBox())!.height).toBeLessThan(50);
+  });
+});
+
+// QA-023 (diseño 2026-11-18, sección «QA-023», partes 1 y B3; LEG-178 a LEG-182; microcopy v1.11 §5.9).
+test.describe("QA-023: Resumen a 360 × 740", () => {
+  const UNA_FRASE = "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
+  const medir = async (page: Page) =>
+    page.evaluate(() => {
+      const arriba = (sel: string) => document.querySelector(sel)!.closest("label")!.getBoundingClientRect().top + window.scrollY;
+      const b = [...document.querySelectorAll("button")].find((e) => e.textContent?.includes("Enviar por WhatsApp"))!;
+      const fin = b.getBoundingClientRect().bottom + window.scrollY;
+      const util = 740 - document.querySelector("header")!.getBoundingClientRect().height;
+      return { m1: Math.round(fin - arriba("#c-ter")), m2: Math.round(fin - arriba("#c-aut")), util: Math.round(util) };
+    });
+
+  for (const correo of [undefined, "ana@example.com"]) {
+    test(`M1 ≤ U − 16 con B3, ${correo ? "con correo (casilla 4 visible)" : "sin correo"}; orden promociones → filete → obligatorias`, async ({ page }) => {
+      await page.setViewportSize({ width: 360, height: 740 });
+      await alResumen(page, UNA_BOLSA, correo);
+      await page.evaluate(() => document.fonts.ready);
+      await expect(page.locator("#c-promo-correo")).toHaveCount(correo ? 1 : 0);
+      const m = await medir(page);
+      test.info().annotations.push({ type: `qa-023-${correo ? "con" : "sin"}-correo`, description: JSON.stringify(m) });
+      expect(m.m1).toBeLessThanOrEqual(m.util - 16);
+
+      // Orden del DOM: promociones antes de las obligatorias, con el filete (border-bottom) entre los dos.
+      const orden = await page.locator("[data-testid='casillas-promociones'], [data-testid='casillas-obligatorias']").evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+      expect(orden).toEqual(["casillas-promociones", "casillas-obligatorias"]);
+      const promo = page.getByTestId("casillas-promociones");
+      expect(await promo.evaluate((e) => getComputedStyle(e).borderBottomWidth)).toBe("1px");
+      if (correo) expect(await promo.locator("#c-promo-correo").count()).toBe(1);
+      // Leyenda visible (LEG-178, condición 1).
+      await expect(page.getByTestId("leyenda-promociones")).toHaveText("Promociones (opcional)");
+      expect((await page.getByTestId("leyenda-promociones").boundingBox())!.height).toBeGreaterThan(10);
+    });
+  }
+
+  test("microayuda v1.11 de una frase; foco a la primera obligatoria sin marcar, visible bajo el encabezado", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await alResumen(page);
+    const ayuda = page.getByTestId("ayuda-preparar");
+    await expect(ayuda).toHaveText(UNA_FRASE);
+    await expect(page.getByText(/marca las dos casillas/)).toHaveCount(0);
+    // Las promociones marcadas no habilitan el botón ni cambian la microayuda.
+    await page.locator("#c-promo-wa").check();
+    await expect(boton(page)).toHaveAttribute("aria-disabled", "true");
+    await boton(page).click({ force: true });
+    await expect(terminos(page)).toBeFocused();
+    const encabezado = await page.locator("header").first().evaluate((h) => h.getBoundingClientRect().bottom);
+    const tope = await page.locator("#c-ter").evaluate((e) => e.closest("label")!.getBoundingClientRect().top);
+    expect(tope).toBeGreaterThanOrEqual(encabezado);
+    await expect(page.getByText("Debes aceptar los términos para continuar.")).toBeVisible();
+    await terminos(page).check();
+    await expect(ayuda).toHaveText(UNA_FRASE);
+    await boton(page).click({ force: true });
+    await expect(datos(page)).toBeFocused();
+    await datos(page).check();
+    await expect(ayuda).toHaveCount(0);
+  });
+
+  test("separaciones de la parte 1 (16 · 12 · 16 · 8 · 12)", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await alResumen(page);
+    const mt = (sel: string) => page.locator(sel).first().evaluate((e) => getComputedStyle(e).marginTop);
+    expect(await page.getByTestId("casillas-promociones").evaluate((e) => getComputedStyle(e).paddingBottom)).toBe("16px");
+    expect(await mt("[data-testid='casillas-obligatorias']")).toBe("16px");
+    expect(await mt("[data-testid='linea-vendedor']")).toBe("12px");
+    expect(await mt("[data-testid='texto-siguiente-paso']")).toBe("16px");
+    expect(await mt("[data-testid='ayuda-preparar']")).toBe("8px");
+    expect(await page.getByTestId("ayuda-preparar").evaluate((e) => getComputedStyle(e.nextElementSibling!).marginTop)).toBe("12px");
+    expect(await page.locator("#c-ter").evaluate((e) => getComputedStyle(e).scrollMarginTop)).toBe("96px");
+    expect(await page.locator("#c-aut").evaluate((e) => getComputedStyle(e).scrollMarginTop)).toBe("96px");
   });
 });

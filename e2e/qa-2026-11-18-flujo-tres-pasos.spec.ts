@@ -9,15 +9,15 @@ import { constanciaMensaje, enviarPorWhatsapp, pestanasAbiertas } from "./ayudas
 const UNA_BOLSA = [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }];
 const SERIAS = ["serious", "critical"];
 
-// Microcopy v1.10, letra por letra.
+// Microcopy v1.10, letra por letra (microayuda: §5.9 v1.11, variante de una frase, LEG-181; QA-023).
 const T = {
   siguienteTarifa:
     "Al pulsar «Enviar por WhatsApp» se abre WhatsApp con tu pedido escrito. Con ese mensaje nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.",
   siguienteCotizar:
     "Al pulsar «Enviar por WhatsApp» se abre WhatsApp con tu pedido escrito. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.",
-  ayudaDos: "Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.",
-  ayudaTerminos: "Para enviar tu pedido, falta que aceptes los términos y condiciones.",
-  ayudaDatos: "Para enviar tu pedido, falta que autorices el tratamiento de tus datos.",
+  ayudaDos: "Para enviar tu pedido, acepta los términos y autoriza tus datos.",
+  ayudaTerminos: "Para enviar tu pedido, acepta los términos y autoriza tus datos.",
+  ayudaDatos: "Para enviar tu pedido, acepta los términos y autoriza tus datos.",
   errorDatos: "Debes autorizar el tratamiento de tus datos para continuar.",
   errorTerminos: "Debes aceptar los términos para continuar.",
   respaldo: "¿No se abrió WhatsApp? Copia el mensaje y envíalo al +57 300 112 9874.",

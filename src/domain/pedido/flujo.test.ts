@@ -14,11 +14,17 @@ const base: EstadoSolicitud = {
   promoCorreo: false,
 };
 
-describe("microayuda de las casillas (§5.9; LEG-172 (4), §4 bis)", () => {
-  it("dice «Para enviar tu pedido» y nombra primero los términos", () => {
-    expect(microayudaCasillas(false, false)).toBe("Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.");
-    expect(microayudaCasillas(true, false)).toBe("Para enviar tu pedido, falta que autorices el tratamiento de tus datos.");
-    expect(microayudaCasillas(false, true)).toBe("Para enviar tu pedido, falta que aceptes los términos y condiciones.");
+describe("microayuda de las casillas (§5.9 v1.11; LEG-181, QA-023)", () => {
+  const UNA_FRASE = "Para enviar tu pedido, acepta los términos y autoriza tus datos.";
+  it("usa la variante de una sola frase de v1.11 con una o con las dos casillas sin marcar", () => {
+    expect(microayudaCasillas(false, false)).toBe(UNA_FRASE);
+    expect(microayudaCasillas(true, false)).toBe(UNA_FRASE);
+    expect(microayudaCasillas(false, true)).toBe(UNA_FRASE);
+  });
+  it("no usa la variante retirada «marca las dos casillas» (LEG-181)", () => {
+    for (const [t, a] of [[false, false], [true, false], [false, true]] as const) {
+      expect(microayudaCasillas(t, a)).not.toMatch(/marca las dos casillas/);
+    }
   });
   it("desaparece con las dos casillas marcadas", () => {
     expect(microayudaCasillas(true, true)).toBeNull();

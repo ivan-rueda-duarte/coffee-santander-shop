@@ -74,7 +74,7 @@ async function prepararYLeer(page: Page) {
 // §7.4 (1): las dos casillas obligatorias cargan sin marcar y bloquean; las de promociones no bloquean.
 // ---------------------------------------------------------------------------------------------------------
 test.describe("casillas (D5 §6.3, D2 «Textos de las casillas»)", () => {
-  test("orden 1 a 4, textos exactos, sin marcar; 1 y 2 bloquean; 3 y 4 nunca bloquean ni desbloquean", async ({ page }) => {
+  test("orden en pantalla 3-4 · 1-2 (B3), textos exactos, sin marcar; 1 y 2 bloquean; 3 y 4 nunca bloquean ni desbloquean", async ({ page }) => {
     await resumen(page, "Santander", "Bucaramanga", DOS_BOLSAS, { correo: "ana@ejemplo.co" });
     const nombres = await page.getByRole("checkbox").evaluateAll((els) =>
       els.map((e) => {
@@ -82,7 +82,9 @@ test.describe("casillas (D5 §6.3, D2 «Textos de las casillas»)", () => {
         return (l?.textContent ?? "").replace(/\s+/g, " ").trim();
       }),
     );
-    expect(nombres).toEqual([TERMINOS, DATOS, PROMO_WA, PROMO_CORREO]);
+    // QA-023, B3 (LEG-178, pendiente de validación del abogado): promociones (3 y 4) encima de las obligatorias (1 y 2).
+    // Antes, orden 1-2-3-4 de D5 §6.3 (LEG-145). La numeración y los textos no cambian.
+    expect(nombres).toEqual([PROMO_WA, PROMO_CORREO, TERMINOS, DATOS]);
     for (const n of [TERMINOS, DATOS, PROMO_WA, PROMO_CORREO]) await expect(page.getByRole("checkbox", { name: n, exact: true })).not.toBeChecked();
     const boton = page.getByRole("button", { name: BOTON });
     await expect(boton).toHaveAttribute("aria-disabled", "true");
