@@ -79,7 +79,7 @@ Sin verificar: Firefox (no está instalado) y WebKit/Safari iOS (no arranca sin 
 |---|---|---|---|---|---|
 | QA-020 | Media | Build / dependencias | `sharp` no está declarado como dependencia | desarrollador-fullstack | **Cerrado** |
 | QA-022 | Media | Pedido / LEG-173 | El respaldo «¿No se abrió WhatsApp?» reaparece sin un clic nuevo al deshacer un cambio | desarrollador-fullstack | Corregido — pendiente verificación (`dd5a13a`) |
-| QA-023 | Media | Diseño / Resumen 360 px | La casilla 1 y «Enviar por WhatsApp» no caben en una pantalla de 360 × 740 (789 px de 665) | disenador-marca (especificación), luego desarrollador-fullstack | Abierto |
+| QA-023 | Media | Diseño / Resumen 360 px | La casilla 1 y «Enviar por WhatsApp» no caben en una pantalla de 360 × 740 (789 px de 665) | disenador-marca (especificación), luego desarrollador-fullstack | Corregido — pendiente verificación (`44f50d6`) |
 | QA-024 | Baja | Accesibilidad / indicador | El nombre accesible del paso hecho es «Pedido , hecho» | desarrollador-fullstack | Corregido — pendiente verificación (`290ee55`) |
 
 ### QA-022 — El respaldo «¿No se abrió WhatsApp?» reaparece sin un clic nuevo al deshacer un cambio
@@ -102,6 +102,7 @@ Sin verificar: Firefox (no está instalado) y WebKit/Safari iOS (no arranca sin 
 - Evidencia: prueba «altura a 360 × 740: casilla 1 → borde inferior del botón» (`Expected: <= 665, Received: 789`); captura `docs/qa/capturas/2026-11-18-a1-resumen-360-casilla1.png`; la anotación `casilla-1-a-boton-360` de `e2e/flujo-tres-pasos.spec.ts` da la misma medida.
 - Prueba de cierre: esa prueba. Si diseño y legal deciden que el presupuesto no aplica, se cambia la aserción con la decisión citada.
 - Responsable sugerido: disenador-marca (nueva especificación de alturas); después desarrollador-fullstack. Conviene informar a legal-cumplimiento, porque la condición salió de su dictamen («Para disenador-marca»).
+- Estado: Corregido — pendiente verificación. Commit `44f50d6`. Causa raíz: el presupuesto de A1 subestimó las casillas legales y las de promociones quedaban dentro del tramo casilla 1 → botón. Se aplicó la sección «QA-023» de diseño (parte 1 y B3, LEG-178) con la microayuda de una frase de la microcopy v1.11 §5.9 (LEG-181). Medido a 360 × 740 desde la etiqueta de la casilla 1: M1 = 578 px y M2 = 506 px, con y sin correo (U = 665). La prueba de cierre mide desde el `<input>` (574 px) con umbral `≤ U` (665); el criterio nuevo de diseño es `M1 ≤ U − 16` (649), que cubren las pruebas nuevas de `e2e/flujo-tres-pasos.spec.ts`. B3 queda sujeto a la validación del abogado antes de publicar.
 
 ### QA-024 — El nombre accesible del paso hecho es «Pedido , hecho»
 - Severidad: Baja
