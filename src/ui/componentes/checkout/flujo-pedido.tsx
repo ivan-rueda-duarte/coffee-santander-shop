@@ -56,18 +56,21 @@ function IndicadorPasos({ paso, alEditarPedido }: { paso: Paso; alEditarPedido: 
         const rotulo = (
           <span className={esActual ? "font-extrabold text-ink-title" : hecho ? "font-semibold text-ink max-[359px]:sr-only" : "font-medium text-ink-muted max-[359px]:sr-only"}>
             {p.titulo}
-            {hecho && <span className="sr-only">, hecho</span>}
+            {hecho && <span aria-hidden="true" className="sr-only">, hecho</span>}
           </span>
         );
         const contenido = <>{circulo}{rotulo}</>;
+        // QA-024: nombre accesible «Pedido, hecho» sin el espacio que Chromium mete antes del span sr-only absoluto.
+        // El span «, hecho» queda oculto al árbol (el nombre sale del aria-label) y conserva el texto del elemento de la lista.
+        const nombreHecho = `${p.titulo}, hecho`;
         const clase = "inline-flex items-center gap-2 py-2.5";
         return (
           <li key={p.id} aria-current={esActual ? "step" : undefined} className="flex items-center gap-x-4 sm:gap-x-6">
             {i > 0 && <span aria-hidden="true" className="hidden h-px w-8 bg-line-strong sm:block" />}
             {hecho && p.id === "pedido" ? (
-              <button type="button" onClick={alEditarPedido} className={`${clase} rounded-md underline-offset-4 hover:underline`}>{contenido}</button>
+              <button type="button" aria-label={nombreHecho} onClick={alEditarPedido} className={`${clase} rounded-md underline-offset-4 hover:underline`}>{contenido}</button>
             ) : hecho && p.id === "envio" ? (
-              <Link href="/pedido/" className={`${clase} rounded-md underline-offset-4 hover:underline`}>{contenido}</Link>
+              <Link href="/pedido/" aria-label={nombreHecho} className={`${clase} rounded-md underline-offset-4 hover:underline`}>{contenido}</Link>
             ) : (
               <span className={clase}>{contenido}</span>
             )}
