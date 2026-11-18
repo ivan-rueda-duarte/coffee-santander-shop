@@ -154,10 +154,10 @@ En descarga real, `5bbf1f8` no reduce el JS de inicio: pasa de 165.029 a 166.076
 
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
-| QA-018 | Media | Rendimiento | JS inicial de inicio por encima del presupuesto (reformulado: 166.076 B descargados > 153.600 B) | desarrollador-fullstack | **Abierto** |
-| QA-025 | Baja | Accesibilidad / M1 | Los chips de filtro tienen 42 px de área táctil, no 44 | desarrollador-fullstack | Abierto |
-| QA-026 | Baja | Accesibilidad / M1 | Controles fuera de la tabla de M1 por debajo de 44 px a 360 | disenador-marca → desarrollador-fullstack | Abierto |
-| QA-027 | Baja | Accesibilidad / M3 | Al enfocar «Envíos» con Tab, la tira no se desplaza y el enlace queda cortado | desarrollador-fullstack | Abierto |
+| QA-018 | Media | Rendimiento | JS inicial de inicio por encima del presupuesto (reformulado: 166.076 B descargados > 153.600 B) | desarrollador-fullstack | Corregido — pendiente verificación (`ff08d1d`) |
+| QA-025 | Baja | Accesibilidad / M1 | Los chips de filtro tienen 42 px de área táctil, no 44 | desarrollador-fullstack | Corregido — pendiente verificación (`50bb2ca`) |
+| QA-026 | Baja | Accesibilidad / M1 | Controles fuera de la tabla de M1 por debajo de 44 px a 360 | disenador-marca → desarrollador-fullstack | Corregido — pendiente verificación (`25af37b`) |
+| QA-027 | Baja | Accesibilidad / M3 | Al enfocar «Envíos» con Tab, la tira no se desplaza y el enlace queda cortado | desarrollador-fullstack | Corregido — pendiente verificación (`a131ef3`) |
 | QA-017 | Baja | (ronda 2026-11-14) | sin cambios en esta ronda | desarrollador-fullstack | Abierto |
 
 ### QA-018 — JS inicial de inicio por encima del presupuesto (reformulado)
@@ -167,6 +167,7 @@ En descarga real, `5bbf1f8` no reduce el JS de inicio: pasa de 165.029 a 166.076
 - Esperado: ≤ 153.600 B (150 KiB), sin contar los `noModule`.
 - Obtenido: 166.076 B (162,2 KiB). Trozos: 71.572 y 45.546 (framework), 10.674, **10.525 (Slider de Radix)**, 8.654, 7.259, 3.909, 3.611, **2.369 (BotonAgregar)** y 1.957.
 - Evidencia y prueba de cierre: `e2e/qa-2026-11-18-ux-media.spec.ts` › «QA-018 · JS inicial de inicio» (falla con «JS inicial 166076 B = 162.2 KiB»).
+- Estado: Corregido — pendiente verificación. Commit `ff08d1d`. Causa raíz: al cargar se descargaban el deslizador de la barra lateral (oculta bajo `lg`), el mapa (el observador miraba la sección y no la caja del mapa, y desde M4 la sección asoma bajo la portada) y la isla `BloqueCompra` de la ficha (`Migas` vivía en `ficha-cafe.tsx`, y la precarga de `/envios/` desde «Envíos» traía su trozo). Medida del desarrollador a 360 × 740: 153.214 B. A 1.440 × 900: 176.692 B, porque el mapa (21.224 B) está en la primera pantalla desde M4.
 - Responsable sugerido: desarrollador-fullstack. Sugerencias: cargar `FiltroRango` (o el panel lateral) solo cuando se ve, desde `lg` o al abrir la hoja; revisar si la isla `BotonAgregar` puede ir en el trozo compartido.
 
 ### QA-025 — Los chips de filtro tienen 42 px de área táctil, no 44
@@ -176,6 +177,7 @@ En descarga real, `5bbf1f8` no reduce el JS de inicio: pasa de 165.029 a 166.076
 - Esperado: 36 visibles + 4 + 4 = 44 px (M1 n.º 2).
 - Obtenido: 42 px. El `::before` con `-inset-y-1` se coloca respecto al **borde interior** (padding box) del chip, y `.ds-tag--outline` tiene 1 px de borde: −4 + 1 = 3 px por lado. Pasa lo mismo en la hoja de filtros («Tona», «Pinchote», «Medio», «Oscuro», «Caramelo», «Chocolate»).
 - Evidencia y prueba de cierre: `e2e/qa-2026-11-18-ux-media.spec.ts` › «QA-025: el área ampliada de un chip…» (recibe 42) y los escenarios M1 «inicio con bolsas», «hoja de filtros» y «tarjeta de provincia».
+- Estado: Corregido — pendiente verificación. Commit `50bb2ca`. Causa raíz: el `::before` se coloca respecto a la caja de relleno y el borde de 1 px restaba 1 px por lado; `-inset-y-1` pasa a `-inset-y-[5px]`.
 - Responsable sugerido: desarrollador-fullstack (p. ej. `before:-inset-y-[5px]`). Los pines y las migas no tienen borde y sí miden 44.
 
 ### QA-026 — Controles fuera de la tabla de M1 por debajo de 44 px a 360
@@ -194,6 +196,7 @@ En descarga real, `5bbf1f8` no reduce el JS de inicio: pasa de 165.029 a 166.076
 | «Cerrar» de la tarjeta de provincia (`h-11 w-11`, encogido por flex: falta `shrink-0`) | hoja de provincia | 42,5 × 44 |
 
 - Evidencia y prueba de cierre: los escenarios M1 de `e2e/qa-2026-11-18-ux-media.spec.ts` («inicio con el cajón abierto», «hoja de filtros», «tarjeta de provincia», «ficha», «/envios/», «/pedido/ (envío)», «/pedido/ (resumen)»).
+- Estado: Corregido — pendiente verificación. Commit `25af37b`, según la sección «QA-025 y QA-026» de la especificación. Causa raíz: la tabla de M1 no cubría estos controles. Nota para QA: la especificación (n.º 3) hace de la raíz del deslizador (44 px) el área táctil y deja el pulgar en 20 × 20; el escenario «hoja de filtros» sigue midiendo los pulgares y falla solo por ellos.
 - Responsable sugerido: disenador-marca decide la forma (a o b de M1) de cada control; desarrollador-fullstack la aplica. El índice legal y el `<summary>` tocan páginas de documentos legales: es solo presentación, el texto no cambia.
 
 ### QA-027 — Al enfocar «Envíos» con Tab, la tira no se desplaza y el enlace queda cortado
@@ -203,6 +206,7 @@ En descarga real, `5bbf1f8` no reduce el JS de inicio: pasa de 165.029 a 166.076
 - Esperado: al enfocar «Envíos», la tira se desplaza hasta que el enlace y su contorno quedan enteros fuera del fundido.
 - Obtenido: `scrollLeft` sigue en 0 (el máximo es 58). «Envíos» ocupa de 323 a 394 px en una tira de 360. Se ven 37 de sus 71 px, bajo el fundido de 24 px. El lado derecho del contorno queda fuera de la pantalla. Chromium no desplaza al enfocar un elemento que ya se ve en parte. Los otros cuatro enlaces se ven enteros.
 - Evidencia: captura `docs/qa/capturas/2026-11-18-m3-tira-foco-envios-360.png`. Prueba de cierre: `e2e/qa-2026-11-18-ux-media.spec.ts` › «QA-027: a 360 px Tab recorre los cinco enlaces…».
+- Estado: Corregido — pendiente verificación. Commit `a131ef3`. Causa raíz: Chromium no desplaza un contenedor al enfocar un elemento que ya se ve en parte; ahora `scrollIntoView({ inline: "nearest", block: "nearest" })` al enfocar, sin `smooth`, y `scroll-px-6`.
 - Responsable sugerido: desarrollador-fullstack (p. ej. `onFocus` con `scrollIntoView({ inline: "nearest", block: "nearest" })` y `scroll-padding-inline` de 24 px en la lista, para que el enlace salga del fundido).
 
 ## Paridad v1
