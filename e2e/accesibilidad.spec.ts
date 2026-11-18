@@ -25,11 +25,11 @@ test.describe("6. accesibilidad", () => {
   test("pedido: axe sin violaciones serias en cada paso", async ({ page }) => {
     await page.goto("/cafes/cafe-arreboles/");
     await page.getByRole("button", { name: "Agregar al pedido" }).click();
+    // A1: /pedido/ abre en Envío (sin paso Carrito).
     await page.goto("/pedido/");
-    await expect(page.getByRole("heading", { name: "Tu pedido", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
     expect(await violacionesGraves(page)).toEqual([]);
-    await page.getByRole("button", { name: /Continuar con el envío/ }).click();
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click(); // con errores visibles
+    await page.getByRole("button", { name: /Ver el resumen/ }).click(); // con errores visibles
     expect(await violacionesGraves(page)).toEqual([]);
   });
 

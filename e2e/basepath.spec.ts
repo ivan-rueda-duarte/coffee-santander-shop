@@ -18,13 +18,13 @@ test.describe("basePath de GitHub Pages", () => {
     await page.evaluate(() => {
       localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }] }));
     });
-    await page.goto(`${base}${REPO}/pedido/?paso=envio`);
+    await page.goto(`${base}${REPO}/pedido/`);
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Departamento").selectOption("Santander");
     await page.getByLabel("Municipio").selectOption("Bucaramanga");
     await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 
     // Casillas (microcopy §4.3 y §5.1, paquete v1) también bajo basePath, con sus enlaces prefijados.
@@ -75,7 +75,7 @@ test.describe("basePath de GitHub Pages", () => {
     await page.evaluate(() => {
       localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }] }));
     });
-    await page.goto(`${base}${REPO}/pedido/?paso=envio`);
+    await page.goto(`${base}${REPO}/pedido/`);
     const nombre = "Archipiélago de San Andrés, Providencia y Santa Catalina";
     await page.getByLabel("Departamento").selectOption({ label: nombre });
     const span = page.locator("#departamento").locator("xpath=..").locator("span[aria-hidden='true']");

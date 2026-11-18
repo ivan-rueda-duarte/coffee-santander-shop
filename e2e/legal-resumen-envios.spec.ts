@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { AVISO_RETRACTO } from "./ayudas";
+import { AVISO_RETRACTO, enviarPorWhatsapp } from "./ayudas";
 
 // D5 §6.3 (paquete del abogado v1.0): aviso de retracto de 5 días hábiles en el resumen, texto exacto.
 // /envios/ publica D3 completo (LEG-141): plazos, retracto y 30 días los dice el documento, no textos paralelos (LEG-164).
@@ -22,13 +22,13 @@ async function sembrar(page: Page, cantidad = 2) {
 
 async function irAlResumen(page: Page, departamento: string, municipio: string) {
   await sembrar(page);
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await page.getByLabel("Nombre completo").fill("Ana Rueda");
   await page.getByLabel("Celular").fill("300 123 4567");
   await page.getByLabel("Departamento").selectOption(departamento);
   await page.getByLabel("Municipio").selectOption(municipio);
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+  await page.getByRole("button", { name: /Ver el resumen/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
@@ -101,7 +101,7 @@ test.describe("aviso de retracto en el resumen", () => {
     await page.evaluate(() => {
       localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 500, molienda: "grano", cantidad: 11 }] }));
     });
-    await page.goto("/pedido/?paso=envio");
+    await page.goto("/pedido/");
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Departamento").selectOption("Santander");
@@ -109,12 +109,12 @@ test.describe("aviso de retracto en el resumen", () => {
     await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
     // Contraentrega retirada (2026-11-12): sin ayuda de comisión de recaudo.
     await expect(page.getByTestId("ayuda-contraentrega")).toHaveCount(0);
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
     await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
   });
 
-  test("el aviso no está en la ficha, en el cajón, en el carrito, en el paso de envío ni en la confirmación; tampoco en el mensaje de WhatsApp", async ({ page }) => {
+  test("el aviso no está en la ficha, en el cajón, en el paso de envío ni en el respaldo del resumen; tampoco en el mensaje de WhatsApp", async ({ page }) => {
     // Ficha
     await page.goto("/cafes/cafe-casa-martinez/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -127,30 +127,25 @@ test.describe("aviso de retracto en el resumen", () => {
     await expect(cajon).toBeVisible();
     expect(await cajon.innerText()).not.toMatch(/retract|garantía/i);
     await page.keyboard.press("Escape");
-    // Carrito (/pedido/)
+    // Envío (/pedido/; A1: sin paso Carrito)
     await page.goto("/pedido/");
-    await expect(page.getByRole("heading", { name: "Tu pedido", level: 1 })).toBeVisible();
-    await expect(page.getByTestId("aviso-retracto")).toHaveCount(0);
-    expect(await retractoFueraDeEnlaces(page)).toEqual([]);
-    // Envío
-    await page.getByRole("button", { name: /Continuar con el envío/ }).click();
     await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
     await expect(page.getByTestId("aviso-retracto")).toHaveCount(0);
     expect(await retractoFueraDeEnlaces(page)).toEqual([]);
-    // Resumen → confirmación
+    // Resumen → «Enviar por WhatsApp» (A1: sin panel de Confirmación)
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Departamento").selectOption("Santander");
     await page.getByLabel("Municipio").selectOption("Bucaramanga");
     await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByTestId("aviso-retracto")).toHaveText(AVISO_RETRACTO);
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-    await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
-    await expect(page.getByTestId("aviso-retracto")).toHaveCount(0);
-    const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+    const href = await enviarPorWhatsapp(page);
+    await expect(page.getByTestId("respaldo-whatsapp")).toBeVisible();
+    await expect(page.getByTestId("aviso-retracto")).toHaveCount(1);
+    expect(await page.getByTestId("respaldo-whatsapp").getByRole("status").innerText()).not.toMatch(/retract/i);
     expect(decodeURIComponent(href.split("?text=")[1])).not.toMatch(/retract/i);
   });
 

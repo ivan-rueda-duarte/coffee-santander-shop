@@ -9,7 +9,7 @@ async function irAEnvio(page: Page) {
   await page.evaluate(() => {
     localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }] }));
   });
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
 }
 

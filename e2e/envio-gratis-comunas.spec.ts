@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page, type Request } from "@playwright/test";
-import { estadoEnvioGratisE2E, fechaEnLetras } from "./ayudas";
+import { enviarPorWhatsapp, estadoEnvioGratisE2E, fechaEnLetras } from "./ayudas";
 
 // Envío gratis en siete comunas de Bucaramanga (ronda QA 2026-11-09; microcopy-legal §8 v1.4 y §8.6.1 v1.5; diseño 2026-11-09).
 // Tres modos, según el build que sirve out/ (estado leído de data/config.csv, igual que el build):
@@ -56,7 +56,7 @@ async function sembrar(page: Page, lineas: Linea[]) {
 
 async function pasoEnvio(page: Page, lineas: Linea[]) {
   await sembrar(page, lineas);
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
 }
 
@@ -104,16 +104,14 @@ async function completarDatos(page: Page, extra: { lleno?: boolean } = {}) {
 }
 
 async function irAResumen(page: Page) {
-  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+  await page.getByRole("button", { name: /Ver el resumen/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
 async function mensaje(page: Page) {
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-  await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-  await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
-  const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+  const href = await enviarPorWhatsapp(page);
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
   return decodeURIComponent(href.split("?text=")[1]);
 }
@@ -331,9 +329,12 @@ test.describe("envío gratis por comunas: ENCENDIDA", () => {
     const busca = /cabecera|comuna/i;
     expect(almacen).not.toMatch(busca);
     expect(urls.filter((u) => busca.test(decodeURIComponent(u)))).toEqual([]);
-    const conComuna = peticiones.filter((r) => busca.test(decodeURIComponent(r.url())) || busca.test(r.postData() ?? ""));
+    // A1: la única salida permitida es la pestaña wa.me que abre el propio cliente con «Enviar por WhatsApp» (CLAUDE.md).
+    const sitio = peticiones.filter((r) => !/^https:\/\/wa\.me\//.test(r.url()));
+    expect(peticiones.length - sitio.length).toBe(1);
+    const conComuna = sitio.filter((r) => busca.test(decodeURIComponent(r.url())) || busca.test(r.postData() ?? ""));
     expect(conComuna.map((r) => r.url())).toEqual([]);
-    expect(peticiones.filter((r) => !r.url().startsWith("http://localhost")).map((r) => r.url())).toEqual([]);
+    expect(sitio.filter((r) => !r.url().startsWith("http://localhost")).map((r) => r.url())).toEqual([]);
   });
 
   test("prefers-reduced-motion: el campo aparece sin transición; sin la preferencia, solo opacidad 150 ms", async ({ page }) => {

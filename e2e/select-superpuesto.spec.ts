@@ -19,7 +19,7 @@ async function irAEnvio(page: Page) {
   await page.evaluate(() => {
     localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }] }));
   });
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
 }
 
@@ -256,7 +256,7 @@ test.describe("QA-005: estado deshabilitado, lector, teclado, colores forzados, 
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Dirección").fill("Calle 1 # 2-3");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByRole("main")).toContainText(`Providencia, ${SAN_ANDRES}`);
   });

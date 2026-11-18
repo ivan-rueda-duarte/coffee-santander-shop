@@ -98,3 +98,27 @@ export const AVISO_RETRACTO =
 
 /** D5 §6.3: texto fijo de pago en el formulario (ya no hay campo de forma de pago, LEG-144). */
 export const TEXTO_PAGO_FORMULARIO = "Pagas por transferencia bancaria o por Bre-B después de aceptar el total por WhatsApp. En esta página no se paga.";
+
+/**
+ * A1 (LEG-172): «Enviar por WhatsApp» del resumen abre wa.me con window.open en el mismo clic. Pulsa el botón, espera
+ * la pestaña nueva (sin red: wa.me se responde en local) y devuelve su URL. Falla si no se abre ninguna pestaña.
+ */
+export async function enviarPorWhatsapp(page: Page): Promise<string> {
+  await page.context().route(/^https:\/\/(api\.)?wa\.me\//, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<title>WhatsApp</title>" }));
+  const [popup] = await Promise.all([page.waitForEvent("popup"), page.getByRole("button", { name: "Enviar por WhatsApp" }).click()]);
+  await popup.waitForURL(/wa\.me\//);
+  const url = popup.url();
+  await popup.close();
+  return url;
+}
+
+/** Cuenta las pestañas que abre la página mientras corre `accion` (para probar que sin casillas no se abre nada). */
+export async function pestanasAbiertas(page: Page, accion: () => Promise<void>): Promise<number> {
+  let n = 0;
+  const contar = () => void n++;
+  page.on("popup", contar);
+  await accion();
+  await page.waitForTimeout(300);
+  page.off("popup", contar);
+  return n;
+}

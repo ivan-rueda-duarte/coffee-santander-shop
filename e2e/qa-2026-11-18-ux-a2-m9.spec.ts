@@ -117,7 +117,7 @@ async function irAlEnvio(page: Page, lineas: object[] = [{ cafeSlug: "cafe-casa-
   await page.goto(`${base}/`);
   await page.waitForLoadState("networkidle");
   await page.evaluate((l) => localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: l })), lineas);
-  await page.goto(`${base}/pedido/?paso=envio`);
+  await page.goto(`${base}/pedido/`);
   await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
 }
 
@@ -367,7 +367,7 @@ test.describe("M9 · errores en tinta con ícono", () => {
         await page.setViewportSize({ width: ancho, height: 800 });
         await irAlEnvio(page);
         await tema(page, t);
-        await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+        await page.getByRole("button", { name: /Ver el resumen/ }).click();
         await expect(page.locator(".ds-alerta")).toBeVisible();
         await expect(page.locator(".ds-error").first()).toBeVisible();
 
@@ -419,7 +419,7 @@ test.describe("M9 · errores en tinta con ícono", () => {
   async function resumenConErrorCasillas(page: Page) {
     await irAlEnvio(page);
     await llenarEnvio(page);
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     // aria-disabled: Playwright no lo da por habilitado; el usuario sí puede pulsarlo (QA-006).
     await page.getByRole("button", { name: "Enviar por WhatsApp" }).click({ force: true });

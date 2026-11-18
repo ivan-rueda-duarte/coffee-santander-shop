@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { constanciaMensaje } from "./ayudas";
+import { constanciaMensaje, enviarPorWhatsapp } from "./ayudas";
 
 // Envío por zonas (docs/ENVIOS.md). Los límites de escalón incluyen el empaque de 80 g:
 // ≤ 1.080 g → 1 kg, ≤ 2.080 g → 2 kg, ≤ 5.080 g → 5 kg, más → por cotizar.
@@ -25,10 +25,9 @@ async function sembrarCarrito(page: Page, lineas: Linea[]) {
   );
 }
 
+// A1: sin paso Carrito; /pedido/ abre en Envío.
 async function abrirCarrito(page: Page) {
   await page.goto("/pedido/");
-  await expect(page.getByRole("heading", { name: "Tu pedido", level: 1 })).toBeVisible();
-  await page.getByRole("button", { name: /Continuar con el envío/ }).click();
 }
 
 async function pasoEnvio(page: Page, lineas: Linea[], departamento?: string, municipio?: string) {
@@ -43,17 +42,15 @@ async function elegirDestino(page: Page, departamento: string, municipio: string
   await page.getByLabel("Municipio").selectOption(municipio);
 }
 
-async function completarYFinalizar(page: Page) {
+async function completarYEnviar(page: Page) {
   await page.getByLabel("Nombre completo").fill("Ana Rueda");
   await page.getByLabel("Celular").fill("300 123 4567");
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+  await page.getByRole("button", { name: /Ver el resumen/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-  await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-  await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
-  const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+  const href = await enviarPorWhatsapp(page);
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
   const texto = decodeURIComponent(href.split("?text=")[1]);
   expect(texto.length).toBeLessThan(2000);
@@ -62,7 +59,7 @@ async function completarYFinalizar(page: Page) {
 
 const pedirHasta = async (page: Page, lineas: Linea[], departamento: string, municipio: string) => {
   await pasoEnvio(page, lineas, departamento, municipio);
-  return completarYFinalizar(page);
+  return completarYEnviar(page);
 };
 
 const envioDe = (page: Page) => page.getByTestId("linea-envio");
@@ -75,7 +72,7 @@ test.describe("envío por zonas: con tarifa", () => {
     await expect(envioDe(page)).toContainText("$18.000");
     await expect(page.getByTestId("linea-subtotal")).toContainText("$60.000");
     await expect(totalDe(page)).toHaveText(/^Total\s*\$78\.000$/);
-    const texto = await completarYFinalizar(page);
+    const texto = await completarYEnviar(page);
     expect(texto).toContain("Envío: zona 3, $18.000 (IVA incluido)");
     expect(texto).toContain("Total: $78.000");
     expect(texto).not.toContain("POR COTIZAR");
@@ -85,7 +82,7 @@ test.describe("envío por zonas: con tarifa", () => {
   test("Bogotá 2 × 500 g → $18.000 (1.080 g caen en el escalón de 1 kg)", async ({ page }) => {
     await pasoEnvio(page, [{ gramos: 500, cantidad: 2 }], "Bogotá, D.C.", "Bogotá, D.C.");
     await expect(envioDe(page)).toContainText("$18.000");
-    const texto = await completarYFinalizar(page);
+    const texto = await completarYEnviar(page);
     expect(texto).toContain("Envío: zona 3, $18.000 (IVA incluido)");
     expect(texto).toContain("Total: $112.000");
   });
@@ -147,7 +144,7 @@ test.describe("envío por zonas: por cotizar", () => {
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Dirección").fill("Calle 1 # 2-3");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toHaveText("Este valor no incluye el envío. Te lo informamos por WhatsApp y tú decides si lo aceptas antes de pagar.");
@@ -157,10 +154,9 @@ test.describe("envío por zonas: por cotizar", () => {
     await expect(totalDe(page)).toContainText("Total sin envío");
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-    await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme cuando aceptas ese valor.");
-    await expect(page.getByTestId("texto-confirmacion")).toContainText("Tu pedido queda en firme");
-    const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+    // LEG-171 (microcopy §9.3), variante por cotizar, encima del botón y antes del clic.
+    await expect(page.getByTestId("texto-siguiente-paso")).toHaveText("Al pulsar «Enviar por WhatsApp» se abre WhatsApp con tu pedido escrito. Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.");
+    const href = await enviarPorWhatsapp(page);
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto.length).toBeLessThan(2000);
     expect(texto).toContain("Envío: POR COTIZAR (zona 5 o más de 5 kg)");
@@ -183,21 +179,19 @@ test.describe("envío por zonas: por cotizar", () => {
     await expect(totalDe(page)).toContainText("Total sin envío");
   });
 
-  test("con tarifa no aparecen el aviso ni el texto alterno de confirmación", async ({ page }) => {
+  test("con tarifa no aparecen el aviso ni el texto alterno de cómo sigue la compra", async ({ page }) => {
     await pasoEnvio(page, [{ gramos: 250, cantidad: 2 }], "Bogotá, D.C.", "Bogotá, D.C.");
     await page.getByLabel("Nombre completo").fill("Ana Rueda");
     await page.getByLabel("Celular").fill("300 123 4567");
     await page.getByLabel("Dirección").fill("Calle 1 # 2-3");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByTestId("aviso-por-cotizar")).toHaveCount(0);
     await expect(totalDe(page)).not.toContainText("sin envío");
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-    await expect(page.getByTestId("texto-confirmacion")).toHaveText("Pulsa «Enviar por WhatsApp» y manda el mensaje. Con él nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.");
-    await expect(page.getByTestId("texto-confirmacion")).not.toContainText("Tu pedido queda en firme");
-    await expect(page.getByTestId("texto-confirmacion")).not.toContainText("queda en firme");
+    await expect(page.getByTestId("texto-siguiente-paso")).toHaveText("Al pulsar «Enviar por WhatsApp» se abre WhatsApp con tu pedido escrito. Con ese mensaje nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.");
+    await expect(page.getByTestId("texto-siguiente-paso")).not.toContainText("queda en firme");
   });
 });
 
@@ -272,7 +266,7 @@ async function completarResumen(page: Page) {
   await page.getByLabel("Nombre completo").fill("Ana Rueda");
   await page.getByLabel("Celular").fill("300 123 4567");
   await page.getByLabel("Dirección").fill("Calle 1 # 2-3");
-  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+  await page.getByRole("button", { name: /Ver el resumen/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
@@ -319,9 +313,9 @@ for (const vp of VIEWPORTS) {
       await completarResumen(page);
       expect(await graves(page)).toEqual([]);
       await page.screenshot({ path: `docs/qa/capturas/resumen-bogota-${vp.nombre}.png`, fullPage: true });
-      await page.getByRole("button", { name: "Volver", exact: true }).click();
+      await page.getByRole("button", { name: "Volver al envío" }).click();
       await elegirDestino(page, "Amazonas", "Leticia");
-      await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+      await page.getByRole("button", { name: /Ver el resumen/ }).click();
       await expect(page.getByTestId("aviso-por-cotizar")).toBeVisible();
       expect(await graves(page)).toEqual([]);
       expect(await sinDesborde(page)).toBe(true);

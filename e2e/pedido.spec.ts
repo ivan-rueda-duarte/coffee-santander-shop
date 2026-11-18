@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { AVISO_RETRACTO, constanciaMensaje, TEXTO_PAGO_FORMULARIO, textosCasillas } from "./ayudas";
+import { AVISO_RETRACTO, constanciaMensaje, enviarPorWhatsapp, TEXTO_PAGO_FORMULARIO, textosCasillas } from "./ayudas";
 
 async function agregarCasaMartinez(page: Page) {
   await page.goto("/cafes/cafe-casa-martinez/");
@@ -21,7 +21,7 @@ async function llenarEnvio(page: Page) {
 }
 
 test.describe("pedido", () => {
-  test("4. ficha → carrito → envío → resumen → confirmación con el enlace de WhatsApp", async ({ page }) => {
+  test("4. ficha → cajón → envío → resumen → «Enviar por WhatsApp» abre wa.me en el mismo clic (A1, LEG-172)", async ({ page }) => {
     await agregarCasaMartinez(page);
 
     // Cajón «Tu pedido»
@@ -29,16 +29,21 @@ test.describe("pedido", () => {
     const cajon = page.getByRole("dialog", { name: "Tu pedido" });
     await expect(cajon).toContainText("Café Casa Martínez");
     await expect(cajon).toContainText("$47.000");
-    await cajon.getByRole("link", { name: /Revisar el pedido/ }).click();
+    await cajon.getByRole("link", { name: /Continuar con el envío/ }).click();
 
-    // 1. Carrito
+    // 2. Envío (A1: sin paso Carrito): indicador «Pedido · Envío · Resumen» y bloque compacto «Tu pedido»
     await expect(page).toHaveURL(/\/pedido\/$/);
-    await expect(page.getByRole("heading", { name: "Tu pedido", level: 1 })).toBeVisible();
-    await page.getByRole("button", { name: /Continuar con el envío/ }).click();
-
-    // 2. Envío: errores claros por campo
     await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeFocused();
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    const pasos = page.getByRole("list", { name: "Pasos del pedido" });
+    await expect(pasos.getByRole("listitem")).toHaveText(["Pedido, hecho", "2Envío", "3Resumen"]);
+    await expect(pasos.locator('[aria-current="step"]')).toContainText("Envío");
+    await expect(page.getByTestId("bloque-tu-pedido")).toContainText("Café Casa Martínez · 500 g · molido × 1");
+    await expect(page.getByTestId("bloque-tu-pedido")).toContainText("1 bolsa");
+    await page.getByRole("button", { name: "Editar el pedido" }).click();
+    await expect(page.getByRole("dialog", { name: "Tu pedido" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "Editar el pedido" })).toBeFocused();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByRole("alert").filter({ hasText: "datos por corregir" })).toBeVisible();
     await expect(page.getByText("Escribe tu nombre.")).toBeVisible();
     await expect(page.getByLabel("Nombre completo")).toBeFocused();
@@ -47,10 +52,10 @@ test.describe("pedido", () => {
     // LEG-144: sin campo de forma de pago; texto fijo de D5 §6.3.
     await expect(page.getByRole("radio", { name: /Bre-B|contraentrega/i })).toHaveCount(0);
     await expect(page.getByTestId("texto-pago")).toContainText(TEXTO_PAGO_FORMULARIO);
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByText(/celular colombiano de 10 dígitos/)).toBeVisible();
     await page.getByLabel("Celular").fill("300 123 4567");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
 
     // 3. Resumen: las casillas vienen sin marcar
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
@@ -73,12 +78,12 @@ test.describe("pedido", () => {
     await expect(preparar).toBeDisabled();
     await terminos.check();
     await expect(preparar).toBeEnabled();
-    await preparar.click();
+    await expect(page.getByTestId("respaldo-whatsapp")).toHaveCount(0);
 
-    // 4. Confirmación
-    await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
-    const enlace = page.getByRole("link", { name: /Enviar por WhatsApp/ });
-    const href = (await enlace.getAttribute("href")) ?? "";
+    // 4. Un clic: se abre wa.me en una pestaña nueva y el Resumen se queda con el respaldo (LEG-172, LEG-173)
+    const href = await enviarPorWhatsapp(page);
+    await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
+    await expect(preparar).toBeFocused();
     expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto).toContain("• Café Casa Martínez (Guanentá) — Molido — 500 g × 1 = $47.000");
@@ -95,12 +100,17 @@ test.describe("pedido", () => {
     expect(texto).toContain("Indicaciones: Dejar en portería");
     expect(texto).toContain("\nPago: transferencia o Bre-B\n");
     expect(texto).not.toMatch(/contraentrega|Forma de pago/i);
-    await expect(enlace).toHaveAttribute("target", "_blank");
+    await expect(page.getByRole("status").filter({ hasText: "¿No se abrió WhatsApp?" })).toHaveText("¿No se abrió WhatsApp? Copia el mensaje y envíalo al +57 300 112 9874.");
     await expect(page.locator("#mensaje-pedido")).toHaveText(texto);
+    await expect(page.getByRole("heading", { name: /Tu pedido está listo/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Enviar por WhatsApp/ })).toHaveCount(0);
 
-    // Editar y Vaciar
-    await page.getByRole("button", { name: "Editar pedido" }).click();
-    await expect(page.getByRole("heading", { name: "Tu pedido", level: 1 })).toBeVisible();
+    // Segundo clic sin cambios: mismo enlace, mismo número DS (§4 bis 1)
+    expect(await enviarPorWhatsapp(page)).toBe(href);
+
+    // Volver al envío
+    await page.getByRole("button", { name: "Volver al envío" }).click();
+    await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
   });
 
   test("Vaciar pedido se puede deshacer", async ({ page }) => {
@@ -156,7 +166,7 @@ test.describe("pedido", () => {
 
   test("documento y código postal: opcionales, validados, en el mensaje y nunca en localStorage", async ({ page }) => {
     await agregarCasaMartinez(page);
-    await page.goto("/pedido/?paso=envio");
+    await page.goto("/pedido/");
     await llenarEnvio(page);
 
     // Sin documento ni código postal no hay error; el selector ofrece los cuatro tipos.
@@ -172,23 +182,21 @@ test.describe("pedido", () => {
     // Número sin tipo y código postal de otro departamento.
     await page.getByLabel("Número de documento").fill("1.098.765.432");
     await page.getByLabel("Código postal").fill("110111");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByText("Elige el tipo de documento.")).toBeVisible();
     await expect(page.getByText("Este código no corresponde a Santander. Revísalo en el visor de 4-72.")).toBeVisible();
 
     await page.getByLabel("Tipo de documento").selectOption("CC");
     await expect(page.getByLabel("Número de documento")).toHaveAttribute("inputmode", "numeric");
     await page.getByLabel("Código postal").fill("680001");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
 
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByText("Documento: CC 1098765432")).toBeVisible();
     await expect(page.getByText("Código postal: 680001")).toBeVisible();
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-
-    const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+    const href = await enviarPorWhatsapp(page);
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto).toContain("Documento: CC 1098765432");
     expect(texto).toContain("Dirección: Calle 45 # 12-30 · Barrio: Cabecera\nCódigo postal: 680001");
@@ -200,10 +208,23 @@ test.describe("pedido", () => {
   });
 
   test("sin pedido, /pedido/ explica que está vacío y recargar el resumen vuelve al envío", async ({ page }) => {
-    await page.goto("/pedido/?paso=envio");
+    await page.goto("/pedido/");
     await expect(page.getByRole("heading", { name: "Tu pedido está vacío" })).toBeVisible();
+    await expect(page.getByRole("list", { name: "Pasos del pedido" })).toHaveCount(0);
     await agregarCasaMartinez(page);
     await page.goto("/pedido/?paso=resumen");
     await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
+    await expect(page).toHaveURL(/\/pedido\/$/);
   });
+
+  // A1 y LEG-175: ya no hay pasos Carrito ni Confirmación; ?paso=envio se acepta por compatibilidad.
+  for (const viejo of ["envio", "carrito", "confirmacion", "otro"]) {
+    test(`?paso=${viejo} se reemplaza por /pedido/ (paso Envío)`, async ({ page }) => {
+      await agregarCasaMartinez(page);
+      await page.goto(`/pedido/?paso=${viejo}`);
+      await expect(page).toHaveURL(/\/pedido\/$/);
+      await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
+      await expect(page.getByText(/Confirmación|Carrito/)).toHaveCount(0);
+    });
+  }
 });

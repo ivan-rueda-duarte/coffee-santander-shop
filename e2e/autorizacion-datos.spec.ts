@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { leerConfig, textosCasillas } from "./ayudas";
+import { enviarPorWhatsapp, leerConfig, textosCasillas } from "./ayudas";
 
 // Cuatro casillas del resumen de /pedido/ (paquete del abogado v1.0: D2 «Textos de las casillas», D5 §6.3; LEG-145):
 // 1 términos y 2 datos, obligatorias; 3 promociones por WhatsApp y 4 por correo (solo con correo), opcionales.
@@ -18,14 +18,14 @@ async function irAlResumen(page: Page, correo = "") {
   await page.evaluate(() => {
     localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }] }));
   });
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await page.getByLabel("Nombre completo").fill("Ana Rueda");
   await page.getByLabel("Celular").fill("300 123 4567");
   await page.getByLabel("Departamento").selectOption("Santander");
   await page.getByLabel("Municipio").selectOption("Bucaramanga");
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
   if (correo) await page.getByLabel(/Correo/).fill(correo);
-  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+  await page.getByRole("button", { name: /Ver el resumen/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
@@ -103,11 +103,11 @@ test.describe("casillas de autorización de datos y de términos", () => {
       expect(graves.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`)).toEqual([]);
       await page.screenshot({ path: `docs/qa/capturas/autorizacion-datos-${ancho}.png`, fullPage: true });
 
-      // Con las dos marcadas avanza.
+      // Con las dos marcadas, el mismo clic abre WhatsApp (A1, LEG-172) y aparece el respaldo.
       await terminos.check();
       await expect(boton).toBeEnabled();
-      await boton.click();
-      await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
+      await enviarPorWhatsapp(page);
+      await expect(page.getByTestId("respaldo-whatsapp")).toBeVisible();
     });
 
     test(`a ${ancho} px: teclado (Espacio marca, Tab pasa por casilla → enlace → casilla)`, async ({ page }) => {
@@ -138,23 +138,22 @@ test.describe("casillas de autorización de datos y de términos", () => {
     const obligatorias = page.getByRole("group", { name: "Autorizaciones obligatorias" }).getByRole("checkbox");
     await obligatorias.nth(0).check();
     await obligatorias.nth(1).check();
-    await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-    const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+    const href = await enviarPorWhatsapp(page);
     expect(decodeURIComponent(href.split("?text=")[1])).toContain("\nAutorizo recibir promociones por WhatsApp y correo.");
     // Ninguna casilla se guarda en el navegador.
     const almacenado = await page.evaluate(() => JSON.stringify(localStorage));
     expect(almacenado).not.toMatch(/promo|autoriz|termin|correo/i);
 
-    // Volver, borrar el correo: la casilla 4 desaparece y no se envía.
-    await page.getByRole("button", { name: "Editar pedido" }).click();
-    await page.goto("/pedido/?paso=envio");
-    await page.getByLabel("Nombre completo").fill("Ana Rueda");
-    await page.getByLabel("Celular").fill("300 123 4567");
-    await page.getByLabel("Departamento").selectOption("Santander");
-    await page.getByLabel("Municipio").selectOption("Bucaramanga");
-    await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-    await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+    // Volver al envío y borrar el correo: la casilla 4 desaparece, no se envía y el respaldo anterior ya no vale (LEG-173).
+    await page.getByRole("button", { name: "Volver al envío" }).click();
+    await page.getByLabel(/^Correo/).fill("");
+    await page.getByRole("button", { name: /Ver el resumen/ }).click();
     await expect(page.getByRole("group", { name: "Promociones (opcional)" }).getByRole("checkbox")).toHaveCount(1);
+    await expect(page.getByTestId("respaldo-whatsapp")).toHaveCount(0);
+    const otro = decodeURIComponent((await enviarPorWhatsapp(page)).split("?text=")[1]);
+    expect(otro).toContain("\nAutorizo recibir promociones por WhatsApp.");
+    expect(otro).not.toContain("ana@correo.co");
+    expect(otro.split("\n")[0]).not.toBe(decodeURIComponent(href.split("?text=")[1]).split("\n")[0]);
   });
 
   test("aviso de privacidad al pie del formulario de envío, con enlace a la política (D2)", async ({ page }) => {
@@ -163,7 +162,7 @@ test.describe("casillas de autorización de datos y de términos", () => {
     await page.evaluate(() => {
       localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }] }));
     });
-    await page.goto("/pedido/?paso=envio");
+    await page.goto("/pedido/");
     const aviso = page.getByTestId("aviso-privacidad");
     await expect(aviso).toContainText(`${leerConfig("razon_social")} (NIT ${leerConfig("nit")}, ${leerConfig("correo_contacto")}, WhatsApp +57 300 112 9874) trata los datos de tu pedido`);
     await expect(aviso).toContainText("Lee la política en /legal/privacidad/.");

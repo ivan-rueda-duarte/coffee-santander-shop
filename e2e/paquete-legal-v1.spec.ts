@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { AVISO_RETRACTO, constanciaMensaje, estadoEnvioGratisE2E, fechaEnLetras, leerConfig, TEXTO_PAGO_FORMULARIO, textosCasillas } from "./ayudas";
+import { AVISO_RETRACTO, constanciaMensaje, enviarPorWhatsapp, estadoEnvioGratisE2E, fechaEnLetras, leerConfig, TEXTO_PAGO_FORMULARIO, textosCasillas } from "./ayudas";
 
 // Ronda QA 2026-11-06 «paquete legal v1» (docs/qa/2026-11-06-paquete-legal-v1.md), actualizada el 2026-11-14 al
 // paquete del abogado v1.0 (docs/legal/revisiones/2026-11-14-paquete-abogado-v1.md, LEG-140 a LEG-167; pruebas de §7.4).
@@ -148,7 +148,7 @@ const DATOS = {
 };
 
 async function llenarEnvio(page: Page, departamento: string, municipio: string, extra: { correo?: string; barrio?: string; indicaciones?: string } = {}) {
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await page.getByLabel("Nombre completo").fill(DATOS.nombre);
   await page.getByLabel("Celular").fill(DATOS.celular);
   if (extra.correo) await page.getByLabel(/^Correo/).fill(extra.correo);
@@ -162,15 +162,14 @@ async function llenarEnvio(page: Page, departamento: string, municipio: string, 
 async function irAlResumen(page: Page, departamento: string, municipio: string, lineas: Linea[] = [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 2 }], extra = {}) {
   await sembrar(page, lineas);
   await llenarEnvio(page, departamento, municipio, extra);
-  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+  await page.getByRole("button", { name: /Ver el resumen/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
 async function mensaje(page: Page) {
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-  await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-  const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+  const href = await enviarPorWhatsapp(page);
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
   return decodeURIComponent(href.split("?text=")[1]);
 }
@@ -237,9 +236,9 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     // Vía elegida (microcopy §5.9 v1.1, LEG-101/102): sin `disabled`, con aria-disabled; textos exactos por caso.
     await expect(boton).not.toHaveAttribute("disabled", /.*/);
     await expect(boton).toHaveAttribute("aria-disabled", "true");
-    const AYUDA_DOS = "Para preparar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
-    const AYUDA_DATOS = "Para preparar tu pedido, falta que autorices el tratamiento de tus datos.";
-    const AYUDA_TERMINOS = "Para preparar tu pedido, falta que aceptes los términos y condiciones.";
+    const AYUDA_DOS = "Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
+    const AYUDA_DATOS = "Para enviar tu pedido, falta que autorices el tratamiento de tus datos.";
+    const AYUDA_TERMINOS = "Para enviar tu pedido, falta que aceptes los términos y condiciones.";
     const ERROR_DATOS = "Debes autorizar el tratamiento de tus datos para continuar.";
     const ERROR_TERMINOS = "Debes aceptar los términos para continuar.";
     await expect(ayuda).toHaveText(AYUDA_DOS);
@@ -255,6 +254,7 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Enviar por WhatsApp/ })).toHaveCount(0);
     await expect(page.locator('a[href^="https://wa.me/"]').filter({ hasText: /Enviar/ })).toHaveCount(0);
+    await expect(page.getByTestId("respaldo-whatsapp")).toHaveCount(0);
     await expect(autorizacion).not.toBeChecked();
     await expect(terminos).not.toBeChecked();
     // D5 §6.3: términos es la casilla 1; el foco va a ella.
@@ -282,13 +282,13 @@ test.describe("resumen del pedido (paquete legal v1)", () => {
     await expect(ayuda).toHaveText(AYUDA_DATOS);
     await expect(boton).toHaveAttribute("aria-disabled", "true");
 
-    // Con las dos marcadas: sin microayuda ni aria-disabled, y avanza.
+    // Con las dos marcadas: sin microayuda ni aria-disabled, y el mismo clic abre WhatsApp (A1, LEG-172).
     await autorizacion.check();
-    await expect(page.getByText(/^Para preparar tu pedido/)).toHaveCount(0);
+    await expect(page.getByText(/^Para enviar tu pedido/)).toHaveCount(0);
     await expect(boton).not.toHaveAttribute("aria-disabled", /.*/);
     await expect(boton).not.toHaveAttribute("aria-describedby", /.*/);
-    await boton.click();
-    await expect(page.getByRole("heading", { name: "Tu pedido está listo para enviar por WhatsApp" })).toBeVisible();
+    await enviarPorWhatsapp(page);
+    await expect(page.getByTestId("respaldo-whatsapp")).toBeVisible();
   });
 
   test("§7.4 mensaje con tarifa (zona 1): solicitud DS, líneas, subtotal con IVA, envío, total y versiones", async ({ page }) => {
@@ -445,7 +445,7 @@ test("/envios/: D3 1.0, leyenda de IVA, metadatos y sin textos retirados", async
 
 test("§7.4 formulario: sin campo de forma de pago ni contraentrega; texto fijo de pago (LEG-144)", async ({ page }) => {
   await sembrar(page, [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }]);
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await expect(page.getByRole("group", { name: /Forma de pago/ })).toHaveCount(0);
   await expect(page.getByRole("radio")).toHaveCount(0);
   await expect(page.getByTestId("texto-pago")).toContainText(TEXTO_PAGO_FORMULARIO);

@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // Las pruebas corren contra el sitio estático (out/), igual que lo servirá GitHub Pages.
-const PUERTO = 4173;
+// E2E_PUERTO permite correr en paralelo con otro árbol de trabajo que ya use el 4173.
+const PUERTO = Number(process.env.E2E_PUERTO ?? 4173);
 
 export default defineConfig({
   testDir: "./e2e",

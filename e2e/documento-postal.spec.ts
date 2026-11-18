@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { textosCasillas } from "./ayudas";
+import { enviarPorWhatsapp, textosCasillas } from "./ayudas";
 
 // Documento opcional y código postal manual (LEG-040 a LEG-048; docs/legal/microcopy-legal.md §4).
 
@@ -10,7 +10,7 @@ async function sembrar(page: Page) {
   await page.evaluate(() => {
     localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 2 }] }));
   });
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
 }
 
@@ -22,7 +22,7 @@ async function basico(page: Page, departamento = "Santander", municipio = "Bucar
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
 }
 
-const revisar = (page: Page) => page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+const revisar = (page: Page) => page.getByRole("button", { name: /Ver el resumen/ }).click();
 const tipo = (page: Page) => page.getByLabel("Tipo de documento");
 const numero = (page: Page) => page.getByLabel("Número de documento");
 const postal = (page: Page) => page.getByLabel("Código postal");
@@ -31,8 +31,7 @@ const enResumen = (page: Page) => expect(page.getByRole("heading", { name: "Revi
 async function mensaje(page: Page) {
   await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
   await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
-  await page.getByRole("button", { name: "Enviar por WhatsApp" }).click();
-  const href = (await page.getByRole("link", { name: /Enviar por WhatsApp/ }).getAttribute("href")) ?? "";
+  const href = await enviarPorWhatsapp(page);
   expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
   return decodeURIComponent(href.split("?text=")[1]);
 }
@@ -165,7 +164,7 @@ test.describe("documento opcional y código postal", () => {
     await postal(page).fill("680001");
     await revisar(page);
     await enResumen(page);
-    await page.getByRole("button", { name: "Volver", exact: true }).click();
+    await page.getByRole("button", { name: "Volver al envío" }).click();
     await expect(numero(page)).toHaveValue("PA123456");
     await revisar(page);
     await enResumen(page);

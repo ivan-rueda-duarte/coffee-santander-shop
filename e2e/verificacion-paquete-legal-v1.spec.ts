@@ -53,20 +53,20 @@ async function irAlResumen(page: Page, departamento: string, municipio: string, 
   await page.goto("/");
   await page.waitForLoadState("networkidle");
   await page.evaluate((l) => localStorage.setItem("desantander.carrito.v2", JSON.stringify({ version: 2, lineas: l })), lineas);
-  await page.goto("/pedido/?paso=envio");
+  await page.goto("/pedido/");
   await page.getByLabel("Nombre completo").fill("Ana Rueda");
   await page.getByLabel("Celular").fill("300 123 4567");
   await page.getByLabel("Departamento").selectOption(departamento);
   await page.getByLabel("Municipio").selectOption(municipio);
   await page.getByLabel("Dirección").fill("Calle 45 # 12-30");
-  await page.getByRole("button", { name: /Finalizar el pedido/ }).click();
+  await page.getByRole("button", { name: /Ver el resumen/ }).click();
   await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
 }
 
 // Orden de D5 §6.3 (casilla 1 términos, casilla 2 datos; LEG-145).
-const AYUDA_DOS = "Para preparar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
-const AYUDA_DATOS = "Para preparar tu pedido, falta que autorices el tratamiento de tus datos.";
-const AYUDA_TERMINOS = "Para preparar tu pedido, falta que aceptes los términos y condiciones.";
+const AYUDA_DOS = "Para enviar tu pedido, marca las dos casillas: los términos y condiciones y la autorización de tus datos.";
+const AYUDA_DATOS = "Para enviar tu pedido, falta que autorices el tratamiento de tus datos.";
+const AYUDA_TERMINOS = "Para enviar tu pedido, falta que aceptes los términos y condiciones.";
 const ERROR_DATOS = "Debes autorizar el tratamiento de tus datos para continuar.";
 const ERROR_TERMINOS = "Debes aceptar los términos para continuar.";
 
@@ -79,7 +79,8 @@ async function tabHastaBoton(page: Page, boton: Locator) {
   return -1;
 }
 
-const enlacePedido = (page: Page) => page.locator('a[href*="wa.me/"][href*="text="]');
+// A1 (LEG-172): sin las casillas 1 y 2 no hay enlace con texto ni respaldo «¿No se abrió WhatsApp?».
+const enlacePedido = (page: Page) => page.locator('a[href*="wa.me/"][href*="text="], [data-testid="respaldo-whatsapp"]');
 
 // ---------------------------------------------------------------------------------------------------------
 // QA-006
@@ -154,6 +155,8 @@ test.describe("QA-006 verificación: botón con aria-disabled, microayuda y erro
     await ter.check();
     await expect(page.getByTestId("ayuda-preparar")).toHaveText(AYUDA_DATOS);
     // Clic real de ratón en el centro del botón (Playwright trata aria-disabled como deshabilitado y no haría clic).
+    // Con el texto de LEG-171 encima, el botón puede quedar bajo el pliegue: se desplaza antes de medir.
+    await boton.scrollIntoViewIfNeeded();
     const caja = (await boton.boundingBox())!;
     await page.mouse.click(caja.x + caja.width / 2, caja.y + caja.height / 2);
     await expect(aut).toBeFocused();
