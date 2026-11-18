@@ -180,6 +180,9 @@ function Contenido() {
   // Todo lo que entra en el mensaje. Si cambia el carrito (también desde otra pestaña), un dato de envío o una casilla,
   // la solicitud preparada deja de valer: el respaldo se oculta y el siguiente clic genera número y texto nuevos (LEG-173 (2)).
   const firma = firmaSolicitud({ lineas, envio: { ...valores }, terminos, autorizacion, promoWhatsapp, promoCorreo });
+  // QA-022: al primer cambio se descarta la solicitud (no basta con ocultarla). Si se deshace el cambio, el respaldo no
+  // reaparece y el siguiente clic genera número y texto nuevos (microcopy §9.4). Ajuste de estado durante el render.
+  if (resultado && resultado.firma !== firma) setResultado(null);
   const vigente = resultado && resultado.firma === firma ? resultado.pedido : null;
 
   /**
