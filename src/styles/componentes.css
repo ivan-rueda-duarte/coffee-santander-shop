@@ -70,7 +70,14 @@
 .ds-badge--dark{background:var(--tostado-900);color:var(--pergamino-50)}
 .ds-badge--earth{background:var(--arcilla-50);color:var(--accent);border-color:var(--accent)}
 .ds-badge--accent{background:var(--grana-600);color:var(--pergamino-50)}
-.ds-badge--soldout{background:transparent;color:var(--danger);border-color:var(--danger)}
+/* M9: «Agotado» no es un error ni edición limitada; sin grana como texto. */
+.ds-badge--soldout{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+/* M9 · Mensaje de error en línea (campo o casilla): texto en tinta, ícono grana. La grana nunca es texto. */
+.ds-error{display:flex;align-items:flex-start;gap:var(--space-2);margin:0;font-family:var(--font-sans);font-size:14px;line-height:22px;font-weight:600;color:var(--ink)}
+.ds-error__icon{flex:none;width:18px;height:18px;margin-top:2px;color:var(--danger)}
+/* M9 · Caja de errores (resumen del formulario, líneas del pedido): borde e ícono grana, texto en tinta. */
+.ds-alerta{display:flex;align-items:flex-start;gap:var(--space-3);padding:var(--space-3) var(--space-4);border:1.5px solid var(--danger);border-left-width:4px;border-radius:var(--radius-md);background:var(--surface-raised);color:var(--ink);font-size:14px;line-height:22px}
+.ds-alerta__icon{flex:none;width:20px;height:20px;margin-top:1px;color:var(--danger)}
 .ds-badge--overline{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800}
 /* Compatibilidad v4: --process y --score ya no se usan; migran a ds-tag--outline y ds-seal. */
 .ds-badge--process{background:transparent;color:var(--ink);border-color:var(--line)}

@@ -23,6 +23,9 @@ export const IconoCopiar = (p: Props) => <Base {...p}><rect x="9" y="9" width="1
 export const IconoPapelera = (p: Props) => <Base {...p}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></Base>;
 export const IconoChevron = (p: Props) => <Base {...p}><path d="m6 9 6 6 6-6" /></Base>;
 export const IconoMenu = (p: Props) => <Base {...p}><path d="M4 7h16M4 12h16M4 17h16" /></Base>;
+// M9: indicadores de error y de no disponible. Decorativos: el significado lo lleva el texto.
+export const IconoAlerta = (p: Props) => <Base {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5" /><path d="M12 16.5h.01" /></Base>;
+export const IconoNoDisponible = (p: Props) => <Base {...p}><circle cx="12" cy="12" r="9" /><path d="M5.6 18.4 18.4 5.6" /></Base>;
 
 export const IconoWhatsapp = (p: Props) => (
   <Base {...p}>

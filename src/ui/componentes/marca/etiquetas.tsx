@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
+import { IconoNoDisponible } from "./iconos";
 
 /** Nivel 1: dato técnico (municipio, altitud, proceso…). Silencioso, separado por punto medio. */
 export function DatosTecnicos({ items, className }: { items: readonly (string | null | undefined | false)[]; className?: string }) {
@@ -28,7 +29,13 @@ const CLASE_PASTILLA: Record<VariantePastilla, string> = {
 };
 
 export function Pastilla({ variante = "region", mayusculas, className, children }: { variante?: VariantePastilla; mayusculas?: boolean; className?: string; children: ReactNode }) {
-  return <span className={clsx("ds-badge", CLASE_PASTILLA[variante], mayusculas && "ds-badge--overline", className)}>{children}</span>;
+  return (
+    <span className={clsx("ds-badge", CLASE_PASTILLA[variante], mayusculas && "ds-badge--overline", className)}>
+      {/* M9: «Agotado» lleva ícono además del texto, para no depender del color. */}
+      {variante === "agotado" && <IconoNoDisponible width={12} height={12} />}
+      {children}
+    </span>
+  );
 }
 
 /** Nivel 3: sello circular del puntaje SCA. Solo con puntaje real verificado y ≥ 80 (lo decide quien lo usa). */

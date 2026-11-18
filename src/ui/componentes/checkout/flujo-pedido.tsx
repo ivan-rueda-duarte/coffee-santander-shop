@@ -18,7 +18,7 @@ import { LineaPedido } from "../carrito/linea-pedido";
 import { TotalesPedido } from "../carrito/totales-pedido";
 import { Boton, BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
-import { IconoCopiar, IconoFlecha, IconoFlechaAtras, IconoWhatsapp } from "../marca/iconos";
+import { IconoAlerta, IconoCopiar, IconoFlecha, IconoFlechaAtras, IconoWhatsapp } from "../marca/iconos";
 import { CODIGOS_DEPARTAMENTO, ENVIO_VACIO, FormularioEnvio, type ValoresEnvio } from "./formulario-envio";
 
 const PASOS = [
@@ -233,8 +233,10 @@ function Contenido() {
           <h1 id="t-envio" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">¿A dónde enviamos?</h1>
           <p className="body mt-2 text-ink-muted">Despachamos desde {tienda.ciudadDespacho} a todo Colombia.</p>
           {Object.keys(errores).length > 0 && (
-            <p role="alert" className="mt-4 rounded-md border border-danger px-4 py-3 text-sm font-semibold text-danger">
-              Revisa los campos marcados: {Object.keys(errores).length === 1 ? "hay 1 dato por corregir." : `hay ${Object.keys(errores).length} datos por corregir.`}
+            // M9: caja con borde e ícono grana; el texto va en tinta.
+            <p role="alert" className="ds-alerta mt-4 font-semibold">
+              <IconoAlerta className="ds-alerta__icon" />
+              <span>Revisa los campos marcados: {Object.keys(errores).length === 1 ? "hay 1 dato por corregir." : `hay ${Object.keys(errores).length} datos por corregir.`}</span>
             </p>
           )}
           <form
@@ -309,23 +311,33 @@ function Contenido() {
           <fieldset className="mt-6 space-y-3" data-testid="casillas-obligatorias">
             <legend className="sr-only">Autorizaciones obligatorias</legend>
             <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input id="c-ter" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorTerminos ? true : undefined} aria-describedby={errorTerminos ? "e-ter" : undefined} />
+              <input id="c-ter" type="checkbox" checked={terminos} onChange={(e) => setTerminos(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900 aria-[invalid=true]:outline aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-offset-2 aria-[invalid=true]:outline-danger" aria-invalid={errorTerminos ? true : undefined} aria-describedby={errorTerminos ? "e-ter" : undefined} />
               <span>
                 {casillaTerminos(legal)[0]}
                 <Link className="font-semibold underline underline-offset-4" href="/legal/terminos/" target="_blank" rel="noopener noreferrer">{casillaTerminos(legal)[1]}</Link>
                 {casillaTerminos(legal)[2]}
               </span>
             </label>
-            {errorTerminos && <p id="e-ter" role="alert" className="text-sm font-semibold text-danger">{errorTerminos}</p>}
+            {errorTerminos && (
+              <p id="e-ter" role="alert" className="ds-error pl-8">
+                <IconoAlerta className="ds-error__icon" />
+                <span>{errorTerminos}</span>
+              </p>
+            )}
             <label className="flex cursor-pointer items-start gap-3 text-sm">
-              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
+              <input id="c-aut" type="checkbox" checked={autorizacion} onChange={(e) => setAutorizacion(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-monte-900 aria-[invalid=true]:outline aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-offset-2 aria-[invalid=true]:outline-danger" aria-invalid={errorAutorizacion ? true : undefined} aria-describedby={errorAutorizacion ? "e-aut" : undefined} />
               <span>
                 {casillaDatos(legal, razonSocial)[0]}
                 <Link className="font-semibold underline underline-offset-4" href="/legal/privacidad/" target="_blank" rel="noopener noreferrer">{casillaDatos(legal, razonSocial)[1]}</Link>
                 {casillaDatos(legal, razonSocial)[2]}
               </span>
             </label>
-            {errorAutorizacion && <p id="e-aut" role="alert" className="text-sm font-semibold text-danger">{errorAutorizacion}</p>}
+            {errorAutorizacion && (
+              <p id="e-aut" role="alert" className="ds-error pl-8">
+                <IconoAlerta className="ds-error__icon" />
+                <span>{errorAutorizacion}</span>
+              </p>
+            )}
           </fieldset>
           {/* Promociones: opcionales, separadas de las obligatorias (LEG-145; separación visual pendiente de diseño). */}
           <fieldset className="mt-5 space-y-3 border-t border-line pt-5" data-testid="casillas-promociones">
@@ -351,9 +363,13 @@ function Contenido() {
           )}
 
           {erroresResumen && (erroresResumen.errores.lineas || erroresResumen.lineas.length > 0) && (
-            <div role="alert" className="mt-4 rounded-md border border-danger px-4 py-3 text-sm text-danger">
-              <p className="font-semibold">{erroresResumen.errores.lineas}</p>
-              <ul className="mt-1 list-disc pl-5">{erroresResumen.lineas.map((l) => <li key={l}>{l}</li>)}</ul>
+            // M9: caja con borde e ícono grana; título y lista en tinta.
+            <div role="alert" className="ds-alerta mt-4">
+              <IconoAlerta className="ds-alerta__icon" />
+              <div>
+                <p className="font-semibold">{erroresResumen.errores.lineas}</p>
+                <ul className="mt-1 list-disc pl-5 text-ink">{erroresResumen.lineas.map((l) => <li key={l}>{l}</li>)}</ul>
+              </div>
             </div>
           )}
 

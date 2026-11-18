@@ -7,7 +7,7 @@ import type { PromocionEnvioGratis } from "@/domain/envio/tipos";
 import { DOCUMENTO_OBLIGATORIO, MAX_DOCUMENTO, MAX_INDICACIONES, TIPOS_DOCUMENTO, type FinalidadDocumento, type TipoDocumento } from "@/domain/pedido/envio";
 import { TEXTOS_PAGO } from "@/domain/pedido/tienda";
 import divipolaCrudo from "@/data/divipola.json";
-import { IconoChevron } from "../marca/iconos";
+import { IconoAlerta, IconoChevron } from "../marca/iconos";
 
 interface Departamento {
   codigo: string;
@@ -65,7 +65,7 @@ export const ENVIO_VACIO: ValoresEnvio = {
   indicaciones: "",
 };
 
-const entrada = "mt-1 w-full rounded-md border border-line-strong bg-surface-raised px-3 py-3 text-base text-ink placeholder:text-ink-muted/70 aria-[invalid=true]:border-danger";
+const entrada = "mt-1 w-full rounded-md border border-line-strong bg-surface-raised px-3 py-3 text-base text-ink placeholder:text-ink-muted/70 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-inset aria-[invalid=true]:ring-danger";
 
 /** `entrada` sin margen ni color de texto: el texto visible lo pinta un <span> encima (QA-002). */
 const entradaSuperpuesta = `${entrada.replace("mt-1 ", "").replace(" text-ink ", " ").replace(" px-3 ", " pl-4 ")} col-start-1 row-start-1 appearance-none pr-10 text-transparent forced-colors:text-[CanvasText] [&>option]:text-ink`;
@@ -104,8 +104,10 @@ function Campo({ id, etiqueta, error, ayuda, ayudaFija, opcional, children }: { 
       {children}
       {ayuda && (!error || ayudaFija) && <p id={`${id}-ayuda`} className="caption mt-1 text-ink-muted">{ayuda}</p>}
       {error && (
-        <p id={`${id}-error`} className="mt-1 text-sm font-semibold text-danger">
-          {error}
+        // M9: texto en tinta con ícono; la grana solo en el borde del campo y en el ícono.
+        <p id={`${id}-error`} className="ds-error mt-1">
+          <IconoAlerta className="ds-error__icon" />
+          <span>{error}</span>
         </p>
       )}
     </div>

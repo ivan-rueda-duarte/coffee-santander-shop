@@ -8,7 +8,6 @@ import { slugify } from "@/domain/comun/slug";
 import { leyendaIva } from "@/domain/pedido/iva";
 import { useCarrito } from "../carrito/carrito-provider";
 import { Boton } from "../marca/boton";
-import { Pastilla } from "../marca/etiquetas";
 import { IconoMas, IconoMenos } from "../marca/iconos";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
 
@@ -100,12 +99,10 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
             Agregar al pedido
           </Boton>
         ) : (
-          <div className="flex items-center gap-3">
-            <Boton type="button" bloque tamano="lg" disabled>
-              Agotado
-            </Boton>
-            <Pastilla variante="agotado">Agotado</Pastilla>
-          </div>
+          // M9: el botón deshabilitado ya dice «Agotado»; sin pastilla que repita la palabra.
+          <Boton type="button" bloque tamano="lg" disabled>
+            Agotado
+          </Boton>
         )}
         <p className="caption mt-3 text-ink-muted">Hasta {max} bolsas por tamaño y presentación; para más, escríbenos por WhatsApp.</p>
         {/* D5 §6.2: la ficha no conoce la zona, así que remite a los plazos de /envios/ (texto del enlace propuesto por legal, LEG-153). */}
