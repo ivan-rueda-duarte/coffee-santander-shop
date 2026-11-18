@@ -4,7 +4,7 @@ import { crearCafe } from "@/domain/pruebas/fixtures";
 import { BloqueCompra } from "./bloque-compra";
 
 vi.mock("../carrito/carrito-provider", () => ({ useCarrito: () => ({ agregar: () => undefined }) }));
-vi.mock("@/ui/hooks/use-catalogo", () => ({ useCatalogo: () => ({ catalogo: { tienda: { maxCantidad: 20, ivaTarifa: 5 } } }) }));
+vi.mock("@/ui/hooks/use-catalogo", () => ({ useCatalogo: () => ({ catalogo: { tienda: { maxCantidad: 20, ivaTarifa: 5, whatsapp: "573001129874" } } }) }));
 
 /** Las píldoras de tamaño (radio name="gramos"), en orden: valor, marcada, deshabilitada y clases de su <label> y <span>. */
 function pildorasTamano(html: string) {
@@ -53,5 +53,55 @@ describe("BloqueCompra: píldoras de tamaño agotadas (diseño 2026-11-18, media
     expect(pildoras.every((p) => !p.label.includes("opacity"))).toBe(true);
     expect(html).toContain('<small class="text-xs font-medium">Agotado</small>');
     expect(html).not.toMatch(/opacity-80">Agotado/);
+  });
+
+  it("todo agotado (LEG-184 alternativa y LEG-186): precio por tamaño, IVA, presentaciones como texto, sin cantidad ni total y aviso con wa.me", () => {
+    const cafe = crearCafe({
+      slug: "cafe-z",
+      nombre: "Café Z",
+      moliendas: ["grano", "molido"],
+      presentaciones: [
+        { gramos: 250, precioCop: 25000, disponible: false },
+        { gramos: 500, precioCop: 50000, disponible: false },
+      ],
+    });
+    const html = renderToStaticMarkup(<BloqueCompra cafe={cafe} />);
+    // Precio sin tachar y «Agotado» debajo, en cada píldora.
+    expect(html).toMatch(/250 g<small class="text-xs font-medium">\$\s?25\.000<\/small><small class="text-xs font-medium">Agotado<\/small>/);
+    expect(html).toMatch(/500 g<small class="text-xs font-medium">\$\s?50\.000<\/small><small class="text-xs font-medium">Agotado<\/small>/);
+    expect(html).not.toContain("line-through");
+    expect(html).toContain('data-testid="leyenda-iva"');
+    // Presentaciones como dato, sin radios de molienda.
+    expect(html).not.toContain('name="molienda"');
+    expect(html).toMatch(/data-testid="presentaciones-agotado"><span class="ds-tag">Grano<\/span><span class="ds-tag">Molido<\/span>/);
+    expect(html).toContain('data-testid="ayuda-molienda"');
+    // Sin compra simulada.
+    expect(html).not.toContain("Cantidad de bolsas");
+    expect(html).not.toContain("1 × 250 g");
+    expect(html).not.toContain("Hasta 20 bolsas");
+    expect(html).not.toContain('data-testid="plazo-ficha"');
+    // Botón «Agotado» deshabilitado y aviso con enlace wa.me sin texto precargado.
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Agotado<\/button>/);
+    expect(html).toContain("Este café está agotado por ahora.");
+    expect(html).toContain('href="https://wa.me/573001129874"');
+    expect(html).toMatch(/>Escríbenos por WhatsApp<\/a> y te avisamos cuando vuelva\./);
+  });
+
+  it("agotado parcial: conserva cantidad, total, nota de máximo y plazo; sin aviso de agotado ni precio extra en la píldora agotada", () => {
+    const cafe = crearCafe({
+      slug: "cafe-w",
+      nombre: "Café W",
+      presentaciones: [
+        { gramos: 250, precioCop: 25000, disponible: false },
+        { gramos: 500, precioCop: 50000, disponible: true },
+      ],
+    });
+    const html = renderToStaticMarkup(<BloqueCompra cafe={cafe} />);
+    expect(html).toContain("Cantidad de bolsas");
+    expect(html).toContain("Hasta 20 bolsas");
+    expect(html).toContain('data-testid="plazo-ficha"');
+    expect(html).toContain('name="molienda"');
+    expect(html).not.toContain('data-testid="aviso-agotado"');
+    expect(html).toContain('250 g<small class="text-xs font-medium">Agotado</small>');
   });
 });
