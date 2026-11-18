@@ -9,15 +9,24 @@ import { TarjetaCafe } from "./tarjeta-cafe";
  * Sección del catálogo. El HTML estático trae TODOS los cafés agrupados por provincia (sin filtros);
  * al cargar el JavaScript, el explorador lee la URL y los filtra. Así el catálogo se ve (y se indexa) sin esperar.
  */
-export function SeccionCatalogo({ cafes, provincias }: { cafes: readonly Cafe[]; provincias: readonly Provincia[] }) {
+export function SeccionCatalogo({
+  cafes,
+  provincias,
+  nivelTitulo: Titulo = "h2",
+}: {
+  cafes: readonly Cafe[];
+  provincias: readonly Provincia[];
+  /** h1 cuando el catálogo es la página (/cafes/); h2 dentro del inicio (M6). Mismo estilo en los dos. */
+  nivelTitulo?: "h1" | "h2";
+}) {
   const grupos = agruparPorProvincia(cafes, provincias);
   return (
     <section id="catalogo" aria-labelledby="titulo-catalogo" className="scroll-mt-20 bg-surface px-5 py-16 md:px-8 md:py-20">
       <div className="mx-auto max-w-6xl">
         <Antetitulo>Nuestros cafés</Antetitulo>
-        <h2 id="titulo-catalogo" className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]">
+        <Titulo id="titulo-catalogo" className="display-l mt-3 text-ink-title max-md:!text-[36px] max-md:!leading-[42px]">
           Elige por <em className="font-normal">origen</em>
-        </h2>
+        </Titulo>
         <p className="body-l mt-3 max-w-2xl text-ink-muted">Cada café dice de qué provincia y municipio viene y qué vas a encontrar en la taza.</p>
         <div className="mt-10">
           <Suspense
