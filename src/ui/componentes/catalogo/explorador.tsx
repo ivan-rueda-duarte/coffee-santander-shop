@@ -6,7 +6,7 @@ import { agruparPorProvincia, textoContador, type Orden } from "@/domain/catalog
 import { precioDesde } from "@/domain/catalogo/tipos";
 import { formatearCOP } from "@/domain/comun/dinero";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
-import { useFiltrosCatalogo } from "@/ui/hooks/use-filtros-catalogo";
+import { useFiltrosCatalogo, useFiltrosSinUrl, type EstadoFiltros } from "@/ui/hooks/use-filtros-catalogo";
 import { Boton } from "../marca/boton";
 import { IconoCerrar, IconoFiltro } from "../marca/iconos";
 import { GrupoChips } from "./controles-filtro";
@@ -29,7 +29,18 @@ export const ID_CONTADOR = "resultados-catalogo";
 
 /** Filtros + resultados. Lee la URL (useSearchParams), así que va dentro de <Suspense> (ver SeccionCatalogo). */
 export function ExploradorFiltrable() {
-  const f = useFiltrosCatalogo();
+  return <Explorador f={useFiltrosCatalogo()} />;
+}
+
+/**
+ * Respaldo de <Suspense>: el mismo explorador sin filtros. Reserva la barra lateral, los chips y el botón «Filtros»
+ * en celular y la misma cuadrícula, para que el catálogo no salte al hidratar (M7).
+ */
+export function ExploradorSinFiltros() {
+  return <Explorador f={useFiltrosSinUrl()} />;
+}
+
+function Explorador({ f }: { f: EstadoFiltros }) {
   const { catalogo } = useCatalogo();
   const op = useOpciones(f);
   const [hojaAbierta, setHojaAbierta] = useState(false);

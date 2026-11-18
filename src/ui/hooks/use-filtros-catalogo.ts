@@ -17,7 +17,7 @@ import {
   type Rango,
 } from "@/domain/catalogo/filtros";
 import { slugify } from "@/domain/comun/slug";
-import { parseFiltros, serializarFiltros } from "@/domain/catalogo/url";
+import { parseFiltros, serializarFiltros, type EntradaUrl } from "@/domain/catalogo/url";
 import { useCatalogo } from "./use-catalogo";
 
 /**
@@ -26,8 +26,21 @@ import { useCatalogo } from "./use-catalogo";
  * Debe usarse dentro de <Suspense> (useSearchParams).
  */
 export function useFiltrosCatalogo() {
+  return useFiltrosDesde(useSearchParams());
+}
+
+const SIN_FILTROS: EntradaUrl = {};
+
+/**
+ * Los mismos filtros sin leer la URL (todo el catálogo, orden por defecto). Es lo que pinta el HTML estático
+ * mientras <Suspense> espera a useSearchParams: así el catálogo no cambia de estructura al hidratar (M7).
+ */
+export function useFiltrosSinUrl() {
+  return useFiltrosDesde(SIN_FILTROS);
+}
+
+function useFiltrosDesde(params: EntradaUrl) {
   const { catalogo } = useCatalogo();
-  const params = useSearchParams();
   const { cafes } = catalogo;
 
   const opciones = useMemo(
