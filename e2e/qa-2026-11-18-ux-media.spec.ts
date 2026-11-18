@@ -437,12 +437,12 @@ test.describe("M3 · tira de navegación", () => {
           off,
         };
       });
+      if (i === 4) await tira.screenshot({ path: "docs/qa/capturas/2026-11-18-m3-tira-foco-envios-360.png" });
       expect(m, `Tab ${i + 1} cae en la tira`).not.toBeNull();
       vistos.push(m!.texto!);
       expect(m!.estilo, m!.texto!).not.toBe("none");
       expect(m!.ancho).toBeGreaterThan(0);
       expect(m!.dentro, `${m!.texto}: el enlace y su contorno quedan dentro de la tira visible`).toBe(true);
-      if (i === 4) await tira.screenshot({ path: "docs/qa/capturas/2026-11-18-m3-tira-foco-envios-360.png" });
     }
     expect(vistos).toEqual(["Mapa", "Cafés", "Cómo pedir", "Historia", "Envíos"]);
   });
