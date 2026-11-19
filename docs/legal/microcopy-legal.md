@@ -1,6 +1,8 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.11 — 2026-11-18.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 1.12 — 2026-11-19.
 
 # Microcopy legal
+
+**Aviso de la v1.12 (2026-11-19, LEG-188 a LEG-191).** El pedido se vacía en el navegador tras un clic válido en «Enviar por WhatsApp», después de abrir `wa.me`. §9.5, regla 4, reescrita; §9.1 y §9.4 ajustadas; §9.6 nueva (vista «Mensaje listo»). D1 a D4, la plantilla D5 §6.4 y la constancia **no cambian**. No requiere validación del abogado; se le informa antes de publicar.
 
 **Aviso de la v1.11 (2026-11-18, LEG-178 a LEG-182).** §5.9: nueva variante de una frase. Orden de las casillas en el resumen: se admite promociones (3 y 4) encima de las obligatorias (1 y 2), con leyenda visible `Promociones (opcional)`, sujeto a validación del abogado (LEG-178).
 
@@ -10,7 +12,7 @@
 
 Textos exactos del sitio que tienen fundamento legal. El desarrollador los copia sin cambios; `{}` son variables que pone el código y salen de `data/config.csv` o de los CSV de datos. Cada texto distingue **exige la norma** y **se recomienda**.
 
-Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran; **§8** envío gratis en comunas de Bucaramanga; **§9** flujo del pedido en tres pasos (v1.10).
+Secciones: **§1** precio, IVA y envío; **§2** inicio, Historia y confirmación (modelo C); **§3** ficha del café (marca, fabricante, notificación sanitaria, molienda, precio); **§4** documento, código postal y casilla de datos; **§5** casilla de términos, mensaje de WhatsApp, retracto, vendedor, plazos, PQR y `/envios/`; **§6** configuración y CSV; **§7** textos que se retiran; **§8** envío gratis en comunas de Bucaramanga; **§9** flujo del pedido en tres pasos (v1.10; vista «Mensaje listo» en §9.6, v1.12).
 
 Cambios de la v1.8 (2026-11-12, QA-013; LEG-139): §2, párrafos 1 y 2 de la Historia reescritos sobre el texto pedido por el dueño, con dos variantes según que todos los cafés activos traigan marca y fabricante (LEG-070) y regla de la lista de datos; §7 retira el texto del dueño. El texto público de los documentos versión 2 no cambia.
 
@@ -498,7 +500,7 @@ Revisión: `docs/legal/revisiones/2026-11-18-flujo-pedido-un-clic.md` (v0.2). Es
 | Paso Envío, enlace bajo el botón | `Seguir viendo cafés` | UI |
 | Resumen, botón principal (valida y abre `wa.me`) | `Enviar por WhatsApp` | **Legal: D1 §5** («Pulsas «Enviar por WhatsApp». Se abre WhatsApp con el pedido escrito»). Sin cambio |
 | Resumen, secundario | `← Volver al envío` | UI, conforme |
-| Resumen, respaldo (§9.4) | `Copiar mensaje` · `Ver el mensaje` (`summary`) · `Vaciar pedido` | Legal (LEG-173) / UI |
+| Resumen y vista «Mensaje listo», respaldo (§9.4) | `Copiar mensaje` · `Ver el mensaje` (`summary`) | Legal (LEG-173). `Vaciar pedido` se retira del respaldo en la v1.12 (el pedido ya está vacío); en el cajón se queda |
 
 Ningún botón, nombre accesible ni prueba dice `Abrir WhatsApp`. El reintento es el mismo botón «Enviar por WhatsApp».
 
@@ -527,11 +529,31 @@ Solo aparece después de un clic válido en «Enviar por WhatsApp», **debajo** 
 | Botón | `Copiar mensaje` |
 | Desplegable (se recomienda) | `Ver el mensaje`, con el texto completo del mensaje |
 
-Reglas: copia **el mismo texto y el mismo número DS** del enlace abierto; si cambia el carrito, un dato de envío o cualquiera de las cuatro casillas, se oculta y el siguiente clic genera número y texto nuevos. Sin cambios, un segundo clic abre el mismo enlace con el mismo número (recomendación de legal, §4 bis de la revisión).
+Reglas: copia **el mismo texto y el mismo número DS** del enlace abierto; si cambia el carrito, un dato de envío o cualquiera de las cuatro casillas, se oculta y el siguiente clic genera número y texto nuevos. Sin cambios, un segundo clic abre el mismo enlace con el mismo número (recomendación de legal, §4 bis de la revisión). *Salvedad de la v1.12 (LEG-188):* el vaciado del carrito por el propio envío no cuenta como cambio; el respaldo sigue en la vista «Mensaje listo» (§9.6) con la copia en memoria. Se descarta si el carrito vuelve a tener cafés distintos de los del mensaje, al recargar o al salir de `/pedido/`.
 
 ### 9.5 Reglas del clic (LEG-172, **bloqueante**)
 
 1. Sin la casilla 1 o la 2: no se genera número DS, texto ni enlace; errores bajo cada casilla (D5 §6.3, sin cambio) y foco a la primera sin marcar; microayuda de §5.9.
 2. Con las dos: número DS, texto y `window.open` del enlace `wa.me` **en el mismo manejador, de forma síncrona**, sin `await`, `setTimeout` ni `requestAnimationFrame` antes.
 3. Las casillas 3 y 4 nunca bloquean.
-4. El carrito no se vacía solo: el sitio no sabe si el cliente mandó el mensaje.
+4. *(v1.12, LEG-188.)* Tras un clic válido, el pedido se vacía en el navegador en el mismo manejador, **después** de `window.open` del enlace `wa.me` y nunca antes. Un clic no válido no vacía nada. El sitio sigue sin saber si el cliente mandó el mensaje. Por eso conserva **solo en memoria** una copia del mensaje ya generado (nunca en `localStorage`, `sessionStorage`, `history.state`, la URL, la analítica ni otra pestaña), muestra la vista «Mensaje listo» (§9.6) con el respaldo de §9.4 y permite recuperar el pedido. La vista no dice que el pedido se envió, se recibió ni se confirmó.
+
+### 9.6 Vista «Mensaje listo» (v1.12; LEG-188 a LEG-191)
+
+Se muestra en `/pedido/` tras un clic válido, con la copia del mensaje en memoria y el carrito vacío. Especificación: `docs/diseno/2026-11-19-vaciar-carrito.md`.
+
+| Dónde | Texto exacto | Tipo |
+|---|---|---|
+| h1 | `Envía el mensaje en WhatsApp` | Legal (art. 23): no dice «enviado», «confirmado» ni «compra» |
+| Bajada, envío con tarifa (incluido el envío gratis por comunas) | `Con ese mensaje nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.` | Texto de §9.3 aprobado por el abogado, sin «Al pulsar…» |
+| Bajada, por cotizar (zona 5 o más de 5 kg) | `Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor.` | Ídem |
+| Nota bajo la bajada | `Vaciamos «Tu pedido» en este navegador para que puedas armar uno nuevo. El mensaje de WhatsApp lleva todos los cafés.` | Legal (LEG-189): que no se lea como cancelación ni como cambio del mensaje |
+| Rótulo del bloque de líneas | `En el mensaje` | UI; las líneas salen de la misma copia que el texto |
+| Botón principal | `Enviar por WhatsApp` | D1 §5; reabre el mismo enlace y el mismo DS |
+| Respaldo | El de §9.4, sin cambio | LEG-173 |
+| Enlace | `Recuperar el pedido` | UI; al recuperar rige §4 bis (mismo DS sin cambios; nuevo con cualquier cambio) |
+| Enlace | `Seguir viendo cafés` | UI |
+
+El número DS **no** se muestra fuera del mensaje (LEG-191): queda en «Ver el mensaje», en lo copiado y en WhatsApp. Si algún día se muestra, solo como `Número de tu solicitud: {DS}`, nunca «Número de pedido».
+
+**Exige la norma:** que el cliente sepa que aún no ha comprado y qué sigue (Ley 1480, art. 23; D1 §5 y §6); que los datos personales no se guarden donde D2 §2 dice que no se guardan (Ley 1581, art. 4; LEG-149). **Se recomienda:** el reintento con el mismo DS y «Recuperar el pedido».
