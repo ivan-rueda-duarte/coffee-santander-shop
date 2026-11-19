@@ -260,7 +260,9 @@ test.describe("A2 · ficha a 360 px", () => {
     };
     const out: Record<string, { x: number; y: number; w: number; h: number } | null> = {};
     for (const [k, l] of Object.entries(sel)) out[k] = (await l.count()) ? await caja(l) : null;
-    const alto = await page.evaluate(() => document.documentElement.scrollHeight);
+    // Alto de la página sin el pie: M1 (ec4b442, objetivos de 44 px) hizo el pie 52 px más alto que en main a
+    // propósito; la comparación de A2 es de la ficha, no del pie (ronda 2026-11-19, docs/qa/2026-11-19-cierre-baja.md).
+    const alto = await page.evaluate(() => document.documentElement.scrollHeight - (document.querySelector("body > footer")?.getBoundingClientRect().height ?? 0));
     const png = await page.screenshot({ fullPage: true, animations: "disabled" });
     await ctx.close();
     return { cajas: out, alto, png };

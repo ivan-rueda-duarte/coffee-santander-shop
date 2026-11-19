@@ -268,7 +268,8 @@ test("flujo desde la ficha: Molido + 500 g; localStorage = solo líneas; sin dat
   expect(JSON.parse(almacen.local["desantander.carrito.v2"])).toEqual({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 500, molienda: "molido", cantidad: 1 }] });
   expect(JSON.stringify(almacen.session)).not.toMatch(/Ana|300 ?123|Calle 45|ejemplo|Bucaramanga/);
   expect(almacen.cookies).toBe("");
-  for (const u of [...urls, page.url()]) expect(u).not.toMatch(/Ana|300|Calle|ejemplo|Bucaramanga|bucaramanga|correo|celular/i);
+  // Se mira la URL sin el origen: con E2E_PUERTO=4300 el «300» del puerto daba un falso positivo (ronda 2026-11-19).
+  for (const u of [...urls, page.url()]) expect(u.replace(/^https?:\/\/[^/]+/, "")).not.toMatch(/Ana|300|Calle|ejemplo|Bucaramanga|bucaramanga|correo|celular/i);
   expect(externas).toEqual([]);
 });
 

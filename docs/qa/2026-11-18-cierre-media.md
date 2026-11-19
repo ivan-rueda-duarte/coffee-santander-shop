@@ -119,12 +119,12 @@ Riesgo: el margen es de 386 B. Cualquier código nuevo en el inicio puede reabri
 
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
-| QA-028 | Media | `/envios/` (D3) | Desde `lg`, la tabla de tarifas parte cada precio en tres renglones y «Hasta n kg» en cuatro | desarrollador-fullstack | Corregido — pendiente verificación (`whitespace-nowrap` en los `<th>` de escalón y los `<td>` de precio de `src/app/envios/page.tsx`; causa: `[overflow-wrap:anywhere]` heredado de `documento-legal.tsx:88`) |
+| QA-028 | Media | `/envios/` (D3) | Desde `lg`, la tabla de tarifas parte cada precio en tres renglones y «Hasta n kg» en cuatro | desarrollador-fullstack | **Cerrado** el 2026-11-19 (`f310098`; ver `docs/qa/2026-11-19-cierre-baja.md`) |
 | QA-018 | Media | Rendimiento | JS inicial de inicio | desarrollador-fullstack | Cerrado (criterio de celular; O-1 para el dueño) |
 | QA-025 | Baja | Accesibilidad / M1 | Chips de 42 px | desarrollador-fullstack | Cerrado |
 | QA-026 | Baja | Accesibilidad / M1 | Controles fuera de la tabla de M1 | disenador-marca → desarrollador-fullstack | Cerrado |
 | QA-027 | Baja | Accesibilidad / M3 | «Envíos» cortado al enfocarlo | desarrollador-fullstack | Cerrado |
-| QA-017 | Baja | (ronda 2026-11-14) | sin cambios | desarrollador-fullstack | Corregido — pendiente verificación (commit `8162ccf`; causa: el `aria-label` de «Agregar» llevaba fijo «en grano entero»; hoy dice «Agregar {café}, {g} g, al pedido» en `src/ui/componentes/carrito/carrito-provider.tsx`, sin presentación que pueda contradecir la que se agrega. La prueba de cierre de `qa-2026-11-14-paquete-abogado.spec.ts` pasa el 2026-11-19) |
+| QA-017 | Baja | (ronda 2026-11-14) | sin cambios | desarrollador-fullstack | **Cerrado** el 2026-11-19 (`8162ccf`; ver `docs/qa/2026-11-19-cierre-baja.md`) |
 
 ### QA-028 — Desde `lg`, la tabla de tarifas parte cada precio en tres renglones y «Hasta n kg» en cuatro
 - **Severidad:** Media. Todos los precios están, pero la tabla de D3, que es la que publica las tarifas, se lee «$8. / 80 / 0» en escritorio: la información de precio no es clara (art. 23 Ley 1480; lo valora legal si hace falta). No es regresión: `main` (`8162ccf`) es igual. M8 la dejó como la única vista desde 1.024 px.
