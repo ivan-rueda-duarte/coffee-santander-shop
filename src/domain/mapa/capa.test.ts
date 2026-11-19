@@ -3,7 +3,10 @@ import type { Cafe, Provincia } from "../catalogo/tipos";
 import {
   anchoPin,
   anchoRotulo,
+  ANCHO_PROXIMAMENTE,
   armarEntradaCapa,
+  cajaEscala,
+  cajaMarca,
   calcularCapa,
   calcularGraticula,
   capaEstatica,
@@ -104,6 +107,51 @@ describe("calcularCapa", () => {
     expect([20, -20, 40, -40]).toContain(b.desplazamiento);
     expect(b.arriba - a.arriba).toBe(b.desplazamiento);
   });
+  // QA-032: «VÉLEZ» y «COMUNERA» se pisaban por sus «Próximamente», más anchos que «VÉLEZ».
+  it("dos provincias sin cafés no se pisan por su «Próximamente» (QA-032)", () => {
+    const base = { bbox: [0, 0, 1, 1] as [number, number, number, number], vacia: true };
+    const vecinas: EntradaCapa = {
+      ...entrada,
+      origenes: [],
+      provincias: [
+        { ...base, slug: "comunera", nombreCorto: "Comunera", c: [440, 600] },
+        { ...base, slug: "velez", nombreCorto: "Vélez", c: [250, 600] },
+      ],
+    };
+    const [c, v] = calcularCapa(vecinas, datos.viewBox, 500, 600).rotulos;
+    // Por los nombres (Vélez 101–149 px, Comunera 181,5–258,5 px) cabrían a la misma altura; con «Próximamente», Vélez llega a 186.
+    expect(c.desplazamiento).toBe(0);
+    expect(v.oculto).toBe(false);
+    expect(v.desplazamiento).not.toBe(0);
+    const cruzan = v.izquierda < c.izquierda + ANCHO_PROXIMAMENTE && c.izquierda < v.izquierda + ANCHO_PROXIMAMENTE && v.arriba < c.arriba + 26 && c.arriba < v.arriba + 26;
+    expect(cruzan).toBe(false);
+  });
+  it("un rótulo no se pone sobre la escala gráfica", () => {
+    const abajo: EntradaCapa = { ...entrada, origenes: [], provincias: [{ slug: "velez", nombreCorto: "Vélez", c: [250, 1150], bbox: [0, 0, 1, 1], vacia: true }] };
+    const capa = calcularCapa(abajo, datos.viewBox, 400, 480);
+    const [r] = capa.rotulos;
+    const e = cajaEscala(capa.escala!.anchoPx, 480);
+    expect(e).toEqual({ x0: 12, x1: 12 + capa.escala!.anchoPx, y0: 449, y1: 468 });
+    expect(r.oculto).toBe(false);
+    expect(r.desplazamiento).toBe(-40);
+    expect(r.arriba + r.alto).toBeLessThan(e.y0);
+  });
+  it("un rótulo no se pone sobre una marca de la gratícula", () => {
+    expect(cajaMarca(6, 100, "7°00'N")).toEqual({ x0: 6, x1: 42, y0: 100, y1: 112 });
+    const sinRotulos = calcularCapa({ ...entrada, origenes: [], provincias: [] }, datos.viewBox, 400, 480);
+    const m = sinRotulos.marcasLat[0];
+    const sobre: EntradaCapa = { ...entrada, origenes: [], provincias: [{ slug: "velez", nombreCorto: "Vélez", c: [20 / 0.4, (m.px + 6) / 0.4], bbox: [0, 0, 1, 1], vacia: false }] };
+    const [r] = calcularCapa(sobre, datos.viewBox, 400, 480).rotulos;
+    expect(r.oculto).toBe(false);
+    expect(r.arriba >= m.px + 12 || r.arriba + r.alto <= m.px || r.izquierda >= 6 + m.texto.length * 6).toBe(true);
+  });
+  it("el corrimiento horizontal llega a la capa estática y cambia la firma (QA-032)", () => {
+    const juntos: EntradaCapa = { ...entrada, origenes: [], provincias: [entrada.provincias[0], { ...entrada.provincias[0], slug: "otra" }] };
+    const capa = calcularCapa(juntos, datos.viewBox, 500, 600);
+    const corrida: typeof capa = { ...capa, rotulos: capa.rotulos.map((r, i) => (i === 1 ? { ...r, desplazamientoX: -20 } : r)) };
+    expect(firmaCapa(corrida)).not.toBe(firmaCapa(capa));
+    expect(capa.rotulos.every((r) => r.desplazamientoX === 0)).toBe(true);
+  });
   it("con zoom, lo que queda fuera no se ve", () => {
     const c = calcularCapa(entrada, [700, 100, 300, 360], 500, 600);
     expect(c.pines[0].visible).toBe(false);
@@ -132,7 +180,9 @@ describe("capa estática por tramos de ancho", () => {
       const medida = calcularCapa(entrada, datos.viewBox, w, w / proporcion);
       const pines = ve(est.pines, i);
       expect(pines.map((p) => [p.slug, p.lado])).toEqual(medida.pines.filter((p) => p.visible).map((p) => [p.slug, p.lado]));
-      expect(ve(est.rotulos, i).map((r) => [r.slug, r.desplazamiento])).toEqual(medida.rotulos.filter((r) => !r.oculto).map((r) => [r.slug, r.desplazamiento]));
+      expect(ve(est.rotulos, i).map((r) => [r.slug, r.desplazamiento, r.desplazamientoX])).toEqual(
+        medida.rotulos.filter((r) => !r.oculto).map((r) => [r.slug, r.desplazamiento, r.desplazamientoX]),
+      );
       expect(ve(est.marcasLat, i).map((m) => m.clave)).toEqual(medida.marcasLat.map((m) => m.clave));
       expect(ve(est.marcasLon, i).map((m) => m.clave)).toEqual(medida.marcasLon.map((m) => m.clave));
       expect(ve(est.escala, i).map((e) => e.km)).toEqual([medida.escala?.km]);

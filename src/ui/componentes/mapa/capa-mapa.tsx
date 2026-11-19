@@ -93,11 +93,15 @@ export function CapaFija({ capa }: { capa: CapaEstatica }) {
 
   const rotulos = porSlug<RotuloCapa>(capa.rotulos).map((vs) => {
     const r = vs[0].valor;
-    const base = { left: `clamp(4px, calc(${pc(r.fx)} - ${r.ancho / 2}px), calc(100% - ${r.ancho + 4}px))` };
-    if (unico(vs)) return <Rotulo key={r.slug} r={r} style={{ ...base, top: `calc(${pc(r.fy)} + ${r.desplazamiento - r.alto / 2}px)` }} />;
+    // El corrimiento horizontal (QA-032) solo entra en el estilo del rótulo que lo usa en algún tramo.
+    const corre = vs.some((v) => v.valor.desplazamientoX !== 0);
+    const izquierda = (dx: string) => ({ left: `clamp(4px, calc(${pc(r.fx)} - ${r.ancho / 2}px${dx}), calc(100% - ${r.ancho + 4}px))` });
+    if (unico(vs))
+      return <Rotulo key={r.slug} r={r} style={{ ...izquierda(corre ? ` + ${r.desplazamientoX}px` : ""), top: `calc(${pc(r.fy)} + ${r.desplazamiento - r.alto / 2}px)` }} />;
+    const base = izquierda(corre ? " + var(--dx, 0px)" : "");
     capa.tramos.forEach((_, i) => {
       const v = enTramo(vs, i);
-      reglas[i].push(`[data-c="r-${r.slug}"]{${v ? `--d:${v.desplazamiento - r.alto / 2}px` : "--v:hidden"}}`);
+      reglas[i].push(`[data-c="r-${r.slug}"]{${v ? `--d:${v.desplazamiento - r.alto / 2}px${corre ? `;--dx:${v.desplazamientoX}px` : ""}` : "--v:hidden"}}`);
     });
     return <Rotulo key={r.slug} r={r} c={`r-${r.slug}`} style={{ ...base, top: `calc(${pc(r.fy)} + var(--d, ${-r.alto / 2}px))`, visibility: "var(--v, visible)" as CSSProperties["visibility"] }} />;
   });

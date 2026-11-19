@@ -97,7 +97,7 @@ describe("colocarPines", () => {
 describe("colocarRotulos", () => {
   it("centra el nombre de la provincia", () => {
     const [r] = colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false }], [], 400, 300);
-    expect(r).toEqual({ oculto: false, izquierda: 160, arriba: 143 });
+    expect(r).toEqual({ oculto: false, izquierda: 160, arriba: 143, desplazamientoX: 0 });
   });
   it("lo baja o sube si choca", () => {
     const ocupadas = [{ x0: 100, x1: 300, y0: 140, y1: 160 }];
@@ -119,5 +119,38 @@ describe("colocarRotulos", () => {
     const ocupadas: { x0: number; x1: number; y0: number; y1: number }[] = [];
     colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false }], ocupadas, 400, 300);
     expect(ocupadas).toHaveLength(1);
+  });
+  // QA-032: «VÉLEZ» y «COMUNERA» no chocaban por el nombre, pero sí por sus «Próximamente», más anchos que «VÉLEZ».
+  it("dos rótulos no se pisan por la segunda línea, más ancha que el nombre (QA-032)", () => {
+    const velez = { cx: 100, cy: 150, ancho: 48, anchoCaja: 85, alto: 26, atenuado: false };
+    const comunera = { cx: 175, cy: 150, ancho: 77, anchoCaja: 85, alto: 26, atenuado: false };
+    // Sin la segunda línea las cajas de los nombres (76–124 y 136,5–213,5) no chocan y quedan a la misma altura.
+    const sinCaja = colocarRotulos([{ ...comunera, anchoCaja: undefined }, { ...velez, anchoCaja: undefined }], [], 400, 300);
+    expect(sinCaja.map((r) => r.arriba)).toEqual([137, 137]);
+    const [c, v] = colocarRotulos([comunera, velez], [], 400, 300);
+    expect(c).toEqual({ oculto: false, izquierda: 137, arriba: 137, desplazamientoX: 0 });
+    expect(v.oculto).toBe(false);
+    expect(v.izquierda).toBe(76);
+    expect(v.arriba).toBe(177); // ±20 aún cruza (26 px de alto): baja 40
+    // Las cajas pintadas (con «Próximamente») ya no se cruzan.
+    const cruza = v.izquierda + 85 > c.izquierda && c.izquierda + 85 > v.izquierda && v.arriba + 26 > c.arriba && c.arriba + 26 > v.arriba;
+    expect(cruza).toBe(false);
+  });
+  it("si ningún sitio en vertical sirve, se corre a un lado antes de ocultarse (QA-032)", () => {
+    // Una franja ocupada de arriba abajo a la derecha del centro; el rótulo cabe 20 px más a la izquierda.
+    const ocupadas = [{ x0: 235, x1: 260, y0: 0, y1: 300 }];
+    const [r] = colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false }], ocupadas, 400, 300);
+    expect(r).toEqual({ oculto: false, izquierda: 140, arriba: 143, desplazamientoX: -20 });
+    // Si tampoco cabe a los lados, se oculta.
+    const todo = [{ x0: 0, x1: 400, y0: 0, y1: 300 }];
+    expect(colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false }], todo, 400, 300)[0]).toEqual({ oculto: true, izquierda: 0, arriba: 0, desplazamientoX: 0 });
+  });
+  it("con `anchoCaja` menor que el nombre o sin ella, la posición no cambia", () => {
+    const base = { cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false };
+    const ocupadas = [{ x0: 270, x1: 300, y0: 140, y1: 160 }];
+    expect(colocarRotulos([{ ...base, anchoCaja: 40 }], [...ocupadas], 400, 300)).toEqual(colocarRotulos([base], [...ocupadas], 400, 300));
+    expect(colocarRotulos([base], [...ocupadas], 400, 300)[0].arriba).toBe(143);
+    // La misma caja ocupada, alcanzada solo por una segunda línea de 120 px, sí lo mueve.
+    expect(colocarRotulos([{ ...base, anchoCaja: 120 }], [...ocupadas], 400, 300)[0].arriba).not.toBe(143);
   });
 });

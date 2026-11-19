@@ -2,7 +2,7 @@
 // La misma función calcula la capa en el build (HTML estático, para cada ancho posible del contenedor) y en el
 // navegador (con el ancho medido y el encuadre animado), así que las dos coinciden.
 
-import { colocarPines, colocarRotulos } from "./etiquetas";
+import { colocarPines, colocarRotulos, type Caja } from "./etiquetas";
 import { escalaGrafica, formatearGrados, proyectar } from "./geometria";
 import type { Cafe, Provincia } from "../catalogo/tipos";
 import type { CajaMapa, DatosMapa, ProyeccionMapa } from "./tipos";
@@ -70,6 +70,8 @@ export interface RotuloCapa {
   alto: number;
   /** Desplazamiento vertical elegido para no chocar (0, ±20 o ±40 px). */
   desplazamiento: number;
+  /** Corrimiento horizontal (0, ±20 o ±40 px), si ningún sitio en vertical sirve. */
+  desplazamientoX: number;
   izquierda: number;
   arriba: number;
 }
@@ -92,6 +94,14 @@ export interface Capa {
 
 export const anchoPin = (nombre: string) => Math.round(nombre.length * 7.2 + 28);
 export const anchoRotulo = (nombre: string) => Math.round(nombre.length * 9.6);
+/** «Próximamente» bajo el nombre de una provincia sin cafés (Montserrat 600 de 10 px; medido: 84,2 px). */
+export const ANCHO_PROXIMAMENTE = 85;
+
+/** Caja de la escala gráfica (`.mapa-escala`: 12 px del borde izquierdo e inferior; barra de 5 px y cifras de 12 px). */
+export const cajaEscala = (anchoPx: number, alto: number): Caja => ({ x0: 12, x1: 12 + anchoPx, y0: alto - 12 - 19, y1: alto - 12 });
+
+/** Caja de una marca de la gratícula (`.mapa-marca`: Montserrat 500 de 10/12 px, ≈ 6 px por carácter). */
+export const cajaMarca = (x: number, y: number, texto: string): Caja => ({ x0: x, x1: x + texto.length * 6, y0: y, y1: y + 12 });
 
 const sinCafe = (nombre: string) => nombre.replace(/^Café\s+/i, "");
 
@@ -173,10 +183,28 @@ export function calcularCapa(e: EntradaCapa, vb: CajaMapa, ancho: number, alto: 
     cx: fx(p.c[0]) * ancho,
     cy: fy(p.c[1]) * alto,
     ancho: anchoRotulo(p.nombreCorto),
+    anchoCaja: p.vacia ? ANCHO_PROXIMAMENTE : undefined,
     alto: p.vacia ? 26 : 14,
     atenuado: elegidas.length > 0 && !elegidas.includes(p.slug),
   }));
-  const colocados = colocarRotulos(rot, colocacion.ocupadas, ancho, alto);
+  const marcasLat = e.graticula.lats.flatMap((l) => {
+    const y = fy(l.y) * alto;
+    return y < alto * 0.04 || y > alto * 0.9 ? [] : [{ clave: `lat${l.valor}`, texto: `${formatearGrados(l.valor)}N`, f: fy(l.y), px: Math.round(y - 9) }];
+  });
+  const marcasLon = e.graticula.lons.flatMap((l) => {
+    const x = fx(l.x) * ancho;
+    return x < ancho * 0.06 || x > ancho * 0.86 ? [] : [{ clave: `lon${l.valor}`, texto: `${formatearGrados(l.valor)}O`, f: fx(l.x), px: Math.round(x + 4) }];
+  });
+
+  // La escala gráfica y las marcas de la gratícula también ocupan su sitio: un rótulo no se pone encima (QA-032).
+  const g = escalaGrafica(e.proyeccion, vw, ancho);
+  const ocupadas = [
+    ...colocacion.ocupadas,
+    cajaEscala(g.anchoPx, alto),
+    ...marcasLat.map((m) => cajaMarca(6, m.px, m.texto)),
+    ...marcasLon.map((m) => cajaMarca(m.px, 4, m.texto)),
+  ];
+  const colocados = colocarRotulos(rot, ocupadas, ancho, alto);
   const rotulos = rot.map<RotuloCapa>((r, i) => {
     const c = colocados[i];
     return {
@@ -192,16 +220,6 @@ export function calcularCapa(e: EntradaCapa, vb: CajaMapa, ancho: number, alto: 
     };
   });
 
-  const marcasLat = e.graticula.lats.flatMap((l) => {
-    const y = fy(l.y) * alto;
-    return y < alto * 0.04 || y > alto * 0.9 ? [] : [{ clave: `lat${l.valor}`, texto: `${formatearGrados(l.valor)}N`, f: fy(l.y), px: Math.round(y - 9) }];
-  });
-  const marcasLon = e.graticula.lons.flatMap((l) => {
-    const x = fx(l.x) * ancho;
-    return x < ancho * 0.06 || x > ancho * 0.86 ? [] : [{ clave: `lon${l.valor}`, texto: `${formatearGrados(l.valor)}O`, f: fx(l.x), px: Math.round(x + 4) }];
-  });
-
-  const g = escalaGrafica(e.proyeccion, vw, ancho);
   return { pines, rotulos, marcasLat, marcasLon, escala: { ...g, fraccion: g.km / (111.32 / e.proyeccion.k) / vw } };
 }
 
@@ -209,7 +227,7 @@ export function calcularCapa(e: EntradaCapa, vb: CajaMapa, ancho: number, alto: 
 export function firmaCapa(c: Capa): string {
   return JSON.stringify([
     c.pines.map((p) => [p.visible, p.lado]),
-    c.rotulos.map((r) => [r.oculto, r.desplazamiento]),
+    c.rotulos.map((r) => [r.oculto, r.desplazamiento, r.desplazamientoX]),
     c.marcasLat.map((m) => m.clave),
     c.marcasLon.map((m) => m.clave),
     c.escala?.km ?? null,
@@ -279,7 +297,7 @@ export function capaEstatica(e: EntradaCapa, proporcion: number, min: number, ma
   };
   return {
     tramos: tramos.map(({ desde, hasta }) => ({ desde, hasta })),
-    rotulos: agrupar((c) => c.rotulos.flatMap((r, orden) => (r.oculto ? [] : [{ clave: `${r.slug}:${r.desplazamiento}`, valor: r, orden }]))),
+    rotulos: agrupar((c) => c.rotulos.flatMap((r, orden) => (r.oculto ? [] : [{ clave: `${r.slug}:${r.desplazamiento}:${r.desplazamientoX}`, valor: r, orden }]))),
     marcasLat: agrupar((c) => c.marcasLat.map((m) => ({ clave: m.clave, valor: m, orden: e.graticula.lats.findIndex((l) => `lat${l.valor}` === m.clave) }))),
     marcasLon: agrupar((c) => c.marcasLon.map((m) => ({ clave: m.clave, valor: m, orden: e.graticula.lons.findIndex((l) => `lon${l.valor}` === m.clave) }))),
     pines: agrupar((c) => c.pines.flatMap((p, orden) => (p.visible ? [{ clave: `${p.slug}:${p.lado}`, valor: p, orden }] : []))),

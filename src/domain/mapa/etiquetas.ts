@@ -60,7 +60,13 @@ export function colocarPines(pines: readonly PinEntrada[], ancho: number, alto: 
 export interface RotuloEntrada {
   cx: number;
   cy: number;
+  /** Ancho del nombre: el rótulo se centra con él. */
   ancho: number;
+  /**
+   * Ancho de lo que se pinta, si es mayor que el nombre (p. ej., «Próximamente» bajo un nombre corto). El texto empieza
+   * donde empezaría el nombre centrado, así que este ancho se extiende a la derecha y es el que no debe chocar (QA-032).
+   */
+  anchoCaja?: number;
   alto: number;
   /** Hay una provincia elegida y esta no es una de ellas. */
   atenuado: boolean;
@@ -70,19 +76,43 @@ export interface RotuloColocado {
   oculto: boolean;
   izquierda: number;
   arriba: number;
+  /** Corrimiento horizontal elegido (0, ±20 o ±40 px), solo cuando ningún sitio en vertical sirve (QA-032). */
+  desplazamientoX: number;
 }
 
-/** Nombres de provincia: en su centro, o un poco más abajo o arriba; si no caben, se atenúan. */
+/**
+ * Sitios que prueba un rótulo, en orden, como [dx, dy] en px desde su centro: primero en vertical, como siempre; si
+ * ninguno sirve, se corre a un lado antes de ocultarse (QA-032: a 320 px, «VÉLEZ» entre «COMUNERA» y la escala).
+ */
+export const SITIOS_ROTULO: readonly (readonly [number, number])[] = [
+  [0, 0],
+  [0, 20],
+  [0, -20],
+  [0, 40],
+  [0, -40],
+  [-20, 0],
+  [20, 0],
+  [-40, 0],
+  [40, 0],
+];
+
+/**
+ * Nombres de provincia: en su centro, o un poco más abajo o arriba; si no caben, se atenúan. Cada rótulo colocado
+ * reserva su caja entera (nombre y «Próximamente»), así que el siguiente no lo pisa (QA-032).
+ */
 export function colocarRotulos(rotulos: readonly RotuloEntrada[], ocupadas: Caja[], ancho: number, alto: number): RotuloColocado[] {
   return rotulos.map((r) => {
     const fuera = r.cx < 0 || r.cx > ancho || r.cy < 0 || r.cy > alto;
-    if (fuera || r.atenuado) return { oculto: true, izquierda: 0, arriba: 0 };
-    const x = Math.min(Math.max(r.cx - r.ancho / 2, 4), ancho - r.ancho - 4);
-    const sitio = [0, 20, -20, 40, -40]
-      .map<Caja>((dy) => ({ x0: x, x1: x + r.ancho, y0: r.cy - r.alto / 2 + dy, y1: r.cy + r.alto / 2 + dy }))
-      .find((caja) => caja.y0 > 2 && caja.y1 < alto - 2 && !choca(caja, ocupadas));
-    if (!sitio) return { oculto: true, izquierda: 0, arriba: 0 };
-    ocupadas.push(sitio);
-    return { oculto: false, izquierda: Math.round(sitio.x0), arriba: Math.round(sitio.y0) };
+    const oculto = { oculto: true, izquierda: 0, arriba: 0, desplazamientoX: 0 };
+    if (fuera || r.atenuado) return oculto;
+    const pintado = Math.max(r.ancho, r.anchoCaja ?? 0);
+    for (const [dx, dy] of SITIOS_ROTULO) {
+      const x = Math.min(Math.max(r.cx - r.ancho / 2 + dx, 4), ancho - r.ancho - 4);
+      const caja: Caja = { x0: x, x1: x + pintado, y0: r.cy - r.alto / 2 + dy, y1: r.cy + r.alto / 2 + dy };
+      if (caja.y0 <= 2 || caja.y1 >= alto - 2 || choca(caja, ocupadas)) continue;
+      ocupadas.push(caja);
+      return { oculto: false, izquierda: Math.round(caja.x0), arriba: Math.round(caja.y0), desplazamientoX: dx };
+    }
+    return oculto;
   });
 }
