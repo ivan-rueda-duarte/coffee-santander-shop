@@ -43,7 +43,12 @@ async function retrasarInteraccion(page: Page, ms: number) {
       }
       await r.fulfill({ response: res, body: cuerpo });
     } catch (e) {
-      if (!page.isClosed()) throw e;
+      // QA-035 (cerrado el 2026-11-19): la traza mostró que el mismo error llega también con la página todavía abierta,
+      // cuando un trozo diferido (no el de la interacción) se pide en los últimos milisegundos de la prueba y el cierre
+      // del contexto empieza mientras `res.text()` espera. Se ignora solo ese error de cierre; si le pasara al trozo de
+      // la interacción a mitad de la prueba, `estado.pedida` no cambiaría y la prueba fallaría por su propia aserción.
+      const cierre = /Response has been disposed|Target page, context or browser has been closed/.test(String(e));
+      if (!page.isClosed() && !cierre) throw e;
     }
   });
   return estado;
@@ -521,37 +526,77 @@ test.describe("orden de foco del mapa", () => {
   });
 });
 
+// QA-037 (ronda 2026-11-19, docs/qa/2026-11-19-verificacion-qa-031-032.md): la tecla Tab pide la interacción; cuando
+// esta llega, la capa fija (con sus pines) se reemplaza por la medida. Si el foco estaba en un pin de la capa fija, se
+// pierde (document.activeElement = body); y un Tab dado justo durante el cambio salta los pines (intermitencia de
+// «orden de foco del mapa»). Se retrasa el trozo de la interacción para abrir esa ventana, como en una red lenta.
+test.describe("QA-037: el foco de teclado sobrevive a la llegada de la interacción", () => {
+  for (const ancho of [1280, 360])
+    test(`a ${ancho} px: con el foco en un pin de la capa fija, al llegar la interacción el foco sigue en ese pin`, async ({ page }) => {
+      const estado = await retrasarInteraccion(page, 1000);
+      await page.setViewportSize({ width: ancho, height: 900 });
+      await page.goto("/", { waitUntil: "networkidle" });
+      await page.locator("#mapa").getByRole("link", { name: "Ir a los cafés" }).focus();
+      for (let i = 0; i < 3; i++) await page.keyboard.press("Tab");
+      const enfocado = () => page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.tagName ?? "");
+      expect(await enfocado()).toMatch(/^Ver la ficha de Café/);
+      const antes = await enfocado();
+      await expect(capaFija(page), "la interacción todavía no llegó").toHaveCount(1);
+      await expect.poll(() => estado.pedida, { message: "Tab pide la interacción" }).toBe(true);
+      await esperarInteraccion(page);
+      await page.waitForTimeout(300);
+      expect(await enfocado(), "el foco sigue en el mismo pin").toBe(antes);
+      // Y el siguiente Tab sigue el orden: el segundo pin.
+      await page.keyboard.press("Tab");
+      expect(await enfocado()).toMatch(/^Ver la ficha de Café/);
+      expect(await enfocado()).not.toBe(antes);
+    });
+});
+
 // =====================================================================================================================
 // 4. Posiciones de rótulos y pines frente a main (a32e00d)
 // =====================================================================================================================
-// QA-032 (5d2b5a6) cambia a propósito algunos rótulos en celular (contenedor = ventana − 40 px). Medido el 2026-11-19
-// con un barrido de 280 a 1.500 px contra main (a32e00d): Vélez se oculta < 291; Vélez −40/−40 de 291 a 302 y −40/0
-// de 303 a 354; Guanentá visible (en main oculto) de 304 a 354 y de 368 a 386; Vélez 0/−40 de 355 a 365, 0/+40 de 366
-// a 386 y 0/+20 de 387 a 451; Guanentá 0/+40 de 442 a 482. Desde 483 px, igual que main.
-type Esperado = { dx: number; dy: number } | "solo-head";
-const CAMBIOS_QA_032: Record<number, Record<string, Esperado>> = {
-  300: { "rotulo:Vélez": { dx: -40, dy: -40 } },
-  320: { "rotulo:Vélez": { dx: -40, dy: 0 }, "rotulo:Guanentá": "solo-head" },
-  360: { "rotulo:Vélez": { dx: 0, dy: -40 } },
-  390: { "rotulo:Vélez": { dx: 0, dy: 20 } },
-  412: { "rotulo:Vélez": { dx: 0, dy: 20 } },
-  430: { "rotulo:Vélez": { dx: 0, dy: 20 } },
-  442: { "rotulo:Vélez": { dx: 0, dy: 20 }, "rotulo:Guanentá": { dx: 0, dy: 40 } },
-  460: { "rotulo:Guanentá": { dx: 0, dy: 40 } },
-  482: { "rotulo:Guanentá": { dx: 0, dy: 40 } },
-  483: {},
+// QA-032 (5d2b5a6) y su revisión visual (b6f1614: provincias con cafés rotuladas primero; punto del pin ± 11 px) cambian a
+// propósito algunos rótulos frente a main (a32e00d). Tramos medidos el 2026-11-19 con un barrido de 280 a 1.500 px (cada
+// px, ventana; contenedor = ventana − 40 px hasta su ancho máximo) en HEAD 374a25b, sin JS y con la interacción, contra
+// main con la interacción. «solo-head»: visible en HEAD y oculto en main; «solo-main»: al revés; dx/dy en px.
+// Fuera de estos tramos, cada rótulo está donde en main (± 1,5 px). Ronda docs/qa/2026-11-19-verificacion-qa-031-032.md.
+type Esperado = { dx: number; dy: number } | "solo-head" | "solo-main";
+const TRAMOS_ROTULOS: Record<string, [desde: number, hasta: number, e: Esperado][]> = {
+  Comunera: [[280, 301, "solo-main"], [302, 386, { dx: 0, dy: 20 }], [387, 425, { dx: 0, dy: 40 }], [426, 482, { dx: 0, dy: 20 }]],
+  Guanentá: [[280, 386, "solo-head"], [387, 425, { dx: 0, dy: -20 }], [426, 441, { dx: 0, dy: -40 }]],
+  // Oculta a 360 (aceptado en la revisión visual: cede el sitio a Soto Norte); +60 en escritorio desde 429.
+  Metropolitana: [[280, 317, "solo-main"], [332, 376, "solo-main"], [429, 1500, { dx: 0, dy: 60 }]],
+  // Visible de 345 a 376 (en main, oculta); +20 en escritorio desde 429.
+  "Soto Norte": [[280, 289, { dx: 0, dy: -60 }], [290, 317, { dx: 0, dy: -20 }], [332, 344, { dx: 0, dy: -40 }], [345, 376, "solo-head"], [429, 1500, { dx: 0, dy: 20 }]],
+  Vélez: [[280, 301, { dx: 0, dy: -40 }], [302, 302, { dx: -40, dy: -40 }], [303, 354, { dx: -40, dy: 0 }], [355, 425, { dx: 0, dy: -20 }], [426, 451, { dx: 0, dy: 40 }]],
+  Yariguíes: [[429, 551, { dx: 0, dy: -20 }], [1024, 1080, { dx: 0, dy: -20 }]],
 };
-const CAPTURAS_QA_032 = [300, 320, 360, 390, 412, 460, 1280];
+function cambiosEsperados(ancho: number): Record<string, Esperado> {
+  const r: Record<string, Esperado> = {};
+  for (const [prov, tramos] of Object.entries(TRAMOS_ROTULOS)) {
+    const t = tramos.find(([d, h]) => ancho >= d && ancho <= h);
+    if (t) r[`rotulo:${prov}`] = t[2];
+  }
+  return r;
+}
+// Anchos de la prueba: los siete de referencia y los bordes de los tramos (evitando los dos px de cada borde, donde el
+// barrido con cambio de tamaño ve la transición de opacidad).
+const ANCHOS_POSICIONES = [300, 320, 340, 360, 376, 377, 390, 412, 428, 429, 430, 442, 460, 482, 483, 551, 552, 768, 1024, 1080, 1081, 1280, 1440];
+// Capturas para la revisión de marca de la ronda 2026-11-19 (rótulos finales).
+const CAPTURAS_ROTULOS = [320, 360, 390, 1280];
 
-/** Diferencias con main que no son las esperadas de QA-032 (y las esperadas que no se cumplen). */
+/** Diferencias con main que no son las esperadas (y las esperadas que no se cumplen). */
 function diferenciasQa032(head: Pieza[], main: Pieza[], ancho: number): string[] {
-  const esperado = CAMBIOS_QA_032[ancho] ?? {};
+  const esperado = cambiosEsperados(ancho);
   const fuera: string[] = [];
   for (const [clave, e] of Object.entries(esperado)) {
     const h = head.find((p) => p.clave === clave);
     const m = main.find((p) => p.clave === clave);
     if (e === "solo-head") {
       if (!h || m) fuera.push(`${clave}: se esperaba visible solo en HEAD (HEAD ${!!h}, main ${!!m})`);
+    } else if (e === "solo-main") {
+      if (h || !m) fuera.push(`${clave}: se esperaba visible solo en main (HEAD ${!!h}, main ${!!m})`);
     } else if (!h || !m || Math.abs(h.x - m.x - e.dx) > 1.5 || Math.abs(h.y - m.y - e.dy) > 1.5)
       fuera.push(`${clave}: se esperaba ${JSON.stringify(e)} frente a main; HEAD ${JSON.stringify(h)}, main ${JSON.stringify(m)}`);
   }
@@ -562,8 +607,8 @@ function diferenciasQa032(head: Pieza[], main: Pieza[], ancho: number): string[]
 test.describe("posiciones frente a main (a32e00d)", () => {
   const main = process.env.E2E_MAIN_URL;
   test.skip(!main, "Define E2E_MAIN_URL con el build de main (a32e00d)");
-  for (const ancho of [...new Set([...ANCHOS, ...Object.keys(CAMBIOS_QA_032).map(Number)])].sort((a, b) => a - b))
-    test(`a ${ancho} px: rótulos, pines, marcas y escala en el mismo sitio que en main, salvo los cambios de QA-032 (sin JS y con la interacción)`, async ({ browser }) => {
+  for (const ancho of ANCHOS_POSICIONES)
+    test(`a ${ancho} px: rótulos, pines, marcas y escala en el mismo sitio que en main, salvo los cambios medidos de QA-032 y su revisión visual (sin JS y con la interacción)`, async ({ browser }) => {
       const alto = 900;
       const m = await nuevaPagina(browser, { base: main!, ancho, alto });
       await m.page.goto("/", { waitUntil: "networkidle" });
@@ -573,14 +618,14 @@ test.describe("posiciones frente a main (a32e00d)", () => {
       await m.page.waitForTimeout(400);
       await m.page.locator(MAPA).scrollIntoViewIfNeeded();
       const deMain = await medirCapa(m.page);
-      if (CAPTURAS_QA_032.includes(ancho)) await m.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-qa-032-main-${ancho}.png` });
+      if (CAPTURAS_ROTULOS.includes(ancho)) await m.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-rotulos-final-main-${ancho}.png` });
       await m.ctx.close();
 
       const s = await nuevaPagina(browser, { js: false, ancho, alto });
       await s.page.goto("/");
       await s.page.locator(MAPA).scrollIntoViewIfNeeded();
       const sinJs = await medirCapa(s.page);
-      if (CAPTURAS_QA_032.includes(ancho)) await s.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-qa-032-head-sin-js-${ancho}.png` });
+      if (CAPTURAS_ROTULOS.includes(ancho)) await s.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-rotulos-final-sin-js-${ancho}.png` });
       await s.ctx.close();
 
       const c = await nuevaPagina(browser, { ancho, alto });
@@ -590,7 +635,7 @@ test.describe("posiciones frente a main (a32e00d)", () => {
       await esperarInteraccion(c.page);
       await c.page.waitForTimeout(400);
       const conJs = await medirCapa(c.page);
-      if (CAPTURAS_QA_032.includes(ancho)) await c.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-qa-032-head-${ancho}.png` });
+      if (CAPTURAS_ROTULOS.includes(ancho)) await c.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-rotulos-final-con-js-${ancho}.png` });
       await c.ctx.close();
 
       test.info().annotations.push({ type: "main", description: JSON.stringify(deMain) }, { type: "sin-js", description: JSON.stringify(sinJs) });
@@ -605,10 +650,13 @@ test.describe("posiciones frente a main (a32e00d)", () => {
 // QA-032 (cerrado en la ronda de verificación, 5d2b5a6): a 320 y 360 px los rótulos de Comunera y Vélez se pisaban.
 // Se mide cada línea de texto visible (nombre, «Próximamente», nombre de pin); además, ningún rótulo de provincia queda
 // cortado por el borde de la caja del mapa (`overflow: hidden`). El nombre del pin al borde es la observación O-1.
-const ANCHOS_QA_032 = [...new Set([...ANCHOS, 300, 412, 430, ...Array.from({ length: 41 }, (_, i) => 440 + i)])].sort((a, b) => a - b);
+// Revisión visual de QA-032 (b6f1614), ronda 2026-11-19: además, desde 320 px las provincias con cafés (Guanentá y Soto
+// Norte) tienen rótulo, y entre cualquier línea de un rótulo de provincia y el punto de cualquier pin quedan ≥ 2 px.
+// Se suman los anchos donde Guanentá tocaba el punto de Casa Martínez (304–316) y los bordes de los tramos nuevos.
+const ANCHOS_QA_032 = [...new Set([...ANCHOS, 300, 304, 310, 316, 340, 345, 366, 376, 386, 412, 430, ...Array.from({ length: 41 }, (_, i) => 440 + i)])].sort((a, b) => a - b);
 test.describe("QA-032: rótulos del mapa sin solaparse", () => {
   for (const ancho of ANCHOS_QA_032)
-    test(`a ${ancho} px, sin JS y con la interacción: ninguna línea de texto del mapa pisa a otra ni queda cortada`, async ({ browser }) => {
+    test(`a ${ancho} px, sin JS y con la interacción: ninguna línea de texto del mapa pisa a otra ni queda cortada; ≥ 2 px al punto del pin; provincias con cafés rotuladas`, async ({ browser }) => {
       const solapes: string[] = [];
       for (const js of [false, true]) {
         const { ctx, page } = await nuevaPagina(browser, { js, ancho, alto: 900 });
@@ -641,12 +689,28 @@ test.describe("QA-032: rótulos del mapa sin solaparse", () => {
               const b = e.getBoundingClientRect();
               out.push({ n: `pin ${e.textContent}`, l: b.left, r: b.right, t: b.top, b: b.bottom });
             }
+          const puntos = [...m.querySelectorAll(".mapa-pin")]
+            .filter((e) => vis(e))
+            .map((e) => ({ n: e.getAttribute("aria-label"), b: e.querySelector(".mapa-pin__punto")!.getBoundingClientRect() }));
+          const cercaDelPunto: string[] = [];
+          for (const o of out)
+            if (!o.n.startsWith("pin "))
+              for (const p of puntos) {
+                const sep = Math.max(p.b.left - o.r, o.l - p.b.right, p.b.top - o.b, o.t - p.b.bottom);
+                if (sep < 2) cercaDelPunto.push(`${o.n} a ${sep.toFixed(1)} px del punto de ${p.n}`);
+              }
+          const conRotulo = [...m.querySelectorAll(".mapa-rotulo")].filter((e) => vis(e)).map((e) => e.firstChild!.textContent!);
           const cortados = out
             .filter((o) => !o.n.startsWith("pin ") && (o.l < c.left - 0.5 || o.r > c.right + 0.5 || o.t < c.top - 0.5 || o.b > c.bottom + 0.5))
             .map((o) => `${o.n} [${(o.l - c.left).toFixed(0)}..${(o.r - c.left).toFixed(0)} de ${c.width.toFixed(0)}]`);
-          return { out, cortados };
+          return { out, cortados, cercaDelPunto, conRotulo, nPuntos: puntos.length };
         });
         for (const k of cajas.cortados) solapes.push(`${js ? "con JS" : "sin JS"}: ${k} cortado por el borde`);
+        for (const k of cajas.cercaDelPunto) solapes.push(`${js ? "con JS" : "sin JS"}: ${k} (< 2 px)`);
+        if (cajas.nPuntos !== 2) solapes.push(`${js ? "con JS" : "sin JS"}: ${cajas.nPuntos} puntos de pin visibles (se esperaban 2)`);
+        if (ancho >= 320)
+          for (const prov of ["Guanentá", "Soto Norte"])
+            if (!cajas.conRotulo.includes(prov)) solapes.push(`${js ? "con JS" : "sin JS"}: ${prov} (con cafés) sin rótulo`);
         for (let i = 0; i < cajas.out.length; i++)
           for (let j = i + 1; j < cajas.out.length; j++) {
             const [a, b] = [cajas.out[i], cajas.out[j]];

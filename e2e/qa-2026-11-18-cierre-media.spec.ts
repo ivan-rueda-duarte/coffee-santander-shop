@@ -387,7 +387,7 @@ test.describe("M8 · tarjetas por zona", () => {
   // Hasta f310098 (QA-028) la tabla era idéntica a la de main. Desde f310098 difiere a propósito: los rótulos «Hasta n kg» y
   // los precios llevan whitespace-nowrap. La prueba exige ahora que esa sea la única diferencia de marcado, que la caja
   // conserve el ancho y que la tabla no crezca (ronda 2026-11-19, docs/qa/2026-11-19-cierre-baja.md).
-  test("a 1.280 px la tabla es la de main con whitespace-nowrap en escalones y precios, y la caja conserva el ancho (QA-028)", async ({ page, browser }) => {
+  test("a 1.280 px la tabla es la de main (idéntica si main ya trae QA-028; si no, solo con el whitespace-nowrap de escalones y precios) y la caja conserva el ancho (QA-028)", async ({ page, browser }) => {
     const main = process.env.E2E_MAIN_URL;
     test.skip(!main, "sin E2E_MAIN_URL");
     const capturar = async (p: Page, url: string) => {
@@ -415,10 +415,16 @@ test.describe("M8 · tarjetas por zona", () => {
     const filas = (ahora.html.match(/<tr data-testid="tarifa-/g) ?? []).length;
     const conEscalones = filas - (ahora.html.match(/colSpan="3"|colspan="3"/g) ?? []).length;
     test.info().annotations.push({ type: "diferencia", description: JSON.stringify({ ahora: cuenta(ahora.html), antes: cuenta(antes.html), filas, conEscalones, cajaAhora: ahora.caja, cajaAntes: antes.caja }) });
-    expect(cuenta(antes.html), "main no trae el arreglo").toBe(0);
     // 3 rótulos «Hasta n kg» + 3 precios por cada fila con escalones.
     expect(cuenta(ahora.html)).toBe(3 + 3 * conEscalones);
-    expect(ahora.html.replaceAll('class="whitespace-nowrap px-4 py-3 text-right', 'class="px-4 py-3 text-right'), "única diferencia de marcado").toBe(antes.html);
+    // O-4 (ronda 2026-11-19): la prueba no depende de un main anterior a f310098. Si el build de E2E_MAIN_URL ya trae el
+    // arreglo (a32e00d o posterior), la tabla debe ser idéntica; si no, la única diferencia debe ser el whitespace-nowrap.
+    const quitarArreglo = (h: string) => h.replaceAll('class="whitespace-nowrap px-4 py-3 text-right', 'class="px-4 py-3 text-right');
+    const mainConArreglo = cuenta(antes.html) > 0;
+    if (mainConArreglo) {
+      expect(cuenta(antes.html), "main trae el arreglo completo").toBe(cuenta(ahora.html));
+      expect(ahora.html, "tabla idéntica a la de main (que ya trae QA-028)").toBe(antes.html);
+    } else expect(quitarArreglo(ahora.html), "única diferencia de marcado").toBe(antes.html);
     expect(ahora.caja.w).toBe(antes.caja.w);
     // La tabla crece (961 → 1.021 px el 2026-11-19): los precios ocupan su ancho y «Cubre» parte más renglones. Es lo
     // esperado y se acepta; solo se registra en la anotación.

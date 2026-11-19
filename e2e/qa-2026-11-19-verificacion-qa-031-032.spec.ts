@@ -245,3 +245,41 @@ test.describe("QA-034: la capa del HTML coincide con la de la interacción en to
     expect(confirmados).toEqual([]);
   });
 });
+
+// QA-036 (ronda 2026-11-19, docs/qa/2026-11-19-verificacion-qa-031-032.md): al elegir una provincia con la interacción
+// montada, los rótulos que se ocultan saltan a translate(0, 0) y se desvanecen ahí durante 0,25 s: cinco o seis nombres se
+// amontonan en la esquina superior izquierda del mapa. Ya ocurre en main (a32e00d). Un rótulo que se oculta debe
+// desvanecerse en su sitio (o desaparecer de golpe), nunca verse en otro lugar.
+test.describe("QA-036: un rótulo que se oculta no se ve en la esquina del mapa", () => {
+  for (const [ancho, alto] of [
+    [1280, 900],
+    [768, 1024],
+  ])
+    test(`a ${ancho} px: al elegir Guanentá con el chip, ningún rótulo con opacidad > 0 aparece en (0, 0) de la caja`, async ({ page }) => {
+      await prepararMapa(page, ancho, alto);
+      await page.waitForTimeout(400);
+      await page.evaluate((sel) => {
+        const w = window as unknown as { __fantasmas: string[] };
+        w.__fantasmas = [];
+        const m = document.querySelector(sel)!;
+        const t0 = performance.now();
+        const tick = () => {
+          const c = m.getBoundingClientRect();
+          for (const e of m.querySelectorAll(".mapa-rotulo")) {
+            const op = Number(getComputedStyle(e).opacity);
+            const r = e.getBoundingClientRect();
+            if (op > 0.02 && Math.abs(r.left - c.left) < 1 && Math.abs(r.top - c.top) < 1)
+              w.__fantasmas.push(`${(performance.now() - t0).toFixed(0)} ms ${e.firstChild?.textContent} opacidad ${op.toFixed(2)}`);
+          }
+          if (performance.now() - t0 < 1500) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }, MAPA_CAJA);
+      await page.locator("button[aria-pressed]:visible", { hasText: "Guanentá" }).first().click();
+      await expect(page).toHaveURL(/provincia=guanenta/);
+      await page.waitForTimeout(1600);
+      const fantasmas = await page.evaluate(() => (window as unknown as { __fantasmas: string[] }).__fantasmas);
+      test.info().annotations.push({ type: "fantasmas", description: fantasmas.slice(0, 12).join(" | ") });
+      expect([...new Set(fantasmas.map((f) => f.replace(/^\d+ ms /, "").replace(/ opacidad.*/, "")))]).toEqual([]);
+    });
+});
