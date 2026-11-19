@@ -14,6 +14,9 @@
 .prov--elegida .mpio { stroke: var(--monte-900); stroke-width: 1.2; stroke-opacity: 1; }
 .mpio--origen { stroke: var(--tostado-900); stroke-width: 1.6; stroke-opacity: 0.9; }
 
+/* Capa de textos del HTML estático: sus variantes por ancho se eligen con consultas de este contenedor. */
+.mapa-capa { container-type: inline-size; }
+
 .graticula { stroke: var(--tostado-900); stroke-opacity: 0.1; stroke-width: 0.8; fill: none; }
 
 .mapa-rotulo { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; text-align: center; font: 800 11px/14px var(--font-sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--tostado-900); text-shadow: 0 0 6px var(--pergamino-50), 0 0 2px var(--pergamino-50); transition: opacity 0.25s ease; }

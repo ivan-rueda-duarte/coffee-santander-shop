@@ -1,55 +1,14 @@
-"use client";
-
-import dynamic from "next/dynamic";
-import { Suspense, useEffect, useRef, useState } from "react";
+import type { VistaCatalogo } from "@/application/casos-uso/obtener-catalogo";
 import { BotonEnlace } from "../marca/boton";
 import { Antetitulo } from "../marca/etiquetas";
 import { Textura } from "../marca/superficies";
+import { MapaProvincias } from "./mapa-provincias";
 
 /**
- * Hueco del mapa mientras no está: misma caja que el mapa (ancho máximo y proporción del viewBox de
- * mapa-santander.json, escrita aquí para no meter el JSON en el JS inicial). Con el mapa justo bajo la portada (M4),
- * un hueco de otro alto movería la página al cargar (CLS).
+ * Sección del mapa (Server Component). El mapa se dibuja en el build y va completo en el HTML, con su caja fija
+ * (ancho máximo y proporción del viewBox): no hay hueco que se llene al cargar, así que no mueve la página (M4).
  */
-function HuecoMapa({ children }: { children?: React.ReactNode }) {
-  return (
-    <div className="mx-auto grid aspect-[1048/1246.5] w-full max-w-[640px] place-items-center rounded-lg bg-surface" aria-hidden={children ? undefined : true}>
-      {children}
-    </div>
-  );
-}
-
-// El mapa pesa más que el resto de la página (≈21 KB gzip con su geometría): se descarga cuando su caja está a 200 px
-// de entrar en pantalla. Se observa la caja del mapa y no la sección: en celular el texto de la sección asoma bajo la
-// portada, pero el mapa queda debajo, fuera de la primera pantalla, y no debe contar en el JS inicial (QA-018).
-const MapaProvincias = dynamic(() => import("./mapa-provincias"), {
-  ssr: false,
-  loading: () => (
-    <HuecoMapa>
-      <p className="body text-ink-muted">Cargando el mapa…</p>
-    </HuecoMapa>
-  ),
-});
-
-export function SeccionMapa({ fuente }: { fuente: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [cerca, setCerca] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || cerca) return;
-    if (!("IntersectionObserver" in window)) {
-      const cuadro = requestAnimationFrame(() => setCerca(true));
-      return () => cancelAnimationFrame(cuadro);
-    }
-    const obs = new IntersectionObserver(
-      (entradas) => entradas.some((e) => e.isIntersecting) && setCerca(true),
-      { rootMargin: "200px 0px" },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [cerca]);
-
+export function SeccionMapa({ catalogo, fuente }: { catalogo: VistaCatalogo; fuente: string }) {
   return (
     <Textura trama="claro" como="section" id="mapa" aria-labelledby="titulo-mapa" className="scroll-mt-20 bg-surface-sunken px-5 py-16 md:px-8 md:py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
@@ -66,14 +25,8 @@ export function SeccionMapa({ fuente }: { fuente: string }) {
           </BotonEnlace>
           <p className="caption mt-6 max-w-md text-ink-muted">{fuente}</p>
         </div>
-        <div ref={ref}>
-          {cerca ? (
-            <Suspense fallback={<HuecoMapa />}>
-              <MapaProvincias />
-            </Suspense>
-          ) : (
-            <HuecoMapa />
-          )}
+        <div>
+          <MapaProvincias catalogo={catalogo} />
         </div>
       </div>
     </Textura>
