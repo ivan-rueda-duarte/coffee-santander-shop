@@ -50,7 +50,7 @@ export default function CajonContenido() {
                 <p className="h3 text-ink-title">Tu pedido está vacío</p>
                 <p className="body mt-2 text-ink-muted">Agrega un café para armar tu pedido.</p>
                 <div className="mt-6 flex justify-center gap-3">
-                  <BotonEnlace href="/#catalogo" variante="secundario" onClick={cerrarCajon}>
+                  <BotonEnlace href="/cafes/" variante="secundario" onClick={cerrarCajon}>
                     Ver los cafés
                   </BotonEnlace>
                   {puedeDeshacer && (
