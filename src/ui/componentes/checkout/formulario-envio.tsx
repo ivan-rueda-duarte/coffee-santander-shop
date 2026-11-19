@@ -131,11 +131,14 @@ export function FormularioEnvio({
   const conComuna = aplicaAlMunicipio(envioGratis, valores.departamento, valores.municipio);
   const comunaElegida = conComuna ? comunaCubierta(valores, envioGratis) : null;
   const municipios = useMemo(() => DEPARTAMENTOS.find((d) => d.nombre === valores.departamento)?.municipios ?? [], [valores.departamento]);
+  /** Campos sin «(opcional)» (decisión 2026-11-04). aria-required y no `required`: la validación es propia y sin globos del navegador. */
+  const obligatorios = new Set<keyof ValoresEnvio>(["nombre", "celular", "departamento", "municipio", "direccion", ...(documentoObligatorio ? (["tipoDocumento", "numeroDocumento"] as const) : [])]);
   /** Atributos comunes del campo, sin clase: los usa `SelectSuperpuesto`, que pone la suya. */
   const propsSelect = (campo: keyof ValoresEnvio, ayuda?: boolean) => ({
     id: campo,
     name: campo,
     value: valores[campo],
+    "aria-required": obligatorios.has(campo) ? (true as const) : undefined,
     "aria-invalid": errores[campo] ? (true as const) : undefined,
     "aria-describedby": errores[campo] ? `${campo}-error` : ayuda ? `${campo}-ayuda` : undefined,
     onChange: (e: { target: { value: string } }) => alCambiar({ [campo]: e.target.value }),
