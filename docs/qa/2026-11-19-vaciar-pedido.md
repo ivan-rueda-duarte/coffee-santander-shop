@@ -82,7 +82,7 @@ Ninguno de los ajustes debilita la prueba: en todos los casos se agrega un paso 
 
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
-| QA-030 | Baja | Checkout / diseño | A 360 × 740, «Copiar mensaje» no queda entero en la primera pantalla de «Mensaje listo» | disenador-marca → desarrollador-fullstack | Abierto |
+| QA-030 | Baja | Checkout / diseño | A 360 × 740, «Copiar mensaje» no queda entero en la primera pantalla de «Mensaje listo» | disenador-marca → desarrollador-fullstack | **Cerrado** el 2026-11-19 (`d3fac81`; ver `docs/qa/2026-11-19-mapa-servidor-y-qa-030.md`) |
 
 ### QA-030 — A 360 × 740, «Copiar mensaje» no queda entero en la primera pantalla de «Mensaje listo»
 
@@ -93,7 +93,7 @@ Ninguno de los ajustes debilita la prueba: en todos los casos se agrega un paso 
 - **Resultado obtenido:** `scrollY = 0`, h1 en y = 147, «Copiar mensaje» de y = 725 a y = 771: solo 15 de sus 46 px quedan dentro de los 740 px. La bajada T2a ocupa 4 líneas y la nota T3 (más larga que la de la especificación, por LEG-189) 3; el encabezado, el antetítulo y el `py-10` del contenedor suman ≈ 147 px antes del h1.
 - **Evidencia:** `e2e/qa-2026-11-19-vaciar-pedido.spec.ts` › «QA-030: a 360 × 740, «Copiar mensaje» entero en la primera pantalla de «Mensaje listo»» falla con «Copiar mensaje va de y=725 a y=771 con 740 px de alto». Traza: `test-results/qa-2026-11-19-vaciar-pedid-cc18a-pantalla-de-«Mensaje-listo»-chromium/trace.zip`. Captura: `docs/qa/capturas/2026-11-19-qa-030-primera-pantalla-360.png`.
 - **Responsable sugerido:** `disenador-marca` decide cómo recuperar ≈ 31 px o más (separaciones, `py` del contenedor en celular, o aceptar que el respaldo empiece en la primera pantalla y corregir el criterio de la especificación); `desarrollador-fullstack` lo aplica. Si diseño cambia el criterio, la prueba de cierre se ajusta en QA con esa especificación.
-- **Estado:** Abierto.
+- **Estado:** **Cerrado** el 2026-11-19. Corregido en `d3fac81` (bloque «En el mensaje» bajo el respaldo, «Ajuste QA-030» del diseño); verificado con T2a y T2b y con 1, 3 y 5 líneas en `docs/qa/2026-11-19-mapa-servidor-y-qa-030.md`.
 
 ## Observaciones (sin defecto)
 

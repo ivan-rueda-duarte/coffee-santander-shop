@@ -257,6 +257,83 @@ test("QA-030: a 360 × 740, «Copiar mensaje» entero en la primera pantalla de 
   await expect(copiar, `«Copiar mensaje» va de y=${caja?.y} a y=${(caja?.y ?? 0) + (caja?.height ?? 0)} con 740 px de alto`).toBeInViewport({ ratio: 1 });
 });
 
+// Verificación de QA-030 (d3fac81), criterio de «Ajuste QA-030» en docs/diseno/2026-11-19-vaciar-carrito.md y «Para QA»:
+// a 360 × 740, sin desplazar, «Copiar mensaje» entero con T2a y T2b y con 1, 3 y más de 3 líneas en el bloque; orden DOM
+// nota → «Enviar por WhatsApp» → respaldo → bloque «En el mensaje» → enlaces; Tab sin cambios; axe; role=status una vez.
+const LINEAS_QA030: Record<string, object[]> = {
+  "1 línea": [{ cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 }],
+  "3 líneas": [
+    { cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 },
+    { cafeSlug: "cafe-arreboles", gramos: 500, molienda: "molido", cantidad: 1 },
+    { cafeSlug: "cafe-casa-martinez", gramos: 500, molienda: "molido", cantidad: 1 },
+  ],
+  "5 líneas («y 2 más»)": [
+    { cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "grano", cantidad: 1 },
+    { cafeSlug: "cafe-arreboles", gramos: 500, molienda: "molido", cantidad: 1 },
+    { cafeSlug: "cafe-casa-martinez", gramos: 500, molienda: "molido", cantidad: 1 },
+    { cafeSlug: "cafe-arreboles", gramos: 250, molienda: "grano", cantidad: 1 },
+    { cafeSlug: "cafe-casa-martinez", gramos: 250, molienda: "molido", cantidad: 1 },
+  ],
+};
+test.describe("QA-030 verificación (d3fac81): «Copiar mensaje» entero a 360 × 740", () => {
+  for (const [bajada, destino] of [["T2a", { departamento: "Santander", municipio: "Bucaramanga" }], ["T2b", { departamento: "Amazonas", municipio: "Leticia" }]] as const)
+    for (const [nombre, lineas] of Object.entries(LINEAS_QA030))
+      test(`${bajada} con ${nombre}: botón entero sin desplazar, orden DOM, Tab, axe y un solo role=status`, async ({ page }) => {
+        await page.setViewportSize({ width: 360, height: 740 });
+        await alResumen(page, { ...destino, lineas });
+        await marcarObligatorias(page);
+        await contarAnunciosRespaldo(page);
+        await enviarPorWhatsapp(page);
+        await expect(page.getByRole("heading", { level: 1, name: T.titulo })).toBeFocused();
+        await expect(page.getByTestId("bajada-mensaje-listo")).toHaveText(bajada === "T2a" ? T.bajadaTarifa : T.bajadaCotizar);
+        const resto = lineas.length - 3;
+        const bloque = page.getByTestId("bloque-en-el-mensaje");
+        await expect(bloque.locator("li")).toHaveCount(Math.min(3, lineas.length));
+        if (resto > 0) await expect(bloque).toContainText(`y ${resto} más`);
+        else await expect(bloque).not.toContainText("más");
+
+        const copiar = page.getByRole("button", { name: "Copiar mensaje" });
+        const caja = await copiar.boundingBox();
+        test.info().annotations.push({ type: "copiar", description: JSON.stringify(caja) });
+        expect(await page.evaluate(() => scrollY)).toBe(0);
+        await expect(copiar, `«Copiar mensaje» de y=${caja?.y} a y=${(caja?.y ?? 0) + (caja?.height ?? 0)}`).toBeInViewport({ ratio: 1 });
+        if (bajada === "T2a" && lineas.length === 5) await page.screenshot({ path: "docs/qa/capturas/2026-11-19-qa-030-verificacion-t2a-5-lineas-360.png" });
+        if (bajada === "T2b" && lineas.length === 5) await page.screenshot({ path: "docs/qa/capturas/2026-11-19-qa-030-verificacion-t2b-5-lineas-360.png" });
+
+        // Orden en el DOM: nota → Enviar → respaldo → bloque → enlaces.
+        const orden = await vista(page).evaluate((v) => {
+          const piezas = [
+            v.querySelector('[data-testid="nota-vaciado"]'),
+            [...v.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Enviar por WhatsApp"),
+            v.querySelector('[data-testid="respaldo-whatsapp"]'),
+            v.querySelector('[data-testid="bloque-en-el-mensaje"]'),
+            [...v.querySelectorAll("a, button")].find((b) => b.textContent?.trim() === "Seguir viendo cafés"),
+          ];
+          if (piezas.some((p) => !p)) return piezas.map((p) => Boolean(p));
+          return piezas.slice(1).map((p, i) => Boolean(piezas[i]!.compareDocumentPosition(p!) & Node.DOCUMENT_POSITION_FOLLOWING));
+        });
+        expect(orden).toEqual([true, true, true, true]);
+        // El respaldo no contiene el bloque ni al revés.
+        expect(await respaldo(page).locator('[data-testid="bloque-en-el-mensaje"]').count()).toBe(0);
+
+        // Un solo role=status con texto (el del respaldo), insertado una vez.
+        await page.waitForTimeout(600);
+        expect(await page.evaluate(() => (window as unknown as { __anuncios: number }).__anuncios)).toBe(1);
+        const estados = await page.locator("[role=status]").evaluateAll((es) => es.map((e) => e.textContent?.trim()).filter(Boolean));
+        expect(estados).toEqual([T.respaldo]);
+        expect(await vista(page).locator("h2").allTextContents()).toEqual([T.rotulo]);
+
+        expect(await axeSerio(page)).toEqual([]);
+
+        const tab: string[] = [];
+        for (let i = 0; i < 5; i++) {
+          await page.keyboard.press("Tab");
+          tab.push(await page.evaluate(() => (document.activeElement as HTMLElement).innerText.trim()));
+        }
+        expect(tab).toEqual(["Enviar por WhatsApp", "Copiar mensaje", "Ver el mensaje", T.recuperar, T.seguir]);
+      });
+});
+
 // =====================================================================================================================
 // 2. Clic no válido: sin casillas y con una línea agotada
 // =====================================================================================================================

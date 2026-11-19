@@ -702,13 +702,16 @@ test.describe("M10 · aviso con acción", () => {
 // QA-018 · JS inicial y «Agregar» de las tarjetas (5bbf1f8)
 // =====================================================================================================================
 test.describe("QA-018 · JS inicial de inicio", () => {
-  test("JS que descarga Chromium al cargar / (hasta networkidle), gzip -9: ≤ 150 KiB; el polyfill noModule no se descarga", async ({ page }) => {
+  // 1.440 px añadido el 2026-11-19 (7693b25, O-1): con el mapa dibujado en el servidor, el escritorio también cabe en el
+  // presupuesto, siempre que no haya gesto (la interacción del mapa llega con el primer gesto y no cuenta como inicial).
+  for (const [ancho, alto] of [[360, 740], [1440, 900]])
+  test(`a ${ancho} px: JS que descarga Chromium al cargar / (hasta networkidle), gzip -9: ≤ 150 KiB; el polyfill noModule no se descarga`, async ({ page }) => {
     const { gzipSync } = await import("node:zlib");
     const cuerpos: Promise<[string, number]>[] = [];
     page.on("response", (r) => {
       if (r.request().resourceType() === "script") cuerpos.push(r.body().then((b) => [r.url(), gzipSync(b, { level: 9 }).length] as [string, number]));
     });
-    await page.setViewportSize({ width: 360, height: 740 });
+    await page.setViewportSize({ width: ancho, height: alto });
     await page.goto("/", { waitUntil: "networkidle" });
     await page.waitForTimeout(500);
     const js = await Promise.all(cuerpos);
@@ -745,7 +748,8 @@ test.describe("«Agregar» de las tarjetas (tarjetas renderizadas en servidor, 5
       await page.goto(ruta);
       const tarjetas = page.locator("#catalogo li article");
       await expect(tarjetas).toHaveCount(2);
-      await expect(page.getByRole("link", { name: "Café Arreboles" })).toHaveAttribute("href", "/cafes/cafe-arreboles/");
+      // exact: desde 7693b25 el pin del mapa («Ver la ficha de Café Arreboles, Tona») también está en el HTML.
+      await expect(page.getByRole("link", { name: "Café Arreboles", exact: true })).toHaveAttribute("href", "/cafes/cafe-arreboles/");
       await expect(page.getByRole("button", { name: /^Agregar Café Arreboles/ })).toHaveCount(1);
       await expect(tarjetas.first()).toContainText("$");
     }

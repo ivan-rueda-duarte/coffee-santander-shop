@@ -245,14 +245,28 @@ test.describe("M4 · CLS del inicio y carga del mapa", () => {
     });
   }
 
-  test("a 360 px el mapa no se descarga al cargar; se carga al desplazarse hasta él", async ({ page }) => {
+  // Ajustada el 2026-11-19 (7693b25, O-1 aprobada por el dueño): el mapa ya viene dibujado en el HTML; lo que no se
+  // descarga al cargar es el trozo de la interacción (se reconoce por su texto «Ver todo Santander»).
+  test("a 360 px la interacción del mapa no se descarga al cargar; se descarga al desplazarse hasta él", async ({ page }) => {
+    const trozos: string[] = [];
+    page.on("response", async (r) => {
+      if (r.request().resourceType() !== "script") return;
+      const cuerpo = await r.text().catch(() => "");
+      if (cuerpo.includes("Ver todo Santander")) trozos.push(r.url());
+    });
     await page.setViewportSize({ width: 360, height: 740 });
     await page.goto("/", { waitUntil: "networkidle" });
     await page.waitForTimeout(500);
-    await expect(page.locator("#mapa svg")).toHaveCount(0);
+    // El dibujo está en el HTML desde el principio, con su capa fija.
+    await expect(page.locator('#mapa svg[aria-label="Mapa de Santander por provincias"]')).toHaveCount(1);
+    await expect(page.locator("#mapa-provincias .mapa-capa")).toHaveCount(1);
+    expect(trozos, "el trozo de la interacción no se pide al cargar").toEqual([]);
     await page.locator("#mapa h2").scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollBy(0, 400));
-    await expect(page.locator("#mapa svg").first()).toBeVisible();
+    await expect.poll(() => trozos.length, { message: "se pide al acercarse el mapa" }).toBe(1);
+    // La capa medida de la interacción reemplaza a la fija.
+    await expect(page.locator("#mapa-provincias .mapa-capa")).toHaveCount(0);
+    await expect(page.locator("#mapa-provincias .mapa-pin").first()).toBeVisible();
     await expect(page.getByText("Cargando el mapa…")).toHaveCount(0);
   });
 

@@ -258,8 +258,8 @@ test.describe("Vaciar el pedido al enviarlo (LEG-188 a LEG-191)", () => {
       await enviarPorWhatsapp(page);
       await expect(page.getByRole("heading", { level: 1, name: T.titulo })).toBeFocused();
       expect(await axeSerio(page)).toEqual([]);
-      // «Copiar mensaje» en la primera pantalla a 360 × 740 (diseño, altura aproximada).
-      if (ancho === 360) await expect(page.getByRole("button", { name: "Copiar mensaje" })).toBeInViewport();
+      // «Copiar mensaje» entero en la primera pantalla a 360 × 740 (QA-030: ratio 1, no basta un píxel).
+      if (ancho === 360) await expect(page.getByRole("button", { name: "Copiar mensaje" })).toBeInViewport({ ratio: 1 });
 
       const orden: string[] = [];
       for (let i = 0; i < 5; i++) {
