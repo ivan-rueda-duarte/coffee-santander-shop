@@ -30,15 +30,21 @@ async function esperarInteraccion(page: Page) {
 async function retrasarInteraccion(page: Page, ms: number) {
   const estado = { pedida: false, servida: false, url: "" };
   await page.route(/\/_next\/static\/chunks\/[^/]+\.js$/, async (r) => {
-    const res = await r.fetch();
-    const cuerpo = await res.text();
-    if (cuerpo.includes(MARCA_INTERACCION)) {
-      estado.pedida = true;
-      estado.url = r.request().url();
-      await new Promise((f) => setTimeout(f, ms));
-      estado.servida = true;
+    // Si la prueba termina con un trozo aún en camino, la página se cierra y la respuesta queda descartada: ese error
+    // no es del sitio (intermitencia de la prueba vista el 2026-11-19, «Response has been disposed»).
+    try {
+      const res = await r.fetch();
+      const cuerpo = await res.text();
+      if (cuerpo.includes(MARCA_INTERACCION)) {
+        estado.pedida = true;
+        estado.url = r.request().url();
+        await new Promise((f) => setTimeout(f, ms));
+        estado.servida = true;
+      }
+      await r.fulfill({ response: res, body: cuerpo });
+    } catch (e) {
+      if (!page.isClosed()) throw e;
     }
-    await r.fulfill({ response: res, body: cuerpo });
   });
   return estado;
 }
@@ -518,11 +524,46 @@ test.describe("orden de foco del mapa", () => {
 // =====================================================================================================================
 // 4. Posiciones de rótulos y pines frente a main (a32e00d)
 // =====================================================================================================================
+// QA-032 (5d2b5a6) cambia a propósito algunos rótulos en celular (contenedor = ventana − 40 px). Medido el 2026-11-19
+// con un barrido de 280 a 1.500 px contra main (a32e00d): Vélez se oculta < 291; Vélez −40/−40 de 291 a 302 y −40/0
+// de 303 a 354; Guanentá visible (en main oculto) de 304 a 354 y de 368 a 386; Vélez 0/−40 de 355 a 365, 0/+40 de 366
+// a 386 y 0/+20 de 387 a 451; Guanentá 0/+40 de 442 a 482. Desde 483 px, igual que main.
+type Esperado = { dx: number; dy: number } | "solo-head";
+const CAMBIOS_QA_032: Record<number, Record<string, Esperado>> = {
+  300: { "rotulo:Vélez": { dx: -40, dy: -40 } },
+  320: { "rotulo:Vélez": { dx: -40, dy: 0 }, "rotulo:Guanentá": "solo-head" },
+  360: { "rotulo:Vélez": { dx: 0, dy: -40 } },
+  390: { "rotulo:Vélez": { dx: 0, dy: 20 } },
+  412: { "rotulo:Vélez": { dx: 0, dy: 20 } },
+  430: { "rotulo:Vélez": { dx: 0, dy: 20 } },
+  442: { "rotulo:Vélez": { dx: 0, dy: 20 }, "rotulo:Guanentá": { dx: 0, dy: 40 } },
+  460: { "rotulo:Guanentá": { dx: 0, dy: 40 } },
+  482: { "rotulo:Guanentá": { dx: 0, dy: 40 } },
+  483: {},
+};
+const CAPTURAS_QA_032 = [300, 320, 360, 390, 412, 460, 1280];
+
+/** Diferencias con main que no son las esperadas de QA-032 (y las esperadas que no se cumplen). */
+function diferenciasQa032(head: Pieza[], main: Pieza[], ancho: number): string[] {
+  const esperado = CAMBIOS_QA_032[ancho] ?? {};
+  const fuera: string[] = [];
+  for (const [clave, e] of Object.entries(esperado)) {
+    const h = head.find((p) => p.clave === clave);
+    const m = main.find((p) => p.clave === clave);
+    if (e === "solo-head") {
+      if (!h || m) fuera.push(`${clave}: se esperaba visible solo en HEAD (HEAD ${!!h}, main ${!!m})`);
+    } else if (!h || !m || Math.abs(h.x - m.x - e.dx) > 1.5 || Math.abs(h.y - m.y - e.dy) > 1.5)
+      fuera.push(`${clave}: se esperaba ${JSON.stringify(e)} frente a main; HEAD ${JSON.stringify(h)}, main ${JSON.stringify(m)}`);
+  }
+  const quitar = (l: Pieza[]) => l.filter((p) => !(p.clave in esperado));
+  return [...fuera, ...diferencias(quitar(head), quitar(main))];
+}
+
 test.describe("posiciones frente a main (a32e00d)", () => {
   const main = process.env.E2E_MAIN_URL;
   test.skip(!main, "Define E2E_MAIN_URL con el build de main (a32e00d)");
-  for (const ancho of ANCHOS)
-    test(`a ${ancho} px: rótulos, pines, marcas y escala en el mismo sitio que en main (sin JS y con la interacción)`, async ({ browser }) => {
+  for (const ancho of [...new Set([...ANCHOS, ...Object.keys(CAMBIOS_QA_032).map(Number)])].sort((a, b) => a - b))
+    test(`a ${ancho} px: rótulos, pines, marcas y escala en el mismo sitio que en main, salvo los cambios de QA-032 (sin JS y con la interacción)`, async ({ browser }) => {
       const alto = 900;
       const m = await nuevaPagina(browser, { base: main!, ancho, alto });
       await m.page.goto("/", { waitUntil: "networkidle" });
@@ -532,13 +573,14 @@ test.describe("posiciones frente a main (a32e00d)", () => {
       await m.page.waitForTimeout(400);
       await m.page.locator(MAPA).scrollIntoViewIfNeeded();
       const deMain = await medirCapa(m.page);
-      await m.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-mapa-main-${ancho}.png` });
+      if (CAPTURAS_QA_032.includes(ancho)) await m.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-qa-032-main-${ancho}.png` });
       await m.ctx.close();
 
       const s = await nuevaPagina(browser, { js: false, ancho, alto });
       await s.page.goto("/");
       await s.page.locator(MAPA).scrollIntoViewIfNeeded();
       const sinJs = await medirCapa(s.page);
+      if (CAPTURAS_QA_032.includes(ancho)) await s.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-qa-032-head-sin-js-${ancho}.png` });
       await s.ctx.close();
 
       const c = await nuevaPagina(browser, { ancho, alto });
@@ -548,22 +590,25 @@ test.describe("posiciones frente a main (a32e00d)", () => {
       await esperarInteraccion(c.page);
       await c.page.waitForTimeout(400);
       const conJs = await medirCapa(c.page);
-      await c.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-mapa-head-${ancho}.png` });
+      if (CAPTURAS_QA_032.includes(ancho)) await c.page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-qa-032-head-${ancho}.png` });
       await c.ctx.close();
 
       test.info().annotations.push({ type: "main", description: JSON.stringify(deMain) }, { type: "sin-js", description: JSON.stringify(sinJs) });
       expect(Math.abs(deMain.caja.w - sinJs.caja.w)).toBeLessThanOrEqual(1);
       expect(Math.abs(deMain.caja.h - sinJs.caja.h)).toBeLessThanOrEqual(1);
-      expect(diferencias(sinJs.piezas, deMain.piezas), "HTML sin JS frente a main").toEqual([]);
-      expect(diferencias(conJs.piezas, deMain.piezas), "con la interacción frente a main").toEqual([]);
+      expect(diferenciasQa032(sinJs.piezas, deMain.piezas, ancho), "HTML sin JS frente a main").toEqual([]);
+      expect(diferenciasQa032(conJs.piezas, deMain.piezas, ancho), "con la interacción frente a main").toEqual([]);
+      expect(diferencias(sinJs.piezas, conJs.piezas), "HTML sin JS frente a la interacción").toEqual([]);
     });
 });
 
-// QA-032 (preexistente, igual en main a32e00d): a 320 y 360 px los rótulos de Comunera y Vélez se pisan (sus
-// «Próximamente» quedan ilegibles). Se mide cada línea de texto visible (nombre, «Próximamente», nombre de pin).
+// QA-032 (cerrado en la ronda de verificación, 5d2b5a6): a 320 y 360 px los rótulos de Comunera y Vélez se pisaban.
+// Se mide cada línea de texto visible (nombre, «Próximamente», nombre de pin); además, ningún rótulo de provincia queda
+// cortado por el borde de la caja del mapa (`overflow: hidden`). El nombre del pin al borde es la observación O-1.
+const ANCHOS_QA_032 = [...new Set([...ANCHOS, 300, 412, 430, ...Array.from({ length: 41 }, (_, i) => 440 + i)])].sort((a, b) => a - b);
 test.describe("QA-032: rótulos del mapa sin solaparse", () => {
-  for (const ancho of ANCHOS)
-    test(`a ${ancho} px, sin JS y con la interacción: ninguna línea de texto del mapa pisa a otra`, async ({ browser }) => {
+  for (const ancho of ANCHOS_QA_032)
+    test(`a ${ancho} px, sin JS y con la interacción: ninguna línea de texto del mapa pisa a otra ni queda cortada`, async ({ browser }) => {
       const solapes: string[] = [];
       for (const js of [false, true]) {
         const { ctx, page } = await nuevaPagina(browser, { js, ancho, alto: 900 });
@@ -583,6 +628,7 @@ test.describe("QA-032: rótulos del mapa sin solaparse", () => {
             const b = r.getBoundingClientRect();
             return { l: b.left, r: b.right, t: b.top, b: b.bottom };
           };
+          const c = m.getBoundingClientRect();
           const out: { n: string; l: number; r: number; t: number; b: number }[] = [];
           for (const e of m.querySelectorAll(".mapa-rotulo"))
             if (vis(e)) {
@@ -595,17 +641,20 @@ test.describe("QA-032: rótulos del mapa sin solaparse", () => {
               const b = e.getBoundingClientRect();
               out.push({ n: `pin ${e.textContent}`, l: b.left, r: b.right, t: b.top, b: b.bottom });
             }
-          return out;
+          const cortados = out
+            .filter((o) => !o.n.startsWith("pin ") && (o.l < c.left - 0.5 || o.r > c.right + 0.5 || o.t < c.top - 0.5 || o.b > c.bottom + 0.5))
+            .map((o) => `${o.n} [${(o.l - c.left).toFixed(0)}..${(o.r - c.left).toFixed(0)} de ${c.width.toFixed(0)}]`);
+          return { out, cortados };
         });
-        for (let i = 0; i < cajas.length; i++)
-          for (let j = i + 1; j < cajas.length; j++) {
-            const [a, b] = [cajas[i], cajas[j]];
+        for (const k of cajas.cortados) solapes.push(`${js ? "con JS" : "sin JS"}: ${k} cortado por el borde`);
+        for (let i = 0; i < cajas.out.length; i++)
+          for (let j = i + 1; j < cajas.out.length; j++) {
+            const [a, b] = [cajas.out[i], cajas.out[j]];
             if (a.n.split("/")[0] === b.n.split("/")[0]) continue;
             const ox = Math.min(a.r, b.r) - Math.max(a.l, b.l);
             const oy = Math.min(a.b, b.b) - Math.max(a.t, b.t);
             if (ox > 0.5 && oy > 0.5) solapes.push(`${js ? "con JS" : "sin JS"}: ${a.n} × ${b.n} (${ox.toFixed(0)} × ${oy.toFixed(0)} px)`);
           }
-        if (!js && ancho <= 360) await page.locator(MAPA).screenshot({ path: `docs/qa/capturas/2026-11-19-qa-032-rotulos-${ancho}.png` });
         await ctx.close();
       }
       expect(solapes).toEqual([]);
