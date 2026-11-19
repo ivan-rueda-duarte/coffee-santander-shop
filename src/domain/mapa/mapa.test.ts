@@ -129,6 +129,12 @@ describe("colocarRotulos", () => {
     expect(colocarRotulos([{ cx: -5, cy: 150, ancho: 80, alto: 14, atenuado: false }], [], 400, 300)[0].oculto).toBe(true);
     expect(colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: true }], [], 400, 300)[0].oculto).toBe(true);
   });
+  it("oculto, conserva el sitio de su centro y no salta a la esquina (QA-036)", () => {
+    const todo = [{ x0: 0, x1: 400, y0: 0, y1: 300 }];
+    expect(colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false }], todo, 400, 300)[0]).toEqual({ oculto: true, izquierda: 160, arriba: 143, desplazamientoX: 0 });
+    expect(colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: true }], [], 400, 300)[0]).toMatchObject({ oculto: true, izquierda: 160, arriba: 143 });
+    expect(colocarRotulos([{ cx: 5, cy: -30, ancho: 80, alto: 14, atenuado: false }], [], 400, 300)[0]).toMatchObject({ oculto: true, izquierda: 4, arriba: -37 });
+  });
   it("no se sale del marco por los lados", () => {
     const [r] = colocarRotulos([{ cx: 5, cy: 150, ancho: 80, alto: 14, atenuado: false }], [], 400, 300);
     expect(r.izquierda).toBe(4);
@@ -161,7 +167,7 @@ describe("colocarRotulos", () => {
     expect(r).toEqual({ oculto: false, izquierda: 140, arriba: 143, desplazamientoX: -20 });
     // Si tampoco cabe a los lados, se oculta.
     const todo = [{ x0: 0, x1: 400, y0: 0, y1: 300 }];
-    expect(colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false }], todo, 400, 300)[0]).toEqual({ oculto: true, izquierda: 0, arriba: 0, desplazamientoX: 0 });
+    expect(colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false }], todo, 400, 300)[0]).toEqual({ oculto: true, izquierda: 160, arriba: 143, desplazamientoX: 0 });
   });
   it("las provincias con cafés buscan sitio antes que las vacías; la salida conserva el orden (revisión visual de QA-032)", () => {
     // Las dos quieren el mismo sitio y solo cabe una: la vacía va primero en la entrada, pero gana la que tiene cafés.

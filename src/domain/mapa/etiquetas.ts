@@ -81,6 +81,10 @@ export interface RotuloEntrada {
 
 export interface RotuloColocado {
   oculto: boolean;
+  /**
+   * Esquina del rótulo en píxeles. Si está oculto, es la de su sitio central (sin desplazamiento): ahí se desvanece al
+   * ocultarse, sobre su provincia, en lugar de saltar a la esquina del mapa (QA-036).
+   */
   izquierda: number;
   arriba: number;
   /** Corrimiento horizontal elegido (0, ±20 o ±40 px), solo cuando ningún sitio en vertical sirve (QA-032). */
@@ -118,11 +122,12 @@ export function colocarRotulos(rotulos: readonly RotuloEntrada[], ocupadas: Caja
 
 function colocarRotulo(r: RotuloEntrada, ocupadas: Caja[], ancho: number, alto: number): RotuloColocado {
   const fuera = r.cx < 0 || r.cx > ancho || r.cy < 0 || r.cy > alto;
-  const oculto = { oculto: true, izquierda: 0, arriba: 0, desplazamientoX: 0 };
+  const xEn = (dx: number) => Math.min(Math.max(r.cx - r.ancho / 2 + dx, 4), ancho - r.ancho - 4);
+  const oculto = { oculto: true, izquierda: Math.round(xEn(0)), arriba: Math.round(r.cy - r.alto / 2), desplazamientoX: 0 };
   if (fuera || r.atenuado) return oculto;
   const pintado = Math.max(r.ancho, r.anchoCaja ?? 0);
   for (const [dx, dy] of SITIOS_ROTULO) {
-    const x = Math.min(Math.max(r.cx - r.ancho / 2 + dx, 4), ancho - r.ancho - 4);
+    const x = xEn(dx);
     const caja: Caja = { x0: x, x1: x + pintado, y0: r.cy - r.alto / 2 + dy, y1: r.cy + r.alto / 2 + dy };
     if (caja.y0 <= 2 || caja.y1 >= alto - 2 || choca(caja, ocupadas)) continue;
     ocupadas.push(caja);
