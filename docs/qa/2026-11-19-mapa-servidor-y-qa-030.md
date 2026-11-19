@@ -106,8 +106,8 @@ Capturas: `docs/qa/capturas/2026-11-19-mapa-head-{320,360,390,768,1024,1280,1440
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
 | QA-030 | Baja | Checkout / diseño | A 360 × 740, «Copiar mensaje» no queda entero en la primera pantalla de «Mensaje listo» | desarrollador-fullstack | **Cerrado** (`d3fac81`) |
-| QA-031 | Media | Mapa / accesibilidad | Con ratón a menos de 768 px, la hoja de la provincia se reabre y se cierra sola cada ≈ 200 ms tras Escape | desarrollador-fullstack | Abierto |
-| QA-032 | Baja | Mapa / marca | A 320 y 360 px, los rótulos de Comunera y Vélez (y sus «Próximamente») se pisan | desarrollador-fullstack (con disenador-marca) | Abierto |
+| QA-031 | Media | Mapa / accesibilidad | Con ratón a menos de 768 px, la hoja de la provincia se reabre y se cierra sola cada ≈ 200 ms tras Escape | desarrollador-fullstack | Corregido — pendiente verificación (`4429277`) |
+| QA-032 | Baja | Mapa / marca | A 320 y 360 px, los rótulos de Comunera y Vélez (y sus «Próximamente») se pisan | desarrollador-fullstack (con disenador-marca) | Corregido — pendiente verificación (`5d2b5a6`) |
 
 ### QA-031 — Con ratón a menos de 768 px, la hoja de la provincia se reabre y se cierra sola cada ≈ 200 ms tras Escape
 
@@ -118,7 +118,7 @@ Capturas: `docs/qa/capturas/2026-11-19-mapa-head-{320,360,390,768,1024,1280,1440
 - **Resultado obtenido:** la hoja se cierra y se vuelve a abrir enseguida. Desde ahí entra en un bucle: `pointerenter` en la provincia abre la hoja, la hoja tapa el puntero, llega `pointerleave` y `cerrarPronto` la cierra a los 180 ms; vuelve a llegar `pointerenter`, y así sigue. Registro: `pointerenter 914 | dlg=1 916 | pointerleave 932 | dlg=0 1113 | pointerenter 1115 | dlg=1 1117 | pointerleave 1132 | dlg=0 1312 | …`. En main, tras Escape llega el mismo `pointerenter` nativo, pero la hoja no se abre: main usaba `onPointerEnter` de React en el `<g>`, y `7693b25` pone `addEventListener("pointerenter")` nativo sobre el SVG del servidor (`interaccion-mapa.tsx`). Antes de Escape no hay bucle, porque el `alEntrar` de la hoja cancela el temporizador. Con el botón «Cerrar» no se reprodujo.
 - **Evidencia:** `e2e/qa-2026-11-19-mapa-servidor.spec.ts` › «QA-031: a 360 px con ratón, Escape cierra la hoja aunque el puntero quede donde estaba la hoja (sin reabrir)» falla en HEAD: 12 muestras de diálogos abiertos cada 100 ms tras Escape, `[1,1,…]` o la hoja nunca llega a ocultarse. Con `E2E_ESCAPE_URL=http://localhost:4491/` (main), la misma prueba pasa. Traza: `test-results/qa-2026-11-19-mapa-servido-f9ae3-estaba-la-hoja-sin-reabrir--chromium/trace.zip`. Captura: `docs/qa/capturas/2026-11-19-qa-031-hoja-escape-360.png`.
 - **Responsable sugerido:** desarrollador-fullstack. Por ejemplo: no reabrir por `pointerenter` la provincia que se acaba de cerrar con Escape hasta que llegue un `pointermove` real, o ignorar `pointerenter`/`pointerleave` mientras la hoja (`comoHoja`) está abierta o se acaba de cerrar.
-- **Estado:** Abierto.
+- **Estado:** Corregido — pendiente verificación. Commit `4429277`. Causa raíz: tras Escape, el `pointerenter` nativo que el navegador manda a la provincia bajo el puntero quieto (por el cambio de diseño, sin movimiento) reabría la hoja; ahora la isla anota dónde estaba el puntero al cerrar e ignora `pointerenter` mientras no se mueva de ahí.
 
 ### QA-032 — A 320 y 360 px, los rótulos de Comunera y Vélez (y sus «Próximamente») se pisan
 
@@ -129,7 +129,7 @@ Capturas: `docs/qa/capturas/2026-11-19-mapa-head-{320,360,390,768,1024,1280,1440
 - **Resultado obtenido:** a 360 px, «Próximamente» de Comunera × «Próximamente» de Vélez (19 × 12 px): se lee «Próximamentéximamente». A 320 px: «COMUNERA» × «VÉLEZ» (8 × 12 px), «COMUNERA» × «Próximamente» de Vélez (28 × 2 px) y los dos «Próximamente» (29 × 11 px). Desde 390 px no hay solapes.
 - **Evidencia:** `e2e/qa-2026-11-19-mapa-servidor.spec.ts` › «QA-032: rótulos del mapa sin solaparse › a 320 px…» y «… a 360 px…» fallan con esa lista. Las de 390 a 1.440 pasan. Capturas: `docs/qa/capturas/2026-11-19-qa-032-rotulos-{320,360}.png`; misma imagen en main: `2026-11-19-mapa-main-360.png`.
 - **Responsable sugerido:** desarrollador-fullstack (`src/domain/mapa/etiquetas.ts`: que `colocarRotulos` resuelva también los choques rótulo-rótulo, moviendo uno u ocultando el «Próximamente» del que choca). Si la solución cambia qué se muestra, que lo decida disenador-marca.
-- **Estado:** Abierto.
+- **Estado:** Corregido — pendiente verificación. Commit `5d2b5a6`. Causa raíz: `colocarRotulos` reservaba solo el ancho estimado del nombre, y «Próximamente» (≈ 85 px) es más ancho que «VÉLEZ»: el cálculo no veía el choque. Ahora cada rótulo reserva su caja pintada; la escala gráfica y las marcas de la gratícula también ocupan sitio, y si ningún sitio en vertical sirve el rótulo se corre ±20/±40 px a un lado antes de ocultarse. Cambia a la vista (contenedor = ancho de ventana − 40 px): a 320 px Vélez se corre 40 px a la izquierda y aparece Guanentá (antes oculto); a 360 px Vélez sube 40 px; a 390 px Vélez baja 20 px; entre 442 y 482 px de ventana Guanentá baja 40 px (rozaba «COMUNERA»). Desde 483 px, igual que antes. Para revisión de disenador-marca.
 
 ## Observaciones (sin defecto)
 
