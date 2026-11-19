@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { altoContenedor, calcularCapa, type EntradaCapa } from "@/domain/mapa/capa";
 import { calcularEncuadre, interpolarCaja } from "@/domain/mapa/geometria";
@@ -15,12 +16,41 @@ import { TarjetaProvincia } from "./tarjeta-provincia";
 
 const NOMBRE_SVG = 'svg[aria-label="Mapa de Santander por provincias"]';
 
-/** El contenedor, el SVG y los grupos de las provincias con cafés, tal como los dejó el HTML del build. */
+/** Marca de la capa del HTML ya adoptada por la interacción (pierde la clase `mapa-capa` y sus consultas de contenedor). */
+const ADOPTADA = "data-capa-adoptada";
+
+/**
+ * Pines y rótulos de la capa del HTML, que la interacción adopta en lugar de pintar otros (QA-037): un pin por café
+ * (clave: slug del café) y un rótulo por provincia (clave: su nombre). Un pin que cambia de forma con el ancho trae una
+ * variante por tramo; se adopta la que tiene el foco o, si no, la que se ve. Se lee antes de adoptar la capa, con sus
+ * reglas vigentes.
+ */
+function buscarAdoptables(capa: HTMLElement) {
+  const pines = new Map<string, HTMLAnchorElement>();
+  const activo = document.activeElement;
+  const seVe = (a: Element) => getComputedStyle(a).visibility === "visible";
+  for (const a of capa.querySelectorAll<HTMLAnchorElement>(":scope > a.mapa-pin")) {
+    const slug = /\/cafes\/([^/]+)\/$/.exec(a.pathname)?.[1];
+    const otro = slug ? pines.get(slug) : undefined;
+    if (slug && (!otro || a === activo || (otro !== activo && !seVe(otro) && seVe(a)))) pines.set(slug, a);
+  }
+  const rotulos = new Map([...capa.querySelectorAll<HTMLElement>(":scope > .mapa-rotulo")].map((e) => [e.firstChild?.textContent ?? "", e]));
+  return { pines, rotulos };
+}
+
+/** El contenedor, el SVG, los grupos de las provincias con cafés y la capa de textos, tal como los dejó el HTML del build. */
 function buscarNodos() {
   const mapa = document.getElementById(ID_MAPA);
   const svg = mapa?.querySelector<SVGSVGElement>(NOMBRE_SVG);
   if (!mapa || !svg) return null;
-  return { mapa, svg, grupos: new Map([...svg.querySelectorAll<SVGGElement>("g.prov--activa")].map((g) => [g.dataset.provincia ?? "", g])) };
+  const capa = mapa.querySelector<HTMLElement>(`:scope > .mapa-capa, :scope > [${ADOPTADA}]`);
+  return {
+    mapa,
+    svg,
+    grupos: new Map([...svg.querySelectorAll<SVGGElement>("g.prov--activa")].map((g) => [g.dataset.provincia ?? "", g])),
+    capa,
+    ...(capa ? buscarAdoptables(capa) : { pines: new Map<string, HTMLAnchorElement>(), rotulos: new Map<string, HTMLElement>() }),
+  };
 }
 
 /**
@@ -36,7 +66,7 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
   const completo = entrada.completo;
 
   // Solo se monta en el navegador (la descarga el activador), así que puede leer el DOM al iniciar el estado:
-  // la capa medida reemplaza a la del HTML en el mismo cuadro, sin un cuadro vacío.
+  // la capa medida toma el relevo de la del HTML en el mismo cuadro, sin un cuadro vacío.
   const [nodos] = useState(buscarNodos);
   // El alto sale del ancho con la misma cuenta que usa el build para la capa del HTML (QA-034): así las dos capas
   // toman las mismas decisiones aunque el navegador redondee el alto de otra manera.
@@ -97,6 +127,64 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
   }, [nodos, claveElegidas]);
 
   const capa = useMemo(() => calcularCapa(entrada, vb, tam.w, tam.h, elegidas), [entrada, vb, tam, elegidas]);
+
+  // ---------- Pines y rótulos adoptados de la capa del HTML (QA-037) ----------
+  // Los pines y los rótulos siguen siendo los nodos del HTML, que solo cambian de sitio y de forma; la capa medida pinta
+  // las marcas de coordenadas y la escala. Si los pines se desmontaran, el que tiene el foco de teclado lo perdería
+  // (pasaría al body) y un Tab dado en el cambio saltaría los pines. Todo ocurre en efectos de diseño: la capa del HTML
+  // y la medida cambian en el mismo cuadro y nada se desplaza (las dos capas toman las mismas decisiones, QA-034).
+  const adoptados = useMemo(() => ({ pines: new Set(nodos?.pines.keys()), rotulos: new Set(nodos?.rotulos.keys()) }), [nodos]);
+  useLayoutEffect(() => {
+    if (!nodos?.capa) return;
+    const fija = nodos.capa;
+    // Un rótulo que el HTML oculta en este ancho (con visibility) pasa a ocultarse con opacidad, sin transición: si no,
+    // se vería un instante al cambiar de una forma a la otra.
+    for (const e of nodos.rotulos.values())
+      if (getComputedStyle(e).visibility !== "visible") {
+        e.style.setProperty("transition", "none");
+        e.classList.add("mapa-rotulo--oculto");
+        e.style.setProperty("visibility", "visible");
+        void e.offsetWidth; // aplica el estado sin transición antes de devolvérsela
+        e.style.removeProperty("transition");
+      }
+    // Sin la clase, las consultas de contenedor de la capa del HTML ya no rigen: pines y rótulos los coloca la interacción.
+    fija.classList.remove("mapa-capa");
+    fija.setAttribute(ADOPTADA, "");
+    const propios = new Set<Element>([...nodos.pines.values(), ...nodos.rotulos.values()]);
+    for (const el of fija.children) if (!propios.has(el) && el instanceof HTMLElement) el.style.setProperty("display", "none");
+  }, [nodos]);
+  // Un pin que queda fuera del encuadre sale del documento, como cuando la capa medida no lo pintaba: ni se enfoca ni
+  // se ve. Un comentario guarda su sitio para que vuelva en el mismo orden de foco.
+  const sitiosPines = useRef(new Map<HTMLAnchorElement, Comment>());
+  useLayoutEffect(() => {
+    if (!nodos) return;
+    for (const p of capa.pines) {
+      const a = nodos.pines.get(p.cafe.slug);
+      if (!a) continue;
+      const sitio = sitiosPines.current.get(a) ?? document.createComment(p.cafe.slug);
+      sitiosPines.current.set(a, sitio);
+      if (!p.visible) {
+        if (a.isConnected) a.replaceWith(sitio);
+        continue;
+      }
+      if (!a.isConnected) sitio.replaceWith(a);
+      Object.assign(a.style, { left: `${p.izquierda}px`, top: `${p.arriba}px`, flexDirection: "", visibility: "visible" });
+      a.classList.toggle("mapa-pin--izquierda", p.lado === "izquierda");
+      a.classList.toggle("mapa-pin--compacto", p.lado === "compacto");
+    }
+    // Un rótulo oculto conserva su sitio y se desvanece ahí (QA-036).
+    for (const r of capa.rotulos) {
+      const e = nodos.rotulos.get(r.nombre);
+      if (!e) continue;
+      Object.assign(e.style, { left: `${r.izquierda}px`, top: `${r.arriba}px`, visibility: "visible" });
+      e.classList.toggle("mapa-rotulo--oculto", r.oculto);
+    }
+  }, [nodos, capa]);
+  // Los pines del HTML no precargan la ficha (QA-018); con la interacción ya montada, sí.
+  const router = useRouter();
+  useEffect(() => {
+    for (const slug of adoptados.pines) router.prefetch(`/cafes/${slug}/`);
+  }, [adoptados, router]);
 
   // ---------- Tarjeta de provincia ----------
   const cafesPorProvincia = useMemo(() => {
@@ -241,9 +329,9 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
 
   return (
     <>
-      <CapaMedida capa={capa} />
+      <CapaMedida capa={capa} adoptados={adoptados} />
       {elegidas.length > 0 && (
-        <div className="absolute right-3 top-3">
+        <div className="absolute right-3 top-3 z-10">
           <Boton tamano="sm" variante="secundario" className="!bg-surface-raised" onClick={f.quitarProvincias}>
             Ver todo Santander
           </Boton>

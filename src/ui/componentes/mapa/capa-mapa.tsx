@@ -53,14 +53,18 @@ function Escala({ km, ancho, t }: { km: number; ancho: string; t?: string }) {
 
 const desplazar = (x: number, y: number): CSSProperties => ({ transform: `translate(${x}px, ${y}px)` });
 
-/** Capa del navegador: posiciones en píxeles para el encuadre y el tamaño medidos. */
-export function CapaMedida({ capa }: { capa: Capa }) {
+/**
+ * Capa del navegador: posiciones en píxeles para el encuadre y el tamaño medidos. Los pines y rótulos de `adoptados`
+ * (slug del café; nombre de la provincia) no se pintan aquí: son los del HTML, que la interacción mueve sin
+ * desmontarlos para no perder el foco de teclado (QA-037).
+ */
+export function CapaMedida({ capa, adoptados }: { capa: Capa; adoptados: { pines: ReadonlySet<string>; rotulos: ReadonlySet<string> } }) {
   return (
     <div className={CLASE_CAPA}>
-      {capa.rotulos.map((r) => <Rotulo key={r.slug} r={r} style={desplazar(r.izquierda, r.arriba)} />)}
+      {capa.rotulos.map((r) => (adoptados.rotulos.has(r.nombre) ? null : <Rotulo key={r.slug} r={r} style={desplazar(r.izquierda, r.arriba)} />))}
       {capa.marcasLat.map((m) => <Marca key={m.clave} m={m} style={desplazar(6, m.px)} />)}
       {capa.marcasLon.map((m) => <Marca key={m.clave} m={m} style={desplazar(m.px, 4)} />)}
-      {capa.pines.map((p) => (p.visible ? <Pin key={p.slug} p={p} style={desplazar(p.izquierda, p.arriba)} /> : null))}
+      {capa.pines.map((p) => (p.visible && !adoptados.pines.has(p.cafe.slug) ? <Pin key={p.slug} p={p} style={desplazar(p.izquierda, p.arriba)} /> : null))}
       {capa.escala && <Escala km={capa.escala.km} ancho={`${capa.escala.anchoPx}px`} />}
     </div>
   );

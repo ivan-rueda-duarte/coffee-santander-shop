@@ -106,13 +106,14 @@ export function ActivadorMapa({ entrada, children }: { entrada: EntradaCapa; chi
       <Suspense fallback={null}>
         <VigiaUrl alPedir={activar} />
       </Suspense>
-      {InteraccionMapa ? (
-        <Suspense fallback={children}>
+      {/* La interacción va antes que la capa del HTML y no la reemplaza: adopta sus pines (QA-037), que así quedan
+          encima de los rótulos medidos, como antes. La capa del HTML nunca se desmonta. */}
+      {InteraccionMapa && (
+        <Suspense fallback={null}>
           <InteraccionMapa entrada={entrada} tomarPendiente={tomarPendiente} />
         </Suspense>
-      ) : (
-        children
       )}
+      {children}
     </>
   );
 }
