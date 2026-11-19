@@ -67,7 +67,7 @@ export function TarjetaProvincia({ provincia, cafes, elegida, ancla, comoHoja, a
           </button>
         )}
       </div>
-      {provincia.descripcion && <p className="body mt-2 line-clamp-3 text-sm text-ink-muted">{provincia.descripcion}</p>}
+      {provincia.descripcion && <p className="body mt-2 line-clamp-3 text-ink-muted">{provincia.descripcion}</p>}
       <p className="mt-3 text-sm font-bold text-ink-title">{etiquetaCafes(cafes.length)}</p>
       {primeros.length > 0 && <p className="caption text-ink-muted">{primeros.join(" · ")}{cafes.length > 2 ? " y más" : ""}</p>}
       <div className="mt-4 flex flex-wrap gap-2">

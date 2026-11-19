@@ -457,7 +457,7 @@ function Contenido() {
           {/* LEG-173: respaldo solo tras un clic válido, con el mismo texto y número DS del enlace abierto. */}
           {vigente && (
             <div className="mt-6 rounded-lg bg-surface-sunken p-5" data-testid="respaldo-whatsapp">
-              <p role="status" className="small font-semibold text-ink">{textoRespaldo(formatearWhatsapp(tienda.whatsapp))}</p>
+              <p role="status" className="small font-semibold! text-ink">{textoRespaldo(formatearWhatsapp(tienda.whatsapp))}</p>
               <Boton variante="secundario" className="mt-3 max-sm:w-full" onClick={copiar}>
                 <IconoCopiar className="ds-btn__icon" /> Copiar mensaje
               </Boton>

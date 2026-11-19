@@ -106,7 +106,7 @@ export function LineaPedido({ linea, editable = true }: { linea: LineaConPrecio;
         )}
         <p className="text-right font-bold tabular-nums text-ink-title">
           {formatearCOP(linea.totalCop)}
-          <small className="caption block font-medium text-ink-muted">
+          <small className="caption block text-ink-muted">
             {etiquetaBolsas(linea.cantidad)} de {linea.gramos} g
           </small>
         </p>

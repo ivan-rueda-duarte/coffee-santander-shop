@@ -87,7 +87,7 @@ export function Encabezado() {
                 <Link
                   href={e.href}
                   aria-current={actual(e.href, ruta)}
-                  className="small inline-flex min-h-11 items-center whitespace-nowrap px-3 font-semibold text-ink underline-offset-8 hover:underline focus-visible:-outline-offset-2! aria-[current=page]:underline aria-[current=page]:decoration-2"
+                  className="small inline-flex min-h-11 items-center whitespace-nowrap px-3 font-semibold! text-ink underline-offset-8 hover:underline focus-visible:-outline-offset-2! aria-[current=page]:underline aria-[current=page]:decoration-2"
                 >
                   {e.texto}
                 </Link>

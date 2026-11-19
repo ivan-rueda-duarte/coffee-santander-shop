@@ -60,7 +60,7 @@ Pruebas omitidas (18): las que exigen `E2E_AGOTADO_URL` o `E2E_BASE_URL` (`ba6e0
 
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
-| QA-029 | Baja | Estilos / marca | Las clases de `marca.css` y `componentes.css` anulan las utilidades de peso y tamaño de Tailwind (`font-bold`, `font-semibold`, `text-sm`) | disenador-marca → desarrollador-fullstack | Abierto |
+| QA-029 | Baja | Estilos / marca | Las clases de `marca.css` y `componentes.css` anulan las utilidades de peso y tamaño de Tailwind (`font-bold`, `font-semibold`, `text-sm`) | disenador-marca → desarrollador-fullstack | Corregido — pendiente verificación |
 | QA-028 | Media | `/envios/` (D3) | Tabla de tarifas partida desde `lg` | desarrollador-fullstack | **Cerrado** |
 | QA-017 | Baja | Accesibilidad | Nombre accesible de «Agregar» con «grano entero» | desarrollador-fullstack | **Cerrado** |
 
@@ -77,6 +77,7 @@ Pruebas omitidas (18): las que exigen `E2E_AGOTADO_URL` o `E2E_BASE_URL` (`ba6e0
 - **Evidencia:** `e2e/qa-2026-11-19-cierre-baja.spec.ts` › «QA-029: a 360 px / a 1280 px toda utilidad font-(peso) se pinta con su peso en /, ficha y /envios/» falla con la lista completa. Traza: `test-results/qa-2026-11-19-cierre-baja--*-QA-029*/trace.zip`. Captura `docs/qa/capturas/2026-11-19-ancla-tarifas-cajon-360.png` (título y «Zona 1» sin negrita).
 - **Prueba de cierre:** esa misma prueba, a 360 y 1.280 px. Si la decisión de diseño es que chips o píldoras sigan en 500, se quita la utilidad del marcado y la prueba pasa igual.
 - **Responsable sugerido:** `disenador-marca` (pesos y tamaños correctos de chips, píldoras, navegación y rótulos de zona) → `desarrollador-fullstack` (capas de CSS o marcado).
+- **Estado:** Corregido — pendiente verificación (commit: ver `git log --grep QA-029`, `fix(estilos)`). Causa raíz: el marcado combinaba clases de marca fuera de capa (`.body`, `.small`, `.caption`, `.ds-tag`) con utilidades que pedían otro peso o tamaño; según `docs/diseno/2026-11-18-ux-auditoria-media.md` § QA-029, las del grupo A (A1–A10) llevan `!` al final y las del grupo B (B1–B4) se quitan, sin tocar `src/styles/` ni `globals.css`. La expresión de la prueba de cierre (`:385`) no reconoce `font-bold!`: con la propuesta por diseño, `(?:^|\s)!?(font-(?:normal|medium|semibold|bold|extrabold))!?(?:\s|$)`, en una copia temporal (ya borrada), la lista queda vacía a 360 y 1.280 px en `/`, la ficha y `/envios/`. El archivo de prueba no se cambió: el ajuste le corresponde a QA.
 
 ## Observaciones
 

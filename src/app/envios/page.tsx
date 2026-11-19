@@ -61,7 +61,7 @@ export default async function PaginaEnvios() {
 
   const tablaTarifas = (
     <section aria-labelledby="tarifas-por-zona" className="!mt-10 rounded-lg bg-surface-sunken p-5" data-testid="bloque-tarifas">
-      <h3 id="tarifas-por-zona" className="body scroll-mt-24 font-bold text-ink-title">Tarifas por zona y municipios de cada zona</h3>
+      <h3 id="tarifas-por-zona" className="body scroll-mt-24 font-bold! text-ink-title">Tarifas por zona y municipios de cada zona</h3>
       <p className="body mt-2 text-ink-muted">
         El peso incluye las bolsas más {EMPAQUE_G} g de empaque, y el escalón también lo cuenta: hasta 1 kg de café paga el escalón de 1 kg, hasta 2 kg el de 2 kg y hasta 5 kg el de 5 kg. Una bolsa suelta, dos de 250 g o dos de 500 g pagan el escalón de 1 kg.
       </p>
@@ -69,12 +69,12 @@ export default async function PaginaEnvios() {
       <ul aria-label="Tarifas de envío por zona" className="mt-4 space-y-3 lg:hidden" data-testid="tarjetas-envios">
         {tarifas.map((t) => (
           <li key={t.clave} className="rounded-lg border border-line bg-surface p-4" data-testid={`tarjeta-zona-${t.clave}`}>
-            <h4 className="body font-bold text-ink-title">Zona {t.zona}</h4>
+            <h4 className="body font-bold! text-ink-title">Zona {t.zona}</h4>
             {t.zona === 1 || t.zona === 2 ? (
               <p className="small mt-1 text-ink" data-testid="cubre">{cubre(t)}</p>
             ) : (
               <details className="mt-1">
-                <summary className="small flex min-h-11 cursor-pointer items-center font-bold text-ink-title underline underline-offset-4">
+                <summary className="small flex min-h-11 cursor-pointer items-center font-bold! text-ink-title underline underline-offset-4">
                   Qué cubre la zona {t.zona}
                 </summary>
                 <p className="small pb-2 text-ink" data-testid="cubre">{cubre(t)}</p>
@@ -96,7 +96,7 @@ export default async function PaginaEnvios() {
                 ))}
               </dl>
             ) : (
-              <p className="small mt-3 border-t border-line pt-3 font-semibold text-ink">Por cotizar por WhatsApp antes de que pagues</p>
+              <p className="small mt-3 border-t border-line pt-3 font-semibold! text-ink">Por cotizar por WhatsApp antes de que pagues</p>
             )}
           </li>
         ))}

@@ -89,7 +89,7 @@ export function PaginaFichaCafe({ ficha }: { ficha: FichaCafe }) {
                 <h2 id="sca" className="h3 text-ink-title">Puntaje SCA</h2>
                 <div className="mt-3 flex items-center gap-4">
                   <SelloSCA puntaje={cafe.puntajeSca!} />
-                  <p className="body max-w-sm text-sm text-ink-muted">
+                  <p className="small max-w-sm text-ink-muted">
                     Puntaje de taza de la Specialty Coffee Association: de 80 en adelante es café de especialidad.
                     {cafe.puntajeFuente && cafe.puntajeFecha && (
                       <>

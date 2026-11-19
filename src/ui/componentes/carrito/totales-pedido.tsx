@@ -79,7 +79,7 @@ export function TotalesPedido({
             {/* D5 §6.3: «Envío a {destino} · zona {n}: {$ valor} (IVA incluido)». */}
             <dd className="text-right font-bold tabular-nums text-ink-title">
               {formatearCOP(envio.valorCop)}
-              {catalogo.tienda.ivaTarifa !== null && <span className="caption block font-normal text-ink-muted">(IVA incluido)</span>}
+              {catalogo.tienda.ivaTarifa !== null && <span className="caption block text-ink-muted">(IVA incluido)</span>}
             </dd>
           </div>
         )}

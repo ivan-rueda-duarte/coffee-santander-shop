@@ -14,10 +14,11 @@ import { useCatalogo } from "@/ui/hooks/use-catalogo";
 function Pildora({ nombre, valor, marcado, alElegir, deshabilitado, children }: { nombre: string; valor: string; marcado: boolean; alElegir: () => void; deshabilitado?: boolean; children: React.ReactNode }) {
   return (
     // Agotado (diseño 2026-11-18, media): sin opacidad; borde punteado line-strong y texto ink-muted (≈ 7:1), para que
-    // «Agotado» se lea y el estado no dependa del color (WCAG 1.4.1 y 1.4.3). Los «!» ganan a .ds-tag--outline, que no está en una capa.
+    // «Agotado» se lea y el estado no dependa del color (WCAG 1.4.1 y 1.4.3). Los «!» ganan a .ds-tag--outline, que no está en una capa;
+    // también text-sm! y font-semibold! (14/20 en 600, QA-029).
     <label className={deshabilitado ? "cursor-not-allowed" : "cursor-pointer"}>
       <input type="radio" name={nombre} value={valor} checked={marcado} disabled={deshabilitado} onChange={alElegir} className="peer sr-only" />
-      <span className="ds-tag ds-tag--outline min-h-11 flex-col items-start !gap-0 !rounded-lg !px-4 !py-2 text-sm font-semibold peer-checked:!border-monte-900 peer-checked:!bg-monte-900 peer-checked:!text-pergamino-50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-disabled:!border-dashed peer-disabled:!border-line-strong peer-disabled:!bg-transparent peer-disabled:!text-ink-muted">
+      <span className="ds-tag ds-tag--outline min-h-11 flex-col justify-center !gap-0 !rounded-lg !px-4 !py-2 text-sm! font-semibold! peer-checked:!border-monte-900 peer-checked:!bg-monte-900 peer-checked:!text-pergamino-50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-disabled:!border-dashed peer-disabled:!border-line-strong peer-disabled:!bg-transparent peer-disabled:!text-ink-muted">
         {children}
       </span>
     </label>

@@ -120,7 +120,7 @@ function Explorador({ f, tarjetas }: { f: EstadoFiltros; tarjetas: TarjetasPorSl
                   type="button"
                   onClick={() => f.quitar(a)}
                   aria-label={`Quitar filtro ${texto}`}
-                  className="ds-tag ds-tag--outline relative min-h-9 cursor-pointer gap-1.5 text-sm font-semibold hover:border-ink before:absolute before:content-[''] before:inset-x-0 before:-inset-y-[5px]"
+                  className="ds-tag ds-tag--outline relative min-h-9 cursor-pointer text-sm! font-semibold! hover:border-ink! before:absolute before:content-[''] before:inset-x-0 before:-inset-y-[5px]"
                 >
                   {texto}
                   <IconoCerrar width={14} height={14} />
