@@ -61,7 +61,7 @@ export default async function PaginaEnvios() {
 
   const tablaTarifas = (
     <section aria-labelledby="tarifas-por-zona" className="!mt-10 rounded-lg bg-surface-sunken p-5" data-testid="bloque-tarifas">
-      <h3 id="tarifas-por-zona" className="body font-bold text-ink-title">Tarifas por zona y municipios de cada zona</h3>
+      <h3 id="tarifas-por-zona" className="body scroll-mt-24 font-bold text-ink-title">Tarifas por zona y municipios de cada zona</h3>
       <p className="body mt-2 text-ink-muted">
         El peso incluye las bolsas más {EMPAQUE_G} g de empaque, y el escalón también lo cuenta: hasta 1 kg de café paga el escalón de 1 kg, hasta 2 kg el de 2 kg y hasta 5 kg el de 5 kg. Una bolsa suelta, dos de 250 g o dos de 500 g pagan el escalón de 1 kg.
       </p>

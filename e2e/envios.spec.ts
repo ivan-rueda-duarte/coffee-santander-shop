@@ -255,7 +255,7 @@ test.describe("página /envios/ y enlaces", () => {
     await expect(pie.locator('a[href="/legal/envios-devoluciones/"]')).toHaveCount(0);
     expect((await page.request.get("/envios/")).status()).toBe(200);
     await pasoEnvio(page, [{ gramos: 250, cantidad: 2 }], "Santander", "Bucaramanga");
-    await expect(page.locator('a[href="/envios/"]').filter({ hasText: "Cómo calculamos el envío" }).first()).toBeVisible();
+    await expect(page.locator('a[href="/envios/#tarifas-por-zona"]').filter({ hasText: "Cómo calculamos el envío" }).first()).toBeVisible();
     await completarResumen(page);
     await expect(page.getByTestId("nota-precio-total").locator('a[href="/envios/"]')).toBeVisible();
     await expect(page.locator('main a[href="/legal/envios-devoluciones/"]')).toHaveCount(0);
