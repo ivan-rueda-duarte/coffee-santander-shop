@@ -108,9 +108,9 @@ export default async function PaginaEnvios() {
             <tr>
               <th scope="col" className="px-4 py-3 font-bold">Zona</th>
               <th scope="col" className="px-4 py-3 font-bold">Cubre</th>
-              <th scope="col" className="px-4 py-3 text-right font-bold">Hasta 1 kg</th>
-              <th scope="col" className="px-4 py-3 text-right font-bold">Hasta 2 kg</th>
-              <th scope="col" className="px-4 py-3 text-right font-bold">Hasta 5 kg</th>
+              <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-bold">Hasta 1 kg</th>
+              <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-bold">Hasta 2 kg</th>
+              <th scope="col" className="whitespace-nowrap px-4 py-3 text-right font-bold">Hasta 5 kg</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
@@ -128,7 +128,7 @@ export default async function PaginaEnvios() {
                 </td>
                 {t.escalones ? (
                   t.escalones.map((valor, i) => (
-                    <td key={i} className="px-4 py-3 text-right align-top font-semibold tabular-nums">{formatearCOP(valor)}</td>
+                    <td key={i} className="whitespace-nowrap px-4 py-3 text-right align-top font-semibold tabular-nums">{formatearCOP(valor)}</td>
                   ))
                 ) : (
                   <td colSpan={3} className="px-4 py-3 text-right align-top font-semibold">Por cotizar por WhatsApp antes de que pagues</td>

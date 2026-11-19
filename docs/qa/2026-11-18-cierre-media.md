@@ -119,7 +119,7 @@ Riesgo: el margen es de 386 B. Cualquier código nuevo en el inicio puede reabri
 
 | ID | Severidad | Área | Título | Responsable | Estado |
 |---|---|---|---|---|---|
-| QA-028 | Media | `/envios/` (D3) | Desde `lg`, la tabla de tarifas parte cada precio en tres renglones y «Hasta n kg» en cuatro | desarrollador-fullstack | Abierto |
+| QA-028 | Media | `/envios/` (D3) | Desde `lg`, la tabla de tarifas parte cada precio en tres renglones y «Hasta n kg» en cuatro | desarrollador-fullstack | Corregido — pendiente verificación (`whitespace-nowrap` en los `<th>` de escalón y los `<td>` de precio de `src/app/envios/page.tsx`; causa: `[overflow-wrap:anywhere]` heredado de `documento-legal.tsx:88`) |
 | QA-018 | Media | Rendimiento | JS inicial de inicio | desarrollador-fullstack | Cerrado (criterio de celular; O-1 para el dueño) |
 | QA-025 | Baja | Accesibilidad / M1 | Chips de 42 px | desarrollador-fullstack | Cerrado |
 | QA-026 | Baja | Accesibilidad / M1 | Controles fuera de la tabla de M1 | disenador-marca → desarrollador-fullstack | Cerrado |
