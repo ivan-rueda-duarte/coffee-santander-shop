@@ -14,11 +14,10 @@ const fraunces = localFont({
   display: "swap",
 });
 
+// Sin la itálica de Montserrat (≈ 40 KB precargados en cada página): la única itálica de la marca es la de Fraunces
+// (remate de titulares, citas y notas de cata). Si algún texto en Montserrat pidiera itálica, el navegador la sintetizaría.
 const montserrat = localFont({
-  src: [
-    { path: "./fonts/Montserrat-Variable.woff2", style: "normal", weight: "100 900" },
-    { path: "./fonts/Montserrat-Italic-Variable.woff2", style: "italic", weight: "100 900" },
-  ],
+  src: [{ path: "./fonts/Montserrat-Variable.woff2", style: "normal", weight: "100 900" }],
   variable: "--font-montserrat",
   display: "swap",
 });
