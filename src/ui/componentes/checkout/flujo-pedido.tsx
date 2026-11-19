@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { prepararPedido, type PedidoListo } from "@/application/casos-uso/preparar-pedido";
 import { avisoPrivacidad, casillaDatos, casillaPromocionesCorreo, casillaPromocionesWhatsapp, casillaTerminos } from "@/domain/legal/consentimientos";
-import { firmaSolicitud, microayudaCasillas, resumenCompacto, textoRespaldo, textoSiguientePaso } from "@/domain/pedido/flujo";
+import { bajadaMensajeListo, firmaSolicitud, microayudaCasillas, resumenCompacto, revisarCopia, textoRespaldo, textoSiguientePaso, TEXTOS_MENSAJE_LISTO, type CopiaSolicitud } from "@/domain/pedido/flujo";
 import { generarNumeroSolicitud, LARGO_SUFIJO } from "@/domain/pedido/numero-solicitud";
 import { crearEsquemaEnvio, esquemaConsentimientos, SIGLA_DOCUMENTO, validar, type DatosEnvio } from "@/domain/pedido/envio";
 import { calcularEnvio } from "@/domain/envio/envio";
@@ -99,11 +99,41 @@ function AnuncioEnvio({ frase }: { frase: string }) {
   );
 }
 
+/**
+ * Copia del mensaje generado en el último clic válido (LEG-173; §4 bis; microcopy v1.12 §9.4 y §9.6; LEG-188 (2)).
+ * Vive solo en el estado de React de `Contenido`: nunca en localStorage, sessionStorage, history.state, la URL, la
+ * analítica ni otra pestaña. Se pierde al recargar o al salir de /pedido/.
+ */
+interface Copia extends CopiaSolicitud {
+  pedido: PedidoListo;
+  /** Bloque «En el mensaje»: las mismas líneas compactas del paso Envío, de la misma copia que el texto. */
+  compacto: { lineas: string[]; resto: number };
+  bolsas: number;
+  porCotizar: boolean;
+}
+
+/** Respaldo de §9.4 (LEG-173): «Copiar mensaje» y «Ver el mensaje» con el mismo texto y número DS del enlace abierto. */
+function Respaldo({ pedido, whatsapp, alCopiar, detalles }: { pedido: PedidoListo; whatsapp: string; alCopiar: () => void; detalles: RefObject<HTMLDetailsElement | null> }) {
+  return (
+    <div className="mt-6 rounded-lg bg-surface-sunken p-5" data-testid="respaldo-whatsapp">
+      <p role="status" className="small font-semibold! text-ink">{textoRespaldo(whatsapp)}</p>
+      <Boton variante="secundario" className="mt-3 max-sm:w-full" onClick={alCopiar}>
+        <IconoCopiar className="ds-btn__icon" /> Copiar mensaje
+      </Boton>
+      <details ref={detalles} className="mt-4">
+        <summary className="relative cursor-pointer text-sm font-bold before:absolute before:content-[''] before:inset-x-0 before:-inset-y-3">Ver el mensaje</summary>
+        <pre id="mensaje-pedido" className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-surface-raised p-4 text-sm">{pedido.texto}</pre>
+      </details>
+      {pedido.indicacionesResumidas && <p className="caption mt-3 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}
+    </div>
+  );
+}
+
 function Contenido() {
   const router = useRouter();
   const params = useSearchParams();
   const { catalogo } = useCatalogo();
-  const { lineas, totales, listo, vaciar, abrirCajon } = useCarrito();
+  const { lineas, totales, listo, vaciarSinAviso, deshacer, puedeDeshacer, abrirCajon } = useCarrito();
   const { buscarCafe } = useCatalogo();
   const { avisar } = useAvisos();
   const tienda = catalogo.tienda;
@@ -128,8 +158,8 @@ function Contenido() {
   const [promoWhatsapp, setPromoWhatsapp] = useState(false);
   const [promoCorreo, setPromoCorreo] = useState(false);
   const [erroresResumen, setErroresResumen] = useState<{ errores: Record<string, string>; lineas: string[] } | null>(null);
-  // Solicitud preparada en el último clic válido, con la firma de lo que llevaba (LEG-173; §4 bis). Solo en memoria.
-  const [resultado, setResultado] = useState<{ pedido: PedidoListo; firma: string } | null>(null);
+  // Copia del mensaje del último clic válido, con la firma de lo que llevaba (LEG-173; §4 bis; LEG-188). Solo en memoria.
+  const [copia, setCopia] = useState<Copia | null>(null);
   const titulo = useRef<HTMLHeadingElement>(null);
   const cajaLineas = useRef<HTMLDivElement>(null);
   const detallesMensaje = useRef<HTMLDetailsElement>(null);
@@ -147,11 +177,6 @@ function Contenido() {
     if (!listo || sinPedido) return;
     if (paso === "resumen" && !envioValido) router.replace("/pedido/");
   }, [listo, sinPedido, paso, envioValido, router]);
-
-  // Al cambiar de paso, el foco va al título para lectores de pantalla y teclado.
-  useEffect(() => {
-    titulo.current?.focus({ preventScroll: false });
-  }, [paso]);
 
   const envioGratis = catalogo.envios.envioGratis;
   const esquema = useMemo(() => crearEsquemaEnvio(CODIGOS_DEPARTAMENTO, { envioGratis }), [envioGratis]);
@@ -183,19 +208,42 @@ function Contenido() {
   // Todo lo que entra en el mensaje. Si cambia el carrito (también desde otra pestaña), un dato de envío o una casilla,
   // la solicitud preparada deja de valer: el respaldo se oculta y el siguiente clic genera número y texto nuevos (LEG-173 (2)).
   const firma = firmaSolicitud({ lineas, envio: { ...valores }, terminos, autorizacion, promoWhatsapp, promoCorreo });
-  // QA-022: al primer cambio se descarta la solicitud (no basta con ocultarla). Si se deshace el cambio, el respaldo no
-  // reaparece y el siguiente clic genera número y texto nuevos (microcopy §9.4). Ajuste de estado durante el render.
-  if (resultado && resultado.firma !== firma) setResultado(null);
-  const vigente = resultado && resultado.firma === firma ? resultado.pedido : null;
+  // QA-022: al primer cambio se descarta la copia (no basta con ocultarla). Si se deshace el cambio, el respaldo no
+  // reaparece y el siguiente clic genera número y texto nuevos (microcopy §9.4). Salvedad de la v1.12 (LEG-188): el
+  // vaciado del propio envío no cuenta como cambio, y recuperar las mismas líneas la deja vigente. Ajuste durante el render.
+  const estadoCopia = copia ? revisarCopia(copia, firma, lineas.length > 0) : null;
+  if (copia && estadoCopia === "descartar") {
+    setCopia(null);
+    // Otro pedido sobre uno vacío por el envío (cajón u otra pestaña): rige el flujo normal desde Envío, sin llevar al
+    // Resumen con las casillas ya marcadas.
+    if (copia.vaciadoPorEnvio) setEnvioValido(false);
+  } else if (copia && estadoCopia === "recuperada") {
+    setCopia({ ...copia, vaciadoPorEnvio: false });
+  }
+  const vigente = copia && estadoCopia !== "descartar" ? copia.pedido : null;
+  // Vista «Mensaje listo» (§9.6): con la copia del envío y el pedido vacío, en /pedido/ y en ?paso=resumen.
+  const mensajeListo = listo && lineas.length === 0 && copia !== null && estadoCopia === "vigente" && copia.vaciadoPorEnvio ? copia : null;
+
+  // Al cambiar de paso (o entrar y salir de «Mensaje listo»), el foco va al título para lectores de pantalla y teclado.
+  const vista = mensajeListo ? "mensaje-listo" : paso;
+  useEffect(() => {
+    titulo.current?.focus({ preventScroll: false });
+  }, [vista]);
 
   /**
    * «Enviar por WhatsApp» (LEG-172, bloqueante): sin las casillas 1 y 2 no hay número DS, texto ni enlace. Con las dos,
    * se arma el mensaje y se abre wa.me en este mismo manejador, de forma síncrona: nada asíncrono antes de window.open
-   * (microcopy §5.5). Un segundo clic sin cambios reabre el mismo enlace con el mismo número (§4 bis 1).
+   * (microcopy §5.5). Después de window.open, y nunca antes, se guarda la copia en memoria y se vacía el pedido sin
+   * aviso (microcopy v1.12 §9.5 regla 4; LEG-188 (1) y (2)). Un clic sin cambios, en el Resumen tras recuperar el
+   * pedido o en «Mensaje listo», reabre el mismo enlace con el mismo número (§4 bis 1).
    */
   const enviar = () => {
-    if (vigente) {
+    if (copia && vigente) {
       window.open(vigente.enlace, "_blank", "noopener,noreferrer");
+      if (!copia.vaciadoPorEnvio) {
+        setCopia({ ...copia, vaciadoPorEnvio: true });
+        vaciarSinAviso();
+      }
       return;
     }
     const consentimientos = validar(esquemaConsentimientos, { autorizacionDatos: autorizacion, aceptaTerminos: terminos });
@@ -216,9 +264,18 @@ function Contenido() {
       return;
     }
     window.open(r.pedido.enlace, "_blank", "noopener,noreferrer");
-    // Con noopener, window.open devuelve null: el sitio no sabe si WhatsApp se abrió y por eso el respaldo aparece siempre.
+    // Con noopener, window.open devuelve null: el sitio no sabe si WhatsApp se abrió ni si el cliente mandó el mensaje.
+    // Por eso la copia queda en memoria (respaldo y «Recuperar el pedido») y el pedido se vacía sin aviso (LEG-188).
     setErroresResumen(null);
-    setResultado({ pedido: r.pedido, firma });
+    setCopia({
+      pedido: r.pedido,
+      firma,
+      compacto: resumenCompacto(lineas, (slug) => buscarCafe(slug)?.nombre ?? slug),
+      bolsas: r.pedido.totales.bolsas,
+      porCotizar: r.pedido.envio.tipo === "por_cotizar",
+      vaciadoPorEnvio: true,
+    });
+    vaciarSinAviso();
   };
 
   const copiar = async () => {
@@ -241,6 +298,35 @@ function Contenido() {
   };
 
   if (!listo) return <p className="body py-16 text-center text-ink-muted">Cargando tu pedido…</p>;
+
+  if (mensajeListo) {
+    // Diseño 2026-11-19 y microcopy v1.12 §9.6: sin indicador de pasos (WhatsApp no es un paso, LEG-175), sin aviso
+    // flotante y sin el número DS fuera del mensaje (LEG-191). Todo sale de la misma copia (LEG-188 (3)).
+    return (
+      <section aria-labelledby="t-enviado" className="max-w-2xl" data-testid="pedido-enviado">
+        <h1 id="t-enviado" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">{TEXTOS_MENSAJE_LISTO.titulo}</h1>
+        <p className="body mt-2 text-ink" data-testid="bajada-mensaje-listo">{bajadaMensajeListo(mensajeListo.porCotizar)}</p>
+        <p className="caption mt-2 text-ink-muted" data-testid="nota-vaciado">{TEXTOS_MENSAJE_LISTO.nota}</p>
+        <section aria-labelledby="t-en-el-mensaje" className="mt-6 rounded-lg border border-line bg-surface-raised p-4" data-testid="bloque-en-el-mensaje">
+          <h2 id="t-en-el-mensaje" className="overline text-ink-muted">{TEXTOS_MENSAJE_LISTO.rotuloBloque}</h2>
+          <ul className="mt-2 space-y-1">
+            {mensajeListo.compacto.lineas.map((t) => <li key={t} className="caption text-ink">{t}</li>)}
+          </ul>
+          {mensajeListo.compacto.resto > 0 && <p className="caption mt-1 text-ink-muted">y {mensajeListo.compacto.resto} más</p>}
+          <p className="caption mt-2 text-ink-muted">{etiquetaBolsas(mensajeListo.bolsas)}</p>
+        </section>
+        <Boton tamano="lg" className="mt-6 max-sm:w-full max-sm:!whitespace-normal" onClick={enviar}>
+          <IconoWhatsapp className="ds-btn__icon" /> Enviar por WhatsApp
+        </Boton>
+        <Respaldo pedido={mensajeListo.pedido} whatsapp={formatearWhatsapp(tienda.whatsapp)} alCopiar={copiar} detalles={detallesMensaje} />
+        <div className="mt-4 flex flex-col items-center gap-2 md:flex-row md:justify-start md:gap-6">
+          {/* Recuperar = deshacer del proveedor: vuelven las mismas líneas y la copia sigue vigente (mismo DS). */}
+          {puedeDeshacer && <Boton variante="enlace" tamano="sm" onClick={deshacer}>{TEXTOS_MENSAJE_LISTO.recuperar}</Boton>}
+          <BotonEnlace href="/cafes/" variante="enlace" tamano="sm">{TEXTOS_MENSAJE_LISTO.seguir}</BotonEnlace>
+        </div>
+      </section>
+    );
+  }
 
   if (sinPedido) {
     return (
@@ -454,32 +540,9 @@ function Contenido() {
             </Boton>
           </div>
 
-          {/* LEG-173: respaldo solo tras un clic válido, con el mismo texto y número DS del enlace abierto. */}
-          {vigente && (
-            <div className="mt-6 rounded-lg bg-surface-sunken p-5" data-testid="respaldo-whatsapp">
-              <p role="status" className="small font-semibold! text-ink">{textoRespaldo(formatearWhatsapp(tienda.whatsapp))}</p>
-              <Boton variante="secundario" className="mt-3 max-sm:w-full" onClick={copiar}>
-                <IconoCopiar className="ds-btn__icon" /> Copiar mensaje
-              </Boton>
-              <details ref={detallesMensaje} className="mt-4">
-                <summary className="relative cursor-pointer text-sm font-bold before:absolute before:content-[''] before:inset-x-0 before:-inset-y-3">Ver el mensaje</summary>
-                <pre id="mensaje-pedido" className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-surface-raised p-4 text-sm">{vigente.texto}</pre>
-              </details>
-              {vigente.indicacionesResumidas && <p className="caption mt-3 text-ink-muted">Acortamos tus indicaciones para que el mensaje quepa; las puedes ampliar por el chat.</p>}
-              <Boton
-                variante="enlace"
-                tamano="sm"
-                className="mt-3"
-                onClick={() => {
-                  vaciar();
-                  setResultado(null);
-                  router.replace("/pedido/");
-                }}
-              >
-                Vaciar pedido
-              </Boton>
-            </div>
-          )}
+          {/* LEG-173: respaldo tras un clic válido (aquí, tras «Recuperar el pedido»), con el mismo texto y número DS del
+              enlace abierto. Sin «Vaciar pedido» desde la v1.12 (LEG-190): el pedido se vacía con el envío. */}
+          {vigente && <Respaldo pedido={vigente} whatsapp={formatearWhatsapp(tienda.whatsapp)} alCopiar={copiar} detalles={detallesMensaje} />}
         </section>
       )}
     </>
