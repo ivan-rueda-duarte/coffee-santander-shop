@@ -26,6 +26,8 @@ Mandé mi pedido por WhatsApp. Si vuelvo a la tienda, quiero el pedido en 0 para
 
 ## Vista «Mensaje listo», 360 px
 
+*Orden revisado el 2026-11-19 por QA-030 (ver «Ajuste QA-030» abajo): las dos acciones van antes del bloque «En el mensaje». Textos según microcopy v1.12 §9.6 (T3 final de LEG-189).*
+
 ```
 TU PEDIDO                                        ← Antetitulo (ya existe en FlujoPedido)
                                                  ← sin indicador de pasos (WhatsApp no es un paso, LEG-175)
@@ -33,28 +35,46 @@ Envía el mensaje en WhatsApp                     ← h1 .h2 text-ink-title, tab
 Con ese mensaje nos pides el pedido. Te          ← body text-ink; variante según instantanea.porCotizar
 respondemos con el total para que lo aceptes
 y te damos los datos para pagar.
-Quitamos estos cafés de tu pedido en este        ← caption text-ink-muted
-navegador para que puedas empezar uno nuevo.
-┌ EN EL MENSAJE ────────────────────────┐        ← mismo bloque compacto del paso Envío, sin «Editar»
-│ Café Casa Martínez · 250 g · grano × 2│          caption text-ink
-│ 3 bolsas                              │          caption text-ink-muted
-└───────────────────────────────────────┘
+Vaciamos «Tu pedido» en este navegador para      ← caption text-ink-muted (T3, LEG-189), siempre bajo la bajada
+que puedas armar uno nuevo. El mensaje de
+WhatsApp lleva todos los cafés.
 [  (wa)  Enviar por WhatsApp            ]        ← primario lg, max-sm:w-full; reabre el mismo enlace
-┌ respaldo (igual que en A1) ───────────┐        ← bg-surface-sunken p-5 rounded-lg
+┌ respaldo (igual que en A1) ───────────┐        ← bg-surface-sunken p-5 rounded-lg; siempre bajo el botón (§9.4)
 │ ¿No se abrió WhatsApp? Copia el       │          role="status", textoRespaldo() sin cambio
 │ mensaje y envíalo al +57 300 112 9874.│
 │ [ ⧉ Copiar mensaje ]                  │          secundario, ancho completo
 │ ▸ Ver el mensaje                      │          details/summary con instantanea.pedido.texto
 │ Acortamos tus indicaciones…           │          solo si aplica
 └───────────────────────────────────────┘
+┌ EN EL MENSAJE ────────────────────────┐        ← mismo bloque compacto del paso Envío, sin «Editar»
+│ Café Casa Martínez · 250 g · grano × 2│          caption text-ink
+│ 3 bolsas                              │          caption text-ink-muted
+└───────────────────────────────────────┘
         Recuperar el pedido                      ← Boton variante="enlace" tamano="sm", solo con puedeDeshacer
         Seguir viendo cafés                      ← BotonEnlace variante="enlace" tamano="sm", /cafes/
 ```
 
 - Contenedor `section aria-labelledby="t-enviado" class="max-w-2xl"`, `data-testid="pedido-enviado"`.
-- Separaciones: bajada `mt-2`, nota `mt-2`, bloque `mt-6`, botón `mt-6`, respaldo `mt-6`, enlaces `mt-4 flex flex-col items-center gap-2`. Todo en tokens existentes; no hay componentes ni colores nuevos.
+- Separaciones: bajada `mt-2`, nota `mt-2`, botón `mt-6`, respaldo `mt-6` (propio del componente `Respaldo`), bloque `mt-6`, enlaces `mt-4 flex flex-col items-center gap-2`. Todo en tokens existentes; no hay componentes ni colores nuevos.
 - Bloque «En el mensaje»: el mismo marcado de `data-testid="bloque-tu-pedido"` con `h2 overline text-ink-muted` «En el mensaje», alimentado por la instantánea. `data-testid="bloque-en-el-mensaje"`.
-- Altura aproximada a 360 × 740: h1 40 + bajada 80 + nota 44 + bloque 100 + botón 54 + respaldo 190 + separaciones 100 ≈ 610 px. «Copiar mensaje» queda en la primera pantalla.
+- Altura aproximada a 360 × 740 con T2a (4 líneas) y T3 (3 líneas): encabezado + antetítulo + `py` ≈ 147, h1 80, bajada 104, nota 52, botón 54, primera línea del respaldo 48, rellenos y separaciones ≈ 96. «Copiar mensaje» queda entre y ≈ 580 y y ≈ 626: entero en la primera pantalla, con ≈ 110 px de holgura. Esa posición ya no depende del número de líneas del bloque («y N más» incluido).
+
+### Ajuste QA-030 (2026-11-19)
+
+**Problema.** Con la nota T3 final (LEG-189, 3 líneas a 360 px) y la bajada T2a en 4 líneas, «Copiar mensaje» quedaba de y = 725 a y = 771 a 360 × 740: solo 15 de sus 46 px a la vista.
+
+**Decisión.** Mover el bloque «En el mensaje» debajo del respaldo. No se cambia ningún texto, tamaño de letra ni separación.
+
+**Por qué este ajuste y no otros.**
+- Recortar separaciones (`mt-6` → `mt-4`, `py` del contenedor) daba ≈ 30 a 40 px, justo lo que faltaba. Volvía a fallar con tres líneas en el bloque o con «y N más», y el `py` del contenedor es de toda la página `/pedido/`.
+- Bajar el h1 de la escala `h2` (32 px en celular) a menos de 32 px rompe la escala de titulares de la marca (64/48/40/32). Con «Envía el mensaje en WhatsApp» en dos líneas, el h1 tampoco cabe en una línea a ningún tamaño de la escala.
+- Jerarquía: lo que el cliente necesita en esta vista es actuar (reabrir WhatsApp o copiar el mensaje). El bloque «En el mensaje» sirve para comprobar el mensaje, y debajo del respaldo queda junto a «Recuperar el pedido», que devuelve justo esas líneas. Ese vecindario tiene más sentido que el anterior.
+
+**Lo que no cambia, por legal.** La nota T3 sigue bajo la bajada (§9.6, «Nota bajo la bajada») y el respaldo sigue debajo del botón (§9.4). La tabla de §9.6 no fija la posición del bloque de líneas. LEG-188 (3) pide que el bloque salga de la misma copia, no un lugar en la vista, y eso no cambia. Ningún texto se recorta ni se reescribe. Si legal entiende que el orden de la tabla de §9.6 es normativo, el ajuste se revierte y se vuelve a la opción de separaciones con el criterio de QA corregido.
+
+**Teclado y lectores.** El bloque no tiene elementos con foco, así que el orden de Tab no cambia: h1 → «Enviar por WhatsApp» → «Copiar mensaje» → «Ver el mensaje» → «Recuperar el pedido» → «Seguir viendo cafés». El `role="status"` del respaldo se sigue anunciando una sola vez. El h2 «En el mensaje» sigue siendo el único h2 de la vista.
+
+**Escritorio.** Se usa el mismo orden; la columna `max-w-2xl` no cambia.
 
 ## Escritorio (`md`+)
 
@@ -73,6 +93,7 @@ La misma columna `max-w-2xl`, alineada a la izquierda como el Resumen. El botón
 | «Seguir viendo cafés» u otro enlace | `Contenido` se desmonta y la instantánea se pierde. Hasta que agregue otro café, el cajón conserva «Deshacer» en su estado vacío (ya existe), que equivale a recuperar |
 | Abrir el cajón desde la vista | Estado vacío del cajón con «Ver los cafés» y «Deshacer» (sin cambio). «Deshacer» recupera el pedido igual que el enlace de la vista |
 | Agrega un café nuevo (esta u otra pestaña) | El carrito deja de estar vacío y no coincide con la firma: se descarta la instantánea y rige el flujo normal (Envío). `puedeDeshacer` pasa a falso |
+| Vuelve a armar, en esta u otra pestaña, **exactamente** el contenido del mensaje (mismos cafés, tamaños, presentaciones y cantidades) | **Comportamiento deseado** (confirmado el 2026-11-19, observación 1 de QA en `docs/qa/2026-11-19-vaciar-pedido.md`). La firma vuelve a coincidir y la instantánea sigue vigente: la pestaña con «Mensaje listo» pasa al Resumen con los datos y las casillas como estaban, el respaldo visible y el **mismo DS** en el siguiente clic. Es lo mismo que «Recuperar el pedido» y cumple microcopy §9.4 («se descarta si el carrito vuelve a tener cafés **distintos**») y LEG-188 (5) (sin cambios, el mismo DS). El mensaje sería idéntico letra por letra, así que un DS nuevo haría ver como dos solicitudes lo que es una sola. Si de verdad quiere un segundo pedido igual, lo aclara en el chat, o cualquier cambio (una casilla, un dato, una cantidad) genera DS nuevo por QA-022. No hace falta aviso ni texto nuevo |
 | Otra pestaña abierta | Recibe el carrito vacío por `localStorage`: cabecera en 0 y, si estaba en `/pedido/`, «Tu pedido está vacío» (no tiene instantánea). No ve el mensaje: los datos personales no viajan entre pestañas |
 | WhatsApp bloqueado o sin app | El pedido igual se vacía (no se puede saber). El respaldo y «Recuperar el pedido» cubren el caso |
 
@@ -121,4 +142,5 @@ Pregunta para legal: con el pedido vacío y el mensaje generado, ¿hace falta mo
 - Atrás desde Resumen → «Mensaje listo». Recarga → «Tu pedido está vacío». Otra pestaña → contador en 0 y sin mensaje.
 - Agregar un café desde el cajón o desde otra pestaña descarta la vista y muestra el paso Envío.
 - axe en la vista nueva (360 y escritorio). `prefers-reduced-motion` sin transiciones.
+- QA-030: a 360 × 740, sin desplazar, «Copiar mensaje» entero en la primera pantalla (`toBeInViewport({ ratio: 1 })`), con T2a y con T2b, y con 1, 3 y más de 3 líneas en el bloque. Orden en el DOM: nota → «Enviar por WhatsApp» → respaldo → bloque «En el mensaje» → enlaces.
 - Ningún dato de envío en `localStorage`, `sessionStorage` ni URL después del envío (LEG-149).

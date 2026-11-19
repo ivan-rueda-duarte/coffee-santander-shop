@@ -307,6 +307,12 @@ function Contenido() {
         <h1 id="t-enviado" ref={titulo} tabIndex={-1} className="h2 text-ink-title scroll-mt-24 outline-none">{TEXTOS_MENSAJE_LISTO.titulo}</h1>
         <p className="body mt-2 text-ink" data-testid="bajada-mensaje-listo">{bajadaMensajeListo(mensajeListo.porCotizar)}</p>
         <p className="caption mt-2 text-ink-muted" data-testid="nota-vaciado">{TEXTOS_MENSAJE_LISTO.nota}</p>
+        {/* QA-030: las dos acciones (reintento y respaldo) van antes del bloque «En el mensaje» para que «Copiar mensaje»
+            quede entero en la primera pantalla a 360 × 740. La nota sigue bajo la bajada (§9.6) y el respaldo bajo el botón (§9.4). */}
+        <Boton tamano="lg" className="mt-6 max-sm:w-full max-sm:!whitespace-normal" onClick={enviar}>
+          <IconoWhatsapp className="ds-btn__icon" /> Enviar por WhatsApp
+        </Boton>
+        <Respaldo pedido={mensajeListo.pedido} whatsapp={formatearWhatsapp(tienda.whatsapp)} alCopiar={copiar} detalles={detallesMensaje} />
         <section aria-labelledby="t-en-el-mensaje" className="mt-6 rounded-lg border border-line bg-surface-raised p-4" data-testid="bloque-en-el-mensaje">
           <h2 id="t-en-el-mensaje" className="overline text-ink-muted">{TEXTOS_MENSAJE_LISTO.rotuloBloque}</h2>
           <ul className="mt-2 space-y-1">
@@ -315,10 +321,6 @@ function Contenido() {
           {mensajeListo.compacto.resto > 0 && <p className="caption mt-1 text-ink-muted">y {mensajeListo.compacto.resto} más</p>}
           <p className="caption mt-2 text-ink-muted">{etiquetaBolsas(mensajeListo.bolsas)}</p>
         </section>
-        <Boton tamano="lg" className="mt-6 max-sm:w-full max-sm:!whitespace-normal" onClick={enviar}>
-          <IconoWhatsapp className="ds-btn__icon" /> Enviar por WhatsApp
-        </Boton>
-        <Respaldo pedido={mensajeListo.pedido} whatsapp={formatearWhatsapp(tienda.whatsapp)} alCopiar={copiar} detalles={detallesMensaje} />
         <div className="mt-4 flex flex-col items-center gap-2 md:flex-row md:justify-start md:gap-6">
           {/* Recuperar = deshacer del proveedor: vuelven las mismas líneas y la copia sigue vigente (mismo DS). */}
           {puedeDeshacer && <Boton variante="enlace" tamano="sm" onClick={deshacer}>{TEXTOS_MENSAJE_LISTO.recuperar}</Boton>}
