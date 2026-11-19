@@ -609,6 +609,26 @@ Observaciones sin ajuste:
 - Capturas a 320, 360 y 390, con y sin JS, para revisión de marca: Guanentá y Soto Norte con nombre, y cada rótulo dentro de su provincia o en su borde inmediato.
 - La prueba «posiciones frente a main» necesitará aceptar los cambios del ajuste 1. Que la tabla los mida y los liste, como hizo con `CAMBIOS_QA_032`.
 
+### Ronda 2: capturas finales de `b6f1614` (2026-11-19)
+
+Revisé `docs/qa/capturas/2026-11-19-rotulos-final-{con-js,sin-js,main}-{320,360,390,1280}.png` con los tramos medidos en `docs/qa/2026-11-19-verificacion-qa-031-032.md` (ronda 2, R2-3). Solo lectura: no se tocó código ni capturas.
+
+**Dictamen: aprobado.** Los ajustes 1 y 2 cumplen. Nada de lo que sigue bloquea la publicación.
+
+| Ancho | Resultado |
+|---|---|
+| 320 | Guanentá y Soto Norte con nombre. «SOTO NORTE» queda en el borde entre Metropolitana y Soto Norte, encima del pin de Arreboles, que está en el verde. Cuenta como borde inmediato y se acepta. Vélez y Comunera ya no se pisan (en main sí). «Próximamente» de Metropolitana queda justo sobre «SOTO NORTE», pero no lo toca: uno va en versalitas 800 y el otro en 500 caja baja, así que se leen como dos rótulos. Esa vecindad ya estaba en main. Yariguíes sigue oculta (se aceptó en la ronda 1). |
+| 360 | Era el ancho de referencia y es el que más mejora. En main, «VÉLEZ COMUNERA» y sus dos «Próximamente» formaban una sola cadena y Soto Norte no tenía nombre. Ahora se leen seis de las siete provincias, cada una en su sitio: Soto Norte y Guanentá (con cafés), Yariguíes, García Rovira, Vélez y Comunera. Metropolitana se oculta. Es la salida que se pidió en la ronda 1 para que no se monte sobre Soto Norte: una provincia «Próximamente» cede el sitio a una con cafés (principios 1 y 5). «SOTO» cae sobre el beige de Metropolitana porque a ese ancho el verde mide ≈ 45 px y el nombre ≈ 90 px. Se acepta: el pin ancla la provincia. |
+| 390 | Igual a main salvo Guanentá. En main, «COMUNERA» quedaba a pocos px del pin de Casa Martínez y Guanentá 20 px más abajo, contra el borde sur. Ahora Comunera baja a su sitio y «GUANENTÁ» queda en pleno amarillo, debajo del pin y sin rozar el punto. |
+| 1.280 | Soto Norte baja 20 px y queda centrada en el verde, sobre el pin de Arreboles. Mejora: en main estaba arriba, contra el borde norte. Metropolitana baja 60 px frente a main (≈ 40 px por debajo de su centro) y queda en la mitad baja del beige, encima de la lengua gris de Yariguíes. Sigue entera dentro de su provincia, a más de 15 px de la píldora «Arreboles» y sin tocar el trazo del borde. Se acepta. Se ve menos centrada que en main, pero no confunde la lectura. |
+
+- **Sin JS = con JS** en los cuatro anchos de las capturas. Con QA-034 cerrado, el mapa no salta al llegar la interacción.
+- **Punto del pin:** el mínimo medido es de 5 px; en las capturas ningún texto roza un punto grana. Cumple: se pedían 2 px.
+- **Jerarquía:** las píldoras de los pines siguen por encima de los rótulos, y ningún rótulo pisa una píldora. Colores, tipografías, pesos y contraste no cambian.
+- **Ocultos nuevos frente a main**, todos «Próximamente»: Comunera de 280 a 301 px y Metropolitana de 280 a 317 y de 332 a 376 px. Los dos están por debajo de 360 o en la franja de 360. Se aceptan con la regla del ajuste 1.
+
+**Mejora opcional, puede ir después de publicar (Baja, sin ID):** en escritorio (desde 429 px), Metropolitana podría quedar más cerca de su centro. Hoy `SITIOS_ROTULO` solo prueba desplazamientos en vertical o en horizontal, y por eso baja hasta +40. Propuesta: probar sitios en diagonal (`[-40, -40]` y `[-60, -40]`) **después** de los nueve actuales. Así ningún rótulo que hoy se coloca cambia de sitio, y solo se mueve el que hoy cae en un sitio peor. Criterio: a 1.280 px el rótulo de Metropolitana queda entero dentro del beige y con su centro a 30 px o menos del centro de la provincia. Siguen valiendo 0 solapes, 0 cortes, ≥ 2 px al punto y Guanentá y Soto Norte siempre rotuladas. Si ningún sitio en diagonal cumple, se deja como está. No vale la pena tocar el mapa antes de publicar solo por esto, con QA-037 abierto en el mismo componente.
+
 ---
 
 ## Decisiones y su razón en la marca
