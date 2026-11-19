@@ -54,3 +54,41 @@ export function resumenCompacto(lineas: readonly LineaCarrito[], nombreDe: (slug
   const textos = lineas.map((l) => `${nombreDe(l.cafeSlug)} · ${l.gramos} g · ${ETIQUETA_MOLIENDA[l.molienda].toLowerCase()} × ${l.cantidad}`);
   return { lineas: textos.slice(0, maximo), resto: Math.max(0, textos.length - maximo) };
 }
+
+// Vista «Mensaje listo» (diseño 2026-11-19; microcopy v1.12 §9.6; LEG-188 a LEG-191). Textos letra por letra de §9.6.
+// No dice «enviado», «recibido», «confirmado», «compra» ni «finalizado», y no muestra el número DS (LEG-191).
+export const TEXTOS_MENSAJE_LISTO = {
+  titulo: "Envía el mensaje en WhatsApp",
+  nota: "Vaciamos «Tu pedido» en este navegador para que puedas armar uno nuevo. El mensaje de WhatsApp lleva todos los cafés.",
+  rotuloBloque: "En el mensaje",
+  recuperar: "Recuperar el pedido",
+  seguir: "Seguir viendo cafés",
+} as const;
+
+/** Bajada de la vista «Mensaje listo» (§9.6): las frases de §9.3 sin «Al pulsar…», según si el envío va por cotizar. */
+export function bajadaMensajeListo(porCotizar: boolean): string {
+  return porCotizar
+    ? "Te respondemos con el valor del envío y el total. Tu pedido queda en firme cuando aceptas ese valor."
+    : "Con ese mensaje nos pides el pedido. Te respondemos con el total para que lo aceptes y te damos los datos para pagar.";
+}
+
+/** Lo que importa de la copia del mensaje para decidir si sigue valiendo (la copia completa vive solo en memoria). */
+export interface CopiaSolicitud {
+  /** `firmaSolicitud` del clic válido que generó el mensaje. */
+  firma: string;
+  /** true desde que el propio envío vació el pedido hasta que el pedido se recupera. */
+  vaciadoPorEnvio: boolean;
+}
+
+/**
+ * Regla de la copia del mensaje tras un cambio (microcopy v1.12 §9.4 y §9.5 regla 4; QA-022; LEG-188 (5)):
+ * - «vigente»: sigue valiendo tal cual (pedido vacío por el propio envío, o mismo contenido que el mensaje);
+ * - «recuperada»: el pedido vacío por el envío volvió con las mismas líneas (Recuperar el pedido / Deshacer): vale, y
+ *   ya no está vacía por el envío;
+ * - «descartar»: cualquier otro cambio (otras líneas, un dato de envío, una casilla, o un vaciado que no fue el envío).
+ */
+export function revisarCopia(copia: CopiaSolicitud, firmaActual: string, hayLineas: boolean): "vigente" | "recuperada" | "descartar" {
+  if (!hayLineas) return copia.vaciadoPorEnvio ? "vigente" : "descartar";
+  if (copia.firma !== firmaActual) return "descartar";
+  return copia.vaciadoPorEnvio ? "recuperada" : "vigente";
+}
