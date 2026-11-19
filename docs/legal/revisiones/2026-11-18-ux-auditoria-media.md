@@ -1,4 +1,4 @@
-> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.1 — 2026-11-18.
+> BORRADOR — Pendiente de revisión y aprobación por el abogado responsable. Versión 0.2 — 2026-11-19.
 
 # Revisión LEG-183 a LEG-187: auditoría UX de severidad media (M4, M8 y ficha agotada)
 
@@ -30,6 +30,8 @@
 4. **Textos nuevos:** ficha agotada conforme con condiciones (LEG-186); mapa conforme (LEG-187).
 
 **Dictamen del cambio: Conforme con observaciones.** No hay bloqueantes nuevos. Sigue abierto, sin relación con este cambio, el de Café Arreboles sin NSA (LEG-024/066/089/146, riesgo aceptado por el dueño).
+
+**Nota del 2026-11-19.** A esta fecha **no consta** que se haya informado al abogado de LEG-183 (desplegable «Qué cubre la zona {n}» en `/envios/`). La aprobación que comunicó el dueño el 2026-11-19 se refiere solo al orden de las casillas (LEG-178). LEG-183 queda **pendiente de informar al abogado**. No es requisito para publicar: no cambia el texto de D3 y no necesita su validación.
 
 ## Entrega para desarrollador-fullstack
 
