@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { colocarPines, colocarRotulos, type PinEntrada } from "./etiquetas";
+import { colocarPines, colocarRotulos, RESERVA_PUNTO, type PinEntrada } from "./etiquetas";
 import { calcularEncuadre, escalaGrafica, formatearGrados, interpolarCaja, proyectar, unirCajas } from "./geometria";
 import type { CajaMapa, ProyeccionMapa } from "./tipos";
 
@@ -87,6 +87,24 @@ describe("colocarPines", () => {
     expect(pines.every((p) => p.visible)).toBe(true);
     expect(pines.filter((p) => p.lado === "derecha").length).toBeLessThan(2);
   });
+  it("el punto reserva ± 11 px: ningún rótulo queda a menos de 2 px de él (revisión visual de QA-032)", () => {
+    expect(RESERVA_PUNTO).toBe(11);
+    const { pines, ocupadas } = colocarPines([pin(200, 150)], 400, 300);
+    expect(ocupadas[0]).toEqual({ x0: 189, x1: 211, y0: 139, y1: 161 });
+    // El nombre del pin no se mueve: sigue empezando en x + 14.
+    expect(pines[0]).toMatchObject({ lado: "derecha", izquierda: 187 });
+    expect(ocupadas[1].x0).toBe(214);
+    // El punto pintado ocupa ± 9 px (16 px, borde y sombra de 1 px). Un rótulo que llega por la izquierda se queda
+    // a 2 px o más de él, por cualquier lado y a cualquier altura.
+    const punto = { x0: 191, x1: 209, y0: 141, y1: 159 };
+    for (let cy = 100; cy <= 200; cy++) {
+      const [r] = colocarRotulos([{ cx: 160, cy, ancho: 80, alto: 14, atenuado: false }], [ocupadas[0]], 400, 300);
+      if (r.oculto) continue;
+      const caja = { x0: r.izquierda, x1: r.izquierda + 80, y0: r.arriba, y1: r.arriba + 14 };
+      const sep = Math.max(punto.x0 - caja.x1, caja.x0 - punto.x1, punto.y0 - caja.y1, caja.y0 - punto.y1);
+      expect(sep).toBeGreaterThanOrEqual(2);
+    }
+  });
   it("oculta los que quedan fuera del marco", () => {
     const { pines, ocupadas } = colocarPines([pin(-50, 10), pin(100, 500)], 400, 300);
     expect(pines.every((p) => !p.visible)).toBe(true);
@@ -144,6 +162,30 @@ describe("colocarRotulos", () => {
     // Si tampoco cabe a los lados, se oculta.
     const todo = [{ x0: 0, x1: 400, y0: 0, y1: 300 }];
     expect(colocarRotulos([{ cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false }], todo, 400, 300)[0]).toEqual({ oculto: true, izquierda: 0, arriba: 0, desplazamientoX: 0 });
+  });
+  it("las provincias con cafés buscan sitio antes que las vacías; la salida conserva el orden (revisión visual de QA-032)", () => {
+    // Las dos quieren el mismo sitio y solo cabe una: la vacía va primero en la entrada, pero gana la que tiene cafés.
+    const ocupadas = [
+      { x0: 0, x1: 400, y0: 0, y1: 140 },
+      { x0: 0, x1: 400, y0: 160, y1: 300 },
+    ];
+    const vacia = { cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false, vacia: true };
+    const conCafes = { cx: 210, cy: 150, ancho: 80, alto: 14, atenuado: false, vacia: false };
+    const [v, c] = colocarRotulos([vacia, conCafes], [...ocupadas], 400, 300);
+    expect(v.oculto).toBe(true);
+    expect(c).toEqual({ oculto: false, izquierda: 170, arriba: 143, desplazamientoX: 0 });
+    // Sin `vacia`, cuenta como provincia con cafés y manda el orden de la entrada.
+    const [a, b] = colocarRotulos([{ ...vacia, vacia: undefined }, conCafes], [...ocupadas], 400, 300);
+    expect([a.oculto, b.oculto]).toEqual([false, true]);
+  });
+  it("dentro de cada grupo se respeta el orden de la entrada", () => {
+    const ocupadas = [
+      { x0: 0, x1: 400, y0: 0, y1: 140 },
+      { x0: 0, x1: 400, y0: 160, y1: 300 },
+    ];
+    const r = (cx: number, vacia: boolean) => ({ cx, cy: 150, ancho: 80, alto: 14, atenuado: false, vacia });
+    const salida = colocarRotulos([r(200, true), r(190, false), r(210, true), r(205, false)], [...ocupadas], 400, 300);
+    expect(salida.map((x) => x.oculto)).toEqual([true, false, true, true]);
   });
   it("con `anchoCaja` menor que el nombre o sin ella, la posición no cambia", () => {
     const base = { cx: 200, cy: 150, ancho: 80, alto: 14, atenuado: false };

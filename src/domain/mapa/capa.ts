@@ -186,6 +186,7 @@ export function calcularCapa(e: EntradaCapa, vb: CajaMapa, ancho: number, alto: 
     anchoCaja: p.vacia ? ANCHO_PROXIMAMENTE : undefined,
     alto: p.vacia ? 26 : 14,
     atenuado: elegidas.length > 0 && !elegidas.includes(p.slug),
+    vacia: p.vacia,
   }));
   const marcasLat = e.graticula.lats.flatMap((l) => {
     const y = fy(l.y) * alto;

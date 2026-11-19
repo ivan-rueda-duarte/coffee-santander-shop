@@ -29,6 +29,9 @@ export interface PinColocado {
   arriba: number;
 }
 
+/** Media caja que reserva el punto de un pin, en px desde su centro. */
+export const RESERVA_PUNTO = 11;
+
 /**
  * Los puntos reservan su lugar primero; luego cada nombre busca sitio a la derecha o a la izquierda
  * y, si no cabe, el pin queda solo con el punto. Devuelve también las cajas ocupadas.
@@ -36,8 +39,10 @@ export interface PinColocado {
 export function colocarPines(pines: readonly PinEntrada[], ancho: number, alto: number): { pines: PinColocado[]; ocupadas: Caja[] } {
   const ocupadas: Caja[] = [];
   const visibles = pines.map((p) => !(p.x < -4 || p.x > ancho + 4 || p.y < -4 || p.y > alto + 4));
+  // El punto reserva ± 11 px: con el margen de `choca`, ningún rótulo queda a menos de 2 px de él (revisión visual de
+  // QA-032). El nombre del pin empieza en x ± 14 y no choca con su propio punto.
   pines.forEach((p, i) => {
-    if (visibles[i]) ocupadas.push({ x0: p.x - 9, x1: p.x + 9, y0: p.y - 9, y1: p.y + 9 });
+    if (visibles[i]) ocupadas.push({ x0: p.x - RESERVA_PUNTO, x1: p.x + RESERVA_PUNTO, y0: p.y - RESERVA_PUNTO, y1: p.y + RESERVA_PUNTO });
   });
 
   const colocados = pines.map<PinColocado>((p, i) => {
@@ -70,6 +75,8 @@ export interface RotuloEntrada {
   alto: number;
   /** Hay una provincia elegida y esta no es una de ellas. */
   atenuado: boolean;
+  /** Provincia sin cafés («Próximamente»): busca sitio después de las que tienen cafés. */
+  vacia?: boolean;
 }
 
 export interface RotuloColocado {
@@ -99,20 +106,27 @@ export const SITIOS_ROTULO: readonly (readonly [number, number])[] = [
 /**
  * Nombres de provincia: en su centro, o un poco más abajo o arriba; si no caben, se atenúan. Cada rótulo colocado
  * reserva su caja entera (nombre y «Próximamente»), así que el siguiente no lo pisa (QA-032).
+ * Las provincias con cafés buscan sitio primero y las vacías después, cada grupo en su orden: una «Próximamente» no
+ * deja sin nombre a una provincia con cafés (revisión visual de QA-032). La salida va en el orden de la entrada.
  */
 export function colocarRotulos(rotulos: readonly RotuloEntrada[], ocupadas: Caja[], ancho: number, alto: number): RotuloColocado[] {
-  return rotulos.map((r) => {
-    const fuera = r.cx < 0 || r.cx > ancho || r.cy < 0 || r.cy > alto;
-    const oculto = { oculto: true, izquierda: 0, arriba: 0, desplazamientoX: 0 };
-    if (fuera || r.atenuado) return oculto;
-    const pintado = Math.max(r.ancho, r.anchoCaja ?? 0);
-    for (const [dx, dy] of SITIOS_ROTULO) {
-      const x = Math.min(Math.max(r.cx - r.ancho / 2 + dx, 4), ancho - r.ancho - 4);
-      const caja: Caja = { x0: x, x1: x + pintado, y0: r.cy - r.alto / 2 + dy, y1: r.cy + r.alto / 2 + dy };
-      if (caja.y0 <= 2 || caja.y1 >= alto - 2 || choca(caja, ocupadas)) continue;
-      ocupadas.push(caja);
-      return { oculto: false, izquierda: Math.round(caja.x0), arriba: Math.round(caja.y0), desplazamientoX: dx };
-    }
-    return oculto;
-  });
+  const orden = rotulos.map((r, i) => ({ r, i })).sort((a, b) => Number(Boolean(a.r.vacia)) - Number(Boolean(b.r.vacia)) || a.i - b.i);
+  const salida: RotuloColocado[] = new Array(rotulos.length);
+  for (const { r, i } of orden) salida[i] = colocarRotulo(r, ocupadas, ancho, alto);
+  return salida;
+}
+
+function colocarRotulo(r: RotuloEntrada, ocupadas: Caja[], ancho: number, alto: number): RotuloColocado {
+  const fuera = r.cx < 0 || r.cx > ancho || r.cy < 0 || r.cy > alto;
+  const oculto = { oculto: true, izquierda: 0, arriba: 0, desplazamientoX: 0 };
+  if (fuera || r.atenuado) return oculto;
+  const pintado = Math.max(r.ancho, r.anchoCaja ?? 0);
+  for (const [dx, dy] of SITIOS_ROTULO) {
+    const x = Math.min(Math.max(r.cx - r.ancho / 2 + dx, 4), ancho - r.ancho - 4);
+    const caja: Caja = { x0: x, x1: x + pintado, y0: r.cy - r.alto / 2 + dy, y1: r.cy + r.alto / 2 + dy };
+    if (caja.y0 <= 2 || caja.y1 >= alto - 2 || choca(caja, ocupadas)) continue;
+    ocupadas.push(caja);
+    return { oculto: false, izquierda: Math.round(caja.x0), arriba: Math.round(caja.y0), desplazamientoX: dx };
+  }
+  return oculto;
 }
