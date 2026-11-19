@@ -18,12 +18,13 @@ export interface PropsTarjeta {
   alCerrar: () => void;
   alVerCafes: () => void;
   alAlternar: () => void;
-  alEntrar: () => void;
-  alSalir: () => void;
 }
 
-/** Tarjeta de provincia: nombre, descripción (si hay), cuántos cafés y el botón para verlos. */
-export function TarjetaProvincia({ provincia, cafes, elegida, ancla, comoHoja, alCerrar, alVerCafes, alAlternar, alEntrar, alSalir }: PropsTarjeta) {
+/**
+ * Tarjeta de provincia: nombre, descripción (si hay), cuántos cafés y el botón para verlos. La entrada y la salida
+ * del puntero las escucha quien la monta, con eventos nativos como los de las provincias (QA-031, QA-033).
+ */
+export function TarjetaProvincia({ provincia, cafes, elegida, ancla, comoHoja, alCerrar, alVerCafes, alAlternar }: PropsTarjeta) {
   const { refs, floatingStyles } = useFloating({
     placement: "top",
     strategy: "fixed",
@@ -47,8 +48,6 @@ export function TarjetaProvincia({ provincia, cafes, elegida, ancla, comoHoja, a
       aria-label={`Provincia ${provincia.nombre}`}
       data-theme="light"
       onKeyDown={alTeclear}
-      onPointerEnter={alEntrar}
-      onPointerLeave={alSalir}
       style={comoHoja ? undefined : floatingStyles}
       className={
         comoHoja

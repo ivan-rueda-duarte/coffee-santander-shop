@@ -219,6 +219,24 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
     return () => quitar.forEach((q) => q());
   }, [nodos, tomarPendiente]);
 
+  // QA-031 y QA-033: la tarjeta escucha la entrada y la salida del puntero con eventos nativos, igual que las
+  // provincias. Si la tarjeta usara `onPointerEnter` de React, este llegaría antes que el `pointerleave` nativo de la
+  // provincia (React lo saca del `pointerout`, que el navegador despacha primero): el `clearTimeout` correría antes de
+  // que `cerrarPronto` programe el cierre y nadie lo cancelaría. Con la hoja abierta bajo el puntero quieto, eso la
+  // quitaba y la volvía a poner cada ≈ 200 ms; al pasar rápido de la provincia a su tarjeta, la cerraba a los 180 ms.
+  // Con los dos nativos, el orden es el del navegador: `pointerleave` de la provincia y luego `pointerenter` de la tarjeta.
+  const conTarjeta = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    const entrar = () => clearTimeout(temporizador.current);
+    const salir = () => manejadores.current.cerrarPronto();
+    el.addEventListener("pointerenter", entrar);
+    el.addEventListener("pointerleave", salir);
+    return () => {
+      el.removeEventListener("pointerenter", entrar);
+      el.removeEventListener("pointerleave", salir);
+    };
+  }, []);
+
   const provinciaAbierta = abierta ? catalogo.provincias.find((p) => p.slug === abierta) : undefined;
 
   return (
@@ -232,7 +250,7 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
         </div>
       )}
       {provinciaAbierta && (
-        <div data-mapa-interactivo>
+        <div data-mapa-interactivo ref={conTarjeta}>
           <TarjetaProvincia
             provincia={provinciaAbierta}
             cafes={cafesPorProvincia.get(provinciaAbierta.slug) ?? []}
@@ -242,8 +260,6 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
             alCerrar={cerrar}
             alVerCafes={() => verCafes(provinciaAbierta.slug)}
             alAlternar={() => f.alternarProvincia(provinciaAbierta.slug)}
-            alEntrar={() => clearTimeout(temporizador.current)}
-            alSalir={cerrarPronto}
           />
         </div>
       )}
