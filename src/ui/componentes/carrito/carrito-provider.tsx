@@ -24,7 +24,14 @@ interface Valor {
   cambiarCantidad: (clave: string, delta: number) => void;
   actualizar: (clave: string, cambios: Partial<Pick<LineaCarrito, "gramos" | "molienda">>) => void;
   eliminar: (clave: string) => void;
+  /** «Vaciar pedido» del cajón: vacía y muestra el aviso con «Deshacer». */
   vaciar: () => void;
+  /**
+   * Vaciado del propio envío (microcopy v1.12 §9.5 regla 4; LEG-188): sin aviso flotante (la vista «Mensaje listo» ya
+   * lo explica) y con `deshacer` disponible para «Recuperar el pedido». Solo lo llama «Enviar por WhatsApp», después
+   * de window.open en un clic válido.
+   */
+  vaciarSinAviso: () => void;
   deshacer: () => void;
 }
 
@@ -128,6 +135,7 @@ export function CarritoProvider({ crearAlmacen, children }: { crearAlmacen: (max
         dispatch({ tipo: "vaciar" });
         avisar("Vaciaste el pedido.", { etiqueta: "Deshacer", alPulsar: deshacer });
       },
+      vaciarSinAviso: () => dispatch({ tipo: "vaciar" }),
       deshacer,
     }),
     [estado.lineas, estado.deshacer, totales, listo, cajonAbierto, avisar, deshacer, nombreDe, abrir, devolverFoco],
