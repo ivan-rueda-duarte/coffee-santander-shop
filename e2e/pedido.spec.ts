@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { AVISO_RETRACTO, constanciaMensaje, enviarPorWhatsapp, TEXTO_PAGO_FORMULARIO, textosCasillas } from "./ayudas";
+import { AVISO_RETRACTO, constanciaMensaje, enviarPorWhatsapp, recuperarPedido, TEXTO_PAGO_FORMULARIO, textosCasillas } from "./ayudas";
 
 async function agregarCasaMartinez(page: Page) {
   await page.goto("/cafes/cafe-casa-martinez/");
@@ -80,10 +80,10 @@ test.describe("pedido", () => {
     await expect(preparar).toBeEnabled();
     await expect(page.getByTestId("respaldo-whatsapp")).toHaveCount(0);
 
-    // 4. Un clic: se abre wa.me en una pestaña nueva y el Resumen se queda con el respaldo (LEG-172, LEG-173)
+    // 4. Un clic: se abre wa.me en una pestaña nueva, el pedido se vacía y queda «Mensaje listo» con el respaldo
+    // (LEG-172, LEG-173; v1.12, LEG-188): el foco va a su h1.
     const href = await enviarPorWhatsapp(page);
-    await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeVisible();
-    await expect(preparar).toBeFocused();
+    await expect(page.getByRole("heading", { level: 1, name: "Envía el mensaje en WhatsApp" })).toBeFocused();
     expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
     const texto = decodeURIComponent(href.split("?text=")[1]);
     expect(texto).toContain("• Café Casa Martínez (Guanentá) — Molido — 500 g × 1 = $47.000");
@@ -108,7 +108,9 @@ test.describe("pedido", () => {
     // Segundo clic sin cambios: mismo enlace, mismo número DS (§4 bis 1)
     expect(await enviarPorWhatsapp(page)).toBe(href);
 
-    // Volver al envío
+    // Recuperar el pedido y volver al envío
+    await recuperarPedido(page);
+    await expect(page.getByRole("heading", { name: "Revisa tu pedido" })).toBeFocused();
     await page.getByRole("button", { name: "Volver al envío" }).click();
     await expect(page.getByRole("heading", { name: "¿A dónde enviamos?" })).toBeVisible();
   });

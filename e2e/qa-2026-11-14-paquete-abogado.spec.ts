@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { enviarPorWhatsapp } from "./ayudas";
+import { enviarPorWhatsapp, recuperarPedido } from "./ayudas";
 
 // Ronda QA 2026-11-14 «paquete del abogado v1.0» (docs/qa/2026-11-14-paquete-abogado-v1.md).
 // Verificación independiente: los textos esperados se copian a mano del paquete del abogado (D5 §6.2 a §6.4, D2
@@ -265,7 +265,12 @@ test("flujo desde la ficha: Molido + 500 g; localStorage = solo líneas; sin dat
   expect(texto).toContain("— Molido — 500 g × 1 = $47.000");
   const almacen = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage }, cookies: document.cookie }));
   expect(Object.keys(almacen.local)).toEqual(["desantander.carrito.v2"]);
-  expect(JSON.parse(almacen.local["desantander.carrito.v2"])).toEqual({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 500, molienda: "molido", cantidad: 1 }] });
+  // v1.12 (LEG-188): el envío vacía el pedido; al recuperarlo vuelve solo la línea del carrito.
+  expect(JSON.parse(almacen.local["desantander.carrito.v2"])).toEqual({ version: 2, lineas: [] });
+  await recuperarPedido(page);
+  const recuperado = await page.evaluate(() => ({ ...localStorage }));
+  expect(Object.keys(recuperado)).toEqual(["desantander.carrito.v2"]);
+  expect(JSON.parse(recuperado["desantander.carrito.v2"])).toEqual({ version: 2, lineas: [{ cafeSlug: "cafe-casa-martinez", gramos: 500, molienda: "molido", cantidad: 1 }] });
   expect(JSON.stringify(almacen.session)).not.toMatch(/Ana|300 ?123|Calle 45|ejemplo|Bucaramanga/);
   expect(almacen.cookies).toBe("");
   // Se mira la URL sin el origen: con E2E_PUERTO=4300 el «300» del puerto daba un falso positivo (ronda 2026-11-19).

@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { constanciaMensaje, enviarPorWhatsapp, pestanasAbiertas } from "./ayudas";
+import { constanciaMensaje, enviarPorWhatsapp, pestanasAbiertas, recuperarPedido } from "./ayudas";
 
 // Ronda QA 2026-11-18: verificación de A1, flujo del pedido en tres pasos (5fd2edc, 2dad5c4, 1c64aa2, e046bdc).
 // Fuentes: docs/diseno/2026-11-18-ux-auditoria-alta.md (A1); docs/legal/revisiones/2026-11-18-flujo-pedido-un-clic.md
@@ -154,11 +154,13 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     expect(href.startsWith("https://wa.me/573001129874?text=")).toBe(true);
     expect(textoDe(href)).toContain(constanciaMensaje());
     expect(numeroDe(href)).toBeTruthy();
-    // El foco se queda en el botón y el respaldo se anuncia con role=status.
-    await expect(boton(page)).toBeFocused();
+    // v1.12 (diseño 2026-11-19, «Teclado, foco y anuncios»): el pedido se vacía y el foco va al h1 de «Mensaje listo»
+    // (sustituye a «el foco se queda en el botón» de A1); el respaldo se anuncia con role=status.
+    await expect(page.getByRole("heading", { level: 1, name: "Envía el mensaje en WhatsApp" })).toBeFocused();
     await expect(respaldo(page).getByRole("status")).toHaveText(T.respaldo);
-    // Siguiente Tab: «Copiar mensaje».
-    await page.keyboard.press("Tab"); // Volver al envío (secundario, va después en el DOM)
+    // Tab: «Enviar por WhatsApp» y luego «Copiar mensaje».
+    await page.keyboard.press("Tab");
+    await expect(boton(page)).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(respaldo(page).getByRole("button", { name: "Copiar mensaje" })).toBeFocused();
   });
@@ -168,6 +170,8 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     await terminos(page).check();
     await datos(page).check();
     const antes = await enviarPorWhatsapp(page);
+    // v1.12 (LEG-188): se recupera el pedido vaciado por el envío; la copia sigue vigente en el Resumen.
+    await recuperarPedido(page);
     await expect(respaldo(page)).toBeVisible();
     await promoWa(page).check();
     await expect(respaldo(page)).toHaveCount(0);
@@ -184,6 +188,8 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     await terminos(page).check();
     await datos(page).check();
     const antes = await enviarPorWhatsapp(page);
+    await recuperarPedido(page);
+    await expect(respaldo(page)).toBeVisible();
     await terminos(page).uncheck();
     await expect(respaldo(page)).toHaveCount(0);
     await terminos(page).check();
@@ -198,6 +204,8 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     await terminos(page).check();
     await datos(page).check();
     const href = await enviarPorWhatsapp(page);
+    await recuperarPedido(page);
+    await expect(respaldo(page)).toBeVisible();
     await page.getByRole("list", { name: "Pasos del pedido" }).getByRole("button", { name: /^Pedido/ }).click();
     const cajon = page.getByRole("dialog", { name: "Tu pedido" });
     await cajon.getByRole("button", { name: /^Una bolsa más de/ }).first().click();
@@ -216,7 +224,8 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     await datos(page).check();
     const href = await enviarPorWhatsapp(page);
     expect(textoDe(href)).toContain("Envío: POR COTIZAR (zona 5 o más de 5 kg)");
-    // Con tarifa: Bucaramanga.
+    // Con tarifa: Bucaramanga (tras recuperar el pedido que vació el envío, v1.12).
+    await recuperarPedido(page);
     await page.getByRole("button", { name: "Volver al envío" }).click();
     await page.getByLabel("Departamento").selectOption("Santander");
     await page.getByLabel("Municipio").selectOption("Bucaramanga");
@@ -249,7 +258,8 @@ test.describe("QA 2026-11-18 · A1 flujo en tres pasos", () => {
     await terminos(page).check();
     await datos(page).check();
     await enviarPorWhatsapp(page);
-    await expect(respaldo(page).getByRole("button")).toHaveText(["Copiar mensaje", "Vaciar pedido"]);
+    // v1.12 (LEG-190): «Vaciar pedido» se retira del respaldo (el envío ya vació el pedido); en el cajón se queda.
+    await expect(respaldo(page).getByRole("button")).toHaveText(["Copiar mensaje"]);
     await expect(respaldo(page).locator("summary")).toHaveText("Ver el mensaje");
     const todo = await page.locator("body").innerText();
     expect(todo).not.toMatch(/Finalizar|Confirmación|Abrir WhatsApp|Preparar pedido|Tu pedido está listo/);

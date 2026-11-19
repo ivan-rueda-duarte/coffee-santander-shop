@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { AVISO_RETRACTO, enviarPorWhatsapp } from "./ayudas";
+import { AVISO_RETRACTO, enviarPorWhatsapp, recuperarPedido } from "./ayudas";
 
 // D5 §6.3 (paquete del abogado v1.0): aviso de retracto de 5 días hábiles en el resumen, texto exacto.
 // /envios/ publica D3 completo (LEG-141): plazos, retracto y 30 días los dice el documento, no textos paralelos (LEG-164).
@@ -143,6 +143,11 @@ test.describe("aviso de retracto en el resumen", () => {
     await page.getByRole("checkbox", { name: /Autorizo a .+ a tratar mis datos personales/ }).check();
     await page.getByRole("checkbox", { name: /acepto los Términos y condiciones/ }).check();
     const href = await enviarPorWhatsapp(page);
+    // «Mensaje listo» (v1.12, LEG-188): sin el aviso ni el retracto fuera de los enlaces legales.
+    await expect(page.getByTestId("pedido-enviado")).toBeVisible();
+    expect(await page.getByTestId("pedido-enviado").innerText()).not.toMatch(/retract|garantía/i);
+    // Tras recuperar el pedido, el Resumen conserva el aviso una sola vez y el respaldo no lo repite.
+    await recuperarPedido(page);
     await expect(page.getByTestId("respaldo-whatsapp")).toBeVisible();
     await expect(page.getByTestId("aviso-retracto")).toHaveCount(1);
     expect(await page.getByTestId("respaldo-whatsapp").getByRole("status").innerText()).not.toMatch(/retract/i);

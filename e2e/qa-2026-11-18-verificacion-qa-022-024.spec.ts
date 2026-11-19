@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { constanciaMensaje, enviarPorWhatsapp } from "./ayudas";
+import { constanciaMensaje, enviarPorWhatsapp, recuperarPedido } from "./ayudas";
 
 // Ronda QA 2026-11-18: verificación de QA-022 (dd5a13a), QA-023 (44f50d6) y QA-024 (290ee55).
 // Fuentes: docs/qa/2026-11-18-verificacion-a1-fotos-qa-020.md; docs/diseno/2026-11-18-ux-auditoria-alta.md, sección
@@ -76,6 +76,9 @@ test.describe("QA-022: respaldo y número DS tras deshacer un cambio", () => {
       // Segundo clic sin cambios: mismo enlace y mismo número (§4 bis 1).
       const repetido = await enviarPorWhatsapp(page);
       expect(repetido).toBe(primero);
+      await expect(page.getByTestId("respaldo-whatsapp")).toBeVisible();
+      // v1.12 (LEG-188): el envío vació el pedido; al recuperarlo la copia sigue vigente y rige QA-022 sin cambio.
+      await recuperarPedido(page);
       await expect(page.getByTestId("respaldo-whatsapp")).toBeVisible();
 
       if (variante === "casilla opcional") {
@@ -254,8 +257,11 @@ test.describe("QA-023: Resumen a 360 × 740 (B3)", () => {
     await terminos(page).check();
     await datos(page).check();
     const sinPromo = textoDe(await enviarPorWhatsapp(page)).split("\n");
+    // v1.12 (LEG-188): cada envío vacía el pedido; se recupera para seguir en el Resumen.
+    await recuperarPedido(page);
     await page.locator("#c-promo-wa").check();
     const soloWa = textoDe(await enviarPorWhatsapp(page)).split("\n");
+    await recuperarPedido(page);
     await page.locator("#c-promo-correo").check();
     const ambas = textoDe(await enviarPorWhatsapp(page)).split("\n");
     const norm = (l: string[]) => l.map((x) => x.replace(/DS-\d{6}-\d{4}-[A-Z2-9]{4}/, "DS-#"));

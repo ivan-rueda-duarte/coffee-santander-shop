@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { enviarPorWhatsapp, leerConfig, textosCasillas } from "./ayudas";
+import { enviarPorWhatsapp, leerConfig, recuperarPedido, textosCasillas } from "./ayudas";
 
 // Cuatro casillas del resumen de /pedido/ (paquete del abogado v1.0: D2 «Textos de las casillas», D5 §6.3; LEG-145):
 // 1 términos y 2 datos, obligatorias; 3 promociones por WhatsApp y 4 por correo (solo con correo), opcionales.
@@ -144,7 +144,9 @@ test.describe("casillas de autorización de datos y de términos", () => {
     const almacenado = await page.evaluate(() => JSON.stringify(localStorage));
     expect(almacenado).not.toMatch(/promo|autoriz|termin|correo/i);
 
-    // Volver al envío y borrar el correo: la casilla 4 desaparece, no se envía y el respaldo anterior ya no vale (LEG-173).
+    // Recuperar el pedido (v1.12, LEG-188), volver al envío y borrar el correo: la casilla 4 desaparece, no se envía y
+    // el respaldo anterior ya no vale (LEG-173).
+    await recuperarPedido(page);
     await page.getByRole("button", { name: "Volver al envío" }).click();
     await page.getByLabel(/^Correo/).fill("");
     await page.getByRole("button", { name: /Ver el resumen/ }).click();

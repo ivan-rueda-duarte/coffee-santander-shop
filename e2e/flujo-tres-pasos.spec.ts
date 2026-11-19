@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { constanciaMensaje, enviarPorWhatsapp, pestanasAbiertas } from "./ayudas";
+import { constanciaMensaje, enviarPorWhatsapp, pestanasAbiertas, recuperarPedido } from "./ayudas";
 
 // A1 (docs/diseno/2026-11-18-ux-auditoria-alta.md) y LEG-171 a LEG-175 (docs/legal/revisiones/2026-11-18-flujo-pedido-un-clic.md;
 // microcopy v1.10 §9): cajón → Envío → Resumen, y «Enviar por WhatsApp» valida y abre wa.me en el mismo clic.
@@ -89,6 +89,9 @@ test.describe("A1: flujo del pedido en tres pasos", () => {
     // §4 bis 1: segundo clic sin cambios, mismo enlace y mismo número.
     expect(await enviarPorWhatsapp(page)).toBe(href);
 
+    // v1.12 (LEG-188): el envío vació el pedido; se recupera para seguir en el Resumen con la misma copia.
+    await recuperarPedido(page);
+    await expect(respaldo(page)).toBeVisible();
     // Una casilla opcional cambia: se oculta; el siguiente clic genera número y texto nuevos.
     await page.getByRole("checkbox", { name: /promociones .+ por WhatsApp/ }).check();
     await expect(respaldo(page)).toHaveCount(0);
@@ -97,7 +100,8 @@ test.describe("A1: flujo del pedido en tres pasos", () => {
     expect(textoDe(conPromo)).toContain("\nAutorizo recibir promociones por WhatsApp.");
     await expect(respaldo(page)).toBeVisible();
 
-    // Un dato de envío cambia (vía «Volver al envío»): el respaldo ya no está al volver.
+    // Un dato de envío cambia (vía «Volver al envío», tras recuperar el pedido): el respaldo ya no está al volver.
+    await recuperarPedido(page);
     await page.getByRole("button", { name: "Volver al envío" }).click();
     await page.getByLabel("Dirección").fill("Calle 45 # 12-31");
     await page.getByRole("button", { name: /Ver el resumen/ }).click();
@@ -106,7 +110,7 @@ test.describe("A1: flujo del pedido en tres pasos", () => {
     const otraDireccion = await enviarPorWhatsapp(page);
     expect(textoDe(otraDireccion)).toContain("Calle 45 # 12-31");
 
-    // El carrito cambia desde otra pestaña (localStorage): el respaldo se oculta.
+    // El carrito cambia desde otra pestaña (localStorage): el respaldo (aquí, el de «Mensaje listo») se oculta.
     await expect(respaldo(page)).toBeVisible();
     const otra = await context.newPage();
     await otra.goto("/");
@@ -165,6 +169,11 @@ test.describe("A1: flujo del pedido en tres pasos", () => {
     await terminos(page).check();
     await datos(page).check();
     await enviarPorWhatsapp(page);
+    // «Mensaje listo» (v1.12): un solo «Enviar por WhatsApp» y ningún texto prohibido.
+    await expect(page.getByRole("button", { name: /Enviar por WhatsApp/ })).toHaveCount(1);
+    expect(await page.locator("main").innerText()).not.toMatch(/Finalizar|Confirmación|Abrir WhatsApp|Tu pedido está listo|Preparar pedido/);
+    // Tras recuperar el pedido, el respaldo del Resumen va debajo del botón.
+    await recuperarPedido(page);
     expect(await y('[data-testid="respaldo-whatsapp"]')).toBeGreaterThan(yBoton);
     await expect(page.getByRole("button", { name: /Enviar por WhatsApp/ })).toHaveCount(1);
     await expect(page.getByRole("link", { name: /WhatsApp/ }).filter({ hasText: /Enviar/ })).toHaveCount(0);

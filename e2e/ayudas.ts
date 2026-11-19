@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 /** Un punto (en píxeles de la ventana) sobre un municipio de la provincia que no esté tapado por un pin o una etiqueta. */
 export async function puntoEnProvincia(page: Page, slug: string): Promise<{ x: number; y: number }> {
@@ -110,6 +110,16 @@ export async function enviarPorWhatsapp(page: Page): Promise<string> {
   const url = popup.url();
   await popup.close();
   return url;
+}
+
+/**
+ * Microcopy v1.12 §9.5 regla 4 y §9.6 (LEG-188): tras un clic válido el pedido se vacía y /pedido/ muestra «Mensaje
+ * listo». «Recuperar el pedido» devuelve las mismas líneas y el paso en que estaba (normalmente el Resumen), con la
+ * copia del mensaje vigente (mismo DS) mientras nada cambie. Para las pruebas que siguen trabajando en el Resumen.
+ */
+export async function recuperarPedido(page: Page): Promise<void> {
+  await page.getByTestId("pedido-enviado").getByRole("button", { name: "Recuperar el pedido" }).click();
+  await expect(page.getByTestId("pedido-enviado")).toHaveCount(0);
 }
 
 /** Cuenta las pestañas que abre la página mientras corre `accion` (para probar que sin casillas no se abre nada). */
