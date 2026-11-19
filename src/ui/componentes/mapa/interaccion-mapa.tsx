@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { calcularCapa, type EntradaCapa } from "@/domain/mapa/capa";
+import { altoContenedor, calcularCapa, type EntradaCapa } from "@/domain/mapa/capa";
 import { calcularEncuadre, interpolarCaja } from "@/domain/mapa/geometria";
 import type { CajaMapa } from "@/domain/mapa/tipos";
 import { useCatalogo } from "@/ui/hooks/use-catalogo";
@@ -38,14 +38,18 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
   // Solo se monta en el navegador (la descarga el activador), así que puede leer el DOM al iniciar el estado:
   // la capa medida reemplaza a la del HTML en el mismo cuadro, sin un cuadro vacío.
   const [nodos] = useState(buscarNodos);
-  const [tam, setTam] = useState(() => ({ w: nodos?.mapa.clientWidth ?? 0, h: nodos?.mapa.clientHeight ?? 0 }));
+  // El alto sale del ancho con la misma cuenta que usa el build para la capa del HTML (QA-034): así las dos capas
+  // toman las mismas decisiones aunque el navegador redondee el alto de otra manera.
+  const proporcion = completo[2] / completo[3];
+  const medir = useCallback((mapa: HTMLElement) => ({ w: mapa.clientWidth, h: mapa.clientWidth ? altoContenedor(mapa.clientWidth, proporcion) : 0 }), [proporcion]);
+  const [tam, setTam] = useState(() => (nodos ? medir(nodos.mapa) : { w: 0, h: 0 }));
   useEffect(() => {
     if (!nodos) return;
     const { mapa } = nodos;
-    const obs = new ResizeObserver(() => setTam({ w: mapa.clientWidth, h: mapa.clientHeight }));
+    const obs = new ResizeObserver(() => setTam(medir(mapa)));
     obs.observe(mapa);
     return () => obs.disconnect();
-  }, [nodos]);
+  }, [nodos, medir]);
 
   // ---------- Encuadre animado ----------
   const elegidas = f.filtros.provincias;

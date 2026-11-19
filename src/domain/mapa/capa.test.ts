@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Cafe, Provincia } from "../catalogo/tipos";
 import {
+  altoContenedor,
   anchoPin,
   anchoRotulo,
   ANCHO_PROXIMAMENTE,
@@ -175,9 +176,10 @@ describe("capa estática por tramos de ancho", () => {
     const est = capaEstatica(entrada, proporcion, 120, 640);
     const tramoDe = (w: number) => est.tramos.findIndex((t) => (t.desde === null || w >= t.desde) && (t.hasta === null || w < t.hasta));
     const ve = <T>(vs: { valor: T; tramos: number[] | null }[], i: number) => vs.filter((v) => v.tramos === null || v.tramos.includes(i)).map((v) => v.valor);
-    for (const w of [120, 200, 280, 320, 390, 482, 582, 640]) {
+    for (let w = 120; w <= 640; w++) {
       const i = tramoDe(w);
-      const medida = calcularCapa(entrada, datos.viewBox, w, w / proporcion);
+      // La isla mide con `clientHeight` (entero): la capa estática tiene que salir de ese mismo alto (QA-034).
+      const medida = calcularCapa(entrada, datos.viewBox, w, altoContenedor(w, proporcion));
       const pines = ve(est.pines, i);
       expect(pines.map((p) => [p.slug, p.lado])).toEqual(medida.pines.filter((p) => p.visible).map((p) => [p.slug, p.lado]));
       expect(ve(est.rotulos, i).map((r) => [r.slug, r.desplazamiento, r.desplazamientoX])).toEqual(
@@ -187,6 +189,12 @@ describe("capa estática por tramos de ancho", () => {
       expect(ve(est.marcasLon, i).map((m) => m.clave)).toEqual(medida.marcasLon.map((m) => m.clave));
       expect(ve(est.escala, i).map((e) => e.km)).toEqual([medida.escala?.km]);
     }
+  });
+  it("el alto del contenedor es el entero que da `clientHeight` (QA-034)", () => {
+    expect(altoContenedor(326, 1000 / 1200)).toBe(391); // 391,2
+    expect(altoContenedor(325, 1000 / 1200)).toBe(390);
+    expect(altoContenedor(330, 1000 / 1200)).toBe(396);
+    expect(altoContenedor(327, 1000 / 1199)).toBe(392); // 392,0 → sin cambio
   });
   it("un solo tramo: todo con tramos = null", () => {
     const est = capaEstatica({ ...entrada, origenes: [], provincias: [], graticula: { lons: [], lats: [] } }, 1000 / 1200, 600, 640);

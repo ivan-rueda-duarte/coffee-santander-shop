@@ -242,13 +242,20 @@ export interface TramoCapa {
 }
 
 /**
+ * Alto en píxeles enteros de un contenedor de `ancho` px con `aspect-ratio: proporcion`, como lo da `clientHeight`
+ * en el navegador. El build y la isla deben medir igual: con decimales, un rótulo justo en el borde (`y1 < alto − 2`)
+ * cabía en una capa y en la otra no (QA-034).
+ */
+export const altoContenedor = (ancho: number, proporcion: number): number => Math.round(ancho / proporcion);
+
+/**
  * Capa del departamento completo para cada ancho entero entre `min` y `max`, agrupada en tramos con la misma firma.
  * El HTML estático pinta un tramo por intervalo de ancho; el navegador, al medir, calcula la misma capa.
  */
 export function tramosCapa(e: EntradaCapa, proporcion: number, min: number, max: number): TramoCapa[] {
   const tramos: (TramoCapa & { firma: string })[] = [];
   for (let w = min; w <= max; w++) {
-    const capa = calcularCapa(e, e.completo, w, w / proporcion);
+    const capa = calcularCapa(e, e.completo, w, altoContenedor(w, proporcion));
     const firma = firmaCapa(capa);
     const ultimo = tramos[tramos.length - 1];
     if (ultimo && ultimo.firma === firma) continue;
