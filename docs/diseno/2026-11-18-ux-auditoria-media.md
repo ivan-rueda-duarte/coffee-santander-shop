@@ -570,6 +570,47 @@ Las reglas propias de `globals.css` (`.overline{text-decoration:none}`, `.ds-btn
 
 ---
 
+## QA-032 revisión visual
+
+Revisión del 2026-11-19 de `5d2b5a6` (rótulos de provincia sin solaparse) con las capturas `docs/qa/capturas/2026-11-19-qa-032-{head,head-sin-js,main}-{300,320,360,390,412,460,1280}.png` y el reporte `docs/qa/2026-11-19-verificacion-qa-031-032.md`. Solo lectura: no se tocó código ni capturas.
+
+**Dictamen: aprobado con ajustes.** La corrección cumple lo que pedía QA-032. Los ajustes 1 y 2 no reabren QA-032 (no son regresiones de `5d2b5a6`). Van como defectos o tareas aparte.
+
+### Lo que queda bien
+
+| Ancho | Resultado |
+|---|---|
+| 300 | «VÉLEZ / Próximamente» queda dentro del verde de Vélez, sin tocar «COMUNERA». «Próximamente» empieza a ≈ 8 px del borde y queda ≈ 17 px sobre «6°00'N». El margen es justo pero se lee bien. Se acepta. |
+| 320 | En `main`, «VÉLEZ» y «COMUNERA» se pisaban. Ahora Vélez se corre a la izquierda y queda en pleno verde, y los dos rótulos se leen cada uno en su provincia. Guanentá aparece (en `main` no salía). |
+| 360 | En `main`, «Próximamente» de Vélez y de Comunera formaban una sola cadena ilegible. Ahora Vélez sube 20 px y queda en la parte alta del verde, con su provincia. Comunera no cambia. |
+| 390 / 412 | Iguales a `main` en lo que importa. Guanentá queda dentro del amarillo, bajo el pin de Casa Martínez. |
+| 460 | Guanentá baja 40 px y queda más adentro del amarillo, lejos de la píldora del pin. Mejora. |
+| 1.280 | Sin cambios. |
+
+- **Nada cortado** en ningún ancho. La versión sin JS coincide con la interactiva en las capturas, salvo QA-034 (366 px), que sigue abierto.
+- **Jerarquía con los pines:** el pin (punto grana y píldora pergamino con el nombre en caja baja) sigue por encima de los rótulos de provincia (versalitas con tracking, sin fondo). «Próximamente» se queda en segundo plano. Ningún rótulo se monta sobre una píldora.
+- **Marca:** no cambian colores, tipografías ni pesos. El contraste no cambia (el texto sigue en tinta sobre los tintes de provincia).
+
+### Ajustes para el desarrollador
+
+| # | Severidad | Rótulo y anchos | Problema | Regla o posición |
+|---|---|---|---|---|
+| 1 | Media (ya estaba en `main`; no es de `5d2b5a6`) | **Guanentá** de 355 a 367 px (incluye **360**, el ancho de referencia) y por debajo de 304. **Soto Norte** a 360 (y en los demás anchos donde se oculte) | Las únicas dos provincias **con cafés** (sin «Próximamente») quedan sin nombre, mientras que las cinco «Próximamente» sí lo tienen. Se invierte la jerarquía: la provincia es el hilo conductor (PRODUCT.md, principio 5) y el origen se ve antes que el precio (principio 1). | **Prioridad de colocación:** en `colocarRotulos` (`src/domain/mapa/etiquetas.ts`), primero se colocan las provincias con cafés (`vacia = false`) y después las vacías, cada grupo en su orden actual. El arreglo de salida conserva el índice original, para no cambiar el orden del DOM ni las claves de `capaEstatica`. Si con esto se oculta una provincia «Próximamente» en algún ancho, se acepta. Criterio: de 320 a 1.500 px ninguna provincia con cafés queda oculta (sin provincia elegida), y siguen valiendo «0 solapes y 0 cortes». |
+| 2 | Baja | **Guanentá** de 304 a 316 px | El nombre toca 1 px el punto del pin de Casa Martínez. Se lee, pero el punto marca el origen y no debe rozarlo ningún texto. | **Reserva del punto del pin:** pasar la caja del punto de ± 9 a **± 11 px** en `colocarPines`. Con el margen de 3 px de `choca`, el nombre del pin (que empieza en `x ± 14`) no cambia de lugar. Criterio: entre el rótulo de cualquier provincia y el punto de cualquier pin quedan al menos 2 px. |
+| 3 | Baja (QA-034, abierto) | **Vélez** a 366 px | Sin JS, el rótulo queda 80 px más arriba y salta cuando llega la interacción. El salto de un rótulo se nota y rompe la estabilidad del mapa. | Respaldo la corrección que propone QA: que `tramosCapa` y la isla usen la misma altura redondeada. No hace falta otra regla de diseño. |
+
+Observaciones sin ajuste:
+- Yariguíes («Próximamente») se oculta a 300 y 320.
+- Metropolitana, a 360, queda en la franja alta donde se juntan Metropolitana y Soto Norte. Con el ajuste 1, Soto Norte toma su sitio primero. QA debe revisar que Metropolitana siga leyéndose en su provincia a 360. Si no, que se oculte antes que montarse sobre Soto Norte.
+
+### Entrega para qa-pruebas (cuando el desarrollador haga 1 y 2)
+
+- Barrido de 280 a 1.500 px, sin JS y con la interacción: ninguna provincia con cafés oculta de 320 en adelante, 0 solapes y 0 cortes, y al menos 2 px entre los rótulos y los puntos de los pines.
+- Capturas a 320, 360 y 390, con y sin JS, para revisión de marca: Guanentá y Soto Norte con nombre, y cada rótulo dentro de su provincia o en su borde inmediato.
+- La prueba «posiciones frente a main» necesitará aceptar los cambios del ajuste 1. Que la tabla los mida y los liste, como hizo con `CAMBIOS_QA_032`.
+
+---
+
 ## Decisiones y su razón en la marca
 
 | Decisión | Razón |
