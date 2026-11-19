@@ -483,6 +483,93 @@ Contraste: `ink-muted` sobre `surface-raised` ≈ 7:1; borde punteado `line-stro
 
 ---
 
+## QA-029. Utilidades de peso y tamaño que no se pintan
+
+Decisión del 2026-11-19 sobre `docs/qa/2026-11-19-cierre-baja.md` (QA-029, Baja). Líneas verificadas en `a52a81b`.
+
+### Causa y alcance
+
+`globals.css` importa `marca.css`, `componentes.css` y `mapa.css` **fuera de capa**. Una regla fuera de capa gana a cualquier regla de `@layer utilities`, sin importar la especificidad. Por eso, cuando un elemento lleva **a la vez** una clase de marca (`.body`, `.small`, `.caption`, `.ds-tag`…) y una utilidad que pide otra cosa, se pinta la clase de marca. Las utilidades sobre elementos **sin** clase de marca funcionan bien. Por ejemplo, la navegación de escritorio (`text-sm font-semibold`) sí sale en 600. El código ya rodea el problema con `!` en varios sitios (`!bg-monte-900` en los chips, `!px-4` en las píldoras, `font-bold!` en el índice legal).
+
+Hay utilidades muertas que no son de tipo y tienen la misma causa: `hover:border-ink` de los chips (el borde de `.ds-tag--outline` no cambia al pasar el puntero), `gap-1.5` de los filtros activos (se pinta el `gap` de 4 px de `.ds-tag`) e `items-start` de las píldoras de la ficha (se pinta el `align-items:center` de `.ds-tag`). Entran en esta decisión.
+
+### Criterio
+
+- **Controles de selección** (chips de filtro, píldoras de presentación y tamaño): Montserrat **14/20 en 600**, igual que las demás etiquetas de control del mismo panel, que ya se pintan así: «Solo en stock» (`controles-filtro.tsx:92`), «Ordenar» (`explorador.tsx:97`) y la navegación de escritorio. Hoy salen en 12/16 y 500, que es el estilo del **dato técnico** (nivel 1 de etiquetas de la marca: «Montserrat 500 de 12 px gris, sin relleno»). Ese estilo es para leer un dato, no para tocarlo con el pulgar a 360 px. El dato dentro del control (el conteo del chip, el precio y «Agotado» de la píldora) se queda en 12 y 500. Así hay jerarquía: hoy «250 g» y «$30.000» tienen el mismo tamaño y el mismo peso.
+- **`.ds-tag--outline` sin interacción** (perfiles de taza de la ficha, presentaciones del café agotado) se queda en 12 y 500. La clase de marca no cambia.
+- **Rótulos que abren o titulan un bloque** (título de la tabla, «Zona n», «Qué cubre…»): **700**, como ya pedían las especificaciones (M8: «h4 body 700»; el `<summary>` de la ficha, «¿Qué significa cada dato?», ya se pinta en 700). En 400, un título se lee como si fuera un párrafo.
+- **Dato destacado dentro de una tarjeta o un panel** («Por cotizar…», primera línea del respaldo): **600**, el mismo peso que la celda equivalente de la tabla y que los precios.
+- **Notas y cuerpo**: valen las clases de marca (`caption` 12/18 en 500, `body` 16/26 en 400). Las utilidades que las contradicen se quitan.
+
+### Decisión por elemento
+
+**Grupo A: gana la utilidad (sí hay cambio visual).** Se conserva la clase de marca, que aporta la familia, el tamaño y el interlineado. A la utilidad se le agrega `!` **al final** (forma de Tailwind v4, la misma de `documento-legal.tsx:77`).
+
+| # | Elemento | Ubicación | Hoy | Correcto | Cambio de marcado |
+|---|---|---|---|---|---|
+| A1 | Título «Tarifas por zona y municipios de cada zona» (`h3`) | `src/app/envios/page.tsx:64` | 16/26 · 400 | 16/26 · **700** | `font-bold` → `font-bold!` |
+| A2 | «Zona n» de cada tarjeta (`h4`, bajo `lg`) | `envios/page.tsx:72` | 400 | **700** | `font-bold` → `font-bold!` |
+| A3 | `<summary>` «Qué cubre la zona n» | `envios/page.tsx:77` | 14/22 · 500 | 14/22 · **700** | `font-bold` → `font-bold!` |
+| A4 | «Por cotizar por WhatsApp antes de que pagues» de la tarjeta | `envios/page.tsx:99` | 500 | **600** (como la celda de la tabla, `:134`) | `font-semibold` → `font-semibold!` |
+| A5 | Enlaces de la tira de navegación en celular (M3) | `src/ui/componentes/layout/encabezado.tsx:90` | 14/22 · 500 | 14/22 · **600** (M3: «`small` en 600»; igual que en escritorio) | `font-semibold` → `font-semibold!` |
+| A6 | Primera línea del respaldo «¿No se abrió WhatsApp?…» (`role="status"`) | `src/ui/componentes/checkout/flujo-pedido.tsx:460` | 500 | **600** | `font-semibold` → `font-semibold!` |
+| A7 | Chips de filtro (`GrupoChips`) | `src/ui/componentes/catalogo/controles-filtro.tsx:42` | 12/16 · 500 | **14/20 · 600** | `text-sm font-semibold` → `text-sm! font-semibold!`. En la línea 43, `hover:border-ink` → `enabled:hover:border-ink!` (con `enabled:`, el chip deshabilitado no reacciona) |
+| A8 | Chips de opción única (`GrupoOpcionUnica`, el SCA mínimo; hoy oculto) | `controles-filtro.tsx:79` | 12/16 · 500 | **14/20 · 600** | `text-sm font-semibold` → `text-sm! font-semibold!` |
+| A9 | Filtros activos («Quitar filtro …») | `src/ui/componentes/catalogo/explorador.tsx:123` | 12/16 · 500 | **14/20 · 600** | `text-sm font-semibold` → `text-sm! font-semibold!`; `hover:border-ink` → `hover:border-ink!`; se **quita** `gap-1.5` (se queda el `gap` de 4 px que se pinta hoy entre el texto y la ×) |
+| A10 | Píldoras de presentación y tamaño de la ficha (`Pildora`) | `src/ui/componentes/ficha/bloque-compra.tsx:20` | 12/16 · 500, contenido centrado | **14/20 · 600**, contenido centrado en los dos ejes | `text-sm font-semibold` → `text-sm! font-semibold!`; se **quita** `items-start` (se queda el centrado horizontal de hoy, el que muestran las capturas) y se **agrega** `justify-center`, para que «Grano» y «Molido» (una sola línea en 44 px de alto) queden centrados en vertical. Hoy quedan 5 px más arriba. Los `<small>` del precio y de «Agotado» (`:88-89`, `text-xs font-medium`) no cambian |
+
+Efecto en el tamaño de los controles (A7 a A10): el alto visible de los chips se queda en 36 px (`min-h-9`; el contenido mide 20 + 8 + 2 = 30). El área de 44 px de QA-025 no cambia. Los chips se ensanchan ≈ 17 %, y a 360 px la lista de provincias puede ocupar una fila más (≈ 44 px). Se acepta. Las píldoras de la ficha se quedan en 44 px de alto; las de tamaño ya medían 50 (dos líneas) y pasan a 54.
+
+**Grupo B: gana la clase de marca (no hay cambio visual).** Se quita la utilidad.
+
+| # | Elemento | Ubicación | Se pinta (correcto) | Cambio de marcado |
+|---|---|---|---|---|
+| B1 | «(IVA incluido)» bajo el total del cajón y del pedido | `src/ui/componentes/carrito/totales-pedido.tsx:82` | `caption` 12/18 · 500 (nota) | quitar `font-normal` |
+| B2 | Nota de precio de la línea del pedido | `src/ui/componentes/carrito/linea-pedido.tsx:109` | `caption` 12/18 · 500 | quitar `font-medium` (repite lo que ya pinta la clase; es limpieza) |
+| B3 | Descripción de la provincia en la tarjeta del mapa | `src/ui/componentes/mapa/tarjeta-provincia.tsx:70` | `body` 16/26 · 400 (cuerpo de marca, 16–18 px en web) | quitar `text-sm` |
+| B4 | Explicación bajo el sello SCA de la ficha (no se ve hoy: no hay puntajes verificados) | `src/ui/componentes/ficha/ficha-cafe.tsx:92` | — | `body … text-sm` → `small` (14/22 · 500, nota bajo el sello). No hay captura que cambie |
+
+**Sin cambio:** `documento-legal.tsx:77` (`small font-bold!`, ya se pinta en 700), los títulos con `!text-[…]` (`ficha-cafe.tsx:55`, `pagina-provincia.tsx:34`), `totales-pedido.tsx:97` (`!font-bold`) y todas las utilidades de peso sobre elementos sin clase de marca (celdas de la tabla de `/envios/`, ficha técnica, glosario, totales, formulario).
+
+### Estrategia técnica
+
+**Ahora (QA-029): corregir el marcado elemento por elemento, como en las tablas.** No se tocan las capas de `globals.css`.
+
+- Riesgo bajo y acotado. Cambian solo los 14 puntos de las tablas, y cada cambio visual es uno decidido aquí. Sigue la convención de `!` que el código ya usa para ganarle a `.ds-tag--outline`.
+- Costo: el `!` sigue siendo necesario cada vez que se combine una clase de marca con una utilidad que la contradiga. Regla para el desarrollador, desde hoy: **o la clase de marca, o la utilidad, nunca las dos con valores distintos; si hacen falta las dos, la utilidad lleva `!`**.
+
+**Después, en una tarea aparte (deuda técnica, no en esta rama): mover los estilos de marca a `@layer components`** con `@import "../styles/marca.css" layer(components);`, y lo mismo para `componentes.css` y `mapa.css`. Es la corrección de fondo. Con ella las utilidades ganan siempre y se pueden retirar casi todos los `!`. No va ahora porque cambia **de una vez** todo lo que hoy está muerto, y eso no está inventariado. Riesgos conocidos:
+
+1. **Foco (el riesgo ya visto).** Si solo se mueven los `@import`, el `:focus-visible` de `globals.css:16` (fuera de capa) pasa a ganarle a `.ds-casilla[aria-invalid="true"]:focus-visible`. La casilla con error y foco pierde el `outline-offset: 4px` y la franja entre el anillo grana y el contorno de foco (QA-021). Si además se mueve `:focus-visible` a `@layer base`, se recupera QA-021, pero entonces `outline-none` gana en los cuatro títulos que reciben el foco por código (`explorador.tsx:94`, `flujo-pedido.tsx:248`, `:277`, `:333`) y el contorno deja de verse en ellos. Esa migración necesita decidir eso antes.
+2. **Utilidades muertas que reviven**, como las de este inventario. Hay que buscar todas las combinaciones clase de marca + utilidad (`display`, `align`, `gap`, `padding`, `color`, `border`, `text-*`) y decidirlas antes de mover nada.
+3. **Orden de los tokens:** `:root` y `[data-theme]` de `marca.css` quedarían en `components`, después de `@layer theme`. Hoy no se pisan nombres, pero hay que comprobarlo.
+4. Todas las capturas aprobadas de `/`, la ficha, `/envios/` y `/pedido/` se vuelven a comparar.
+
+Las reglas propias de `globals.css` (`.overline{text-decoration:none}`, `.ds-btn{min-height}`, `prefers-reduced-motion`) se quedan fuera de capa en cualquier caso.
+
+### Entrega para desarrollador-fullstack (QA-029)
+
+1. Grupo A, filas A1 a A10, tal como están en la tabla.
+2. Grupo B, filas B1 a B4.
+3. Un solo commit `fix(estilos): pesos y tamaños de control según marca (QA-029)`. No se toca CSS de `src/styles/` ni `globals.css`.
+4. Actualizar el comentario de `bloque-compra.tsx:17`: ahora también `text-sm!` y `font-semibold!` usan `!` para ganarle a `.ds-tag--outline`.
+
+### Entrega para qa-pruebas (QA-029)
+
+- **La prueba de cierre sigue valiendo, con un ajuste.** La expresión de `e2e/qa-2026-11-19-cierre-baja.spec.ts:385` exige un espacio o el final de la cadena después de la utilidad, así que `font-bold!` deja de coincidir. Con la regex tal como está, los elementos corregidos con `!` **saldrían de la prueba** y esta pasaría sin comprobarlos. Hay que aceptar el `!` delante o detrás: `(?:^|\s)!?(font-(?:normal|medium|semibold|bold|extrabold))!?(?:\s|$)`. Con ese cambio, a 360 y 1.280 px, en `/`, la ficha y `/envios/`, la lista debe quedar vacía. Los elementos del grupo B ya no llevan la utilidad, así que salen de la prueba con razón.
+- **Tamaño:** agregar a la misma prueba, o a una nueva, que todo elemento con `text-sm` o `text-sm!` se pinte a 14 px. Hoy los chips con `text-sm` se pintan a 12, y la prueba solo mira el peso.
+- Chips (inicio, hoja de filtros, filtros activos) y píldoras de la ficha: 14 px y 600 en el rótulo. Conteo, precio y «Agotado» en 12 px y 500. Perfiles de taza de la ficha sin cambio: 12 px y 500.
+- QA-025: el chip sigue midiendo 36 px de alto visible y 44 px de área táctil.
+- Píldoras de la ficha: con «Grano» o «Molido» (una línea), la diferencia entre el espacio de arriba y el de abajo es de 1 px o menos. Con dos líneas, el contenido sigue centrado en horizontal. Píldora agotada sin cambio (borde punteado, `ink-muted`).
+- A 1.280 px, con el puntero sobre un chip no marcado, el borde cambia a `ink`. Sobre uno deshabilitado no cambia.
+- `/envios/` a 360 y 768 px: título y «Zona n» en 700, `<summary>` en 700, «Por cotizar» en 600, sin desplazamiento horizontal.
+- Tira de navegación a 360 px: enlaces en 600 y de 44 px de alto. «Envíos» sigue asomando bajo el fundido.
+- Volver a aprobar estas capturas: `/envios/` (tarjetas, 360 y 768), ficha (bloque de compra, 360 y 1.280), inicio (chips y tira, 360; filtros, 1.280) y resumen con respaldo. El resto no debe cambiar.
+- Volver a correr la guardia de QA-018: cambian cadenas de clases en componentes cliente del inicio (unos pocos bytes) y hoy quedan 385 B de margen.
+- axe a 360 y 1.280 px sin violaciones serias ni críticas en `/`, la ficha y `/envios/`.
+
+---
+
 ## Decisiones y su razón en la marca
 
 | Decisión | Razón |
@@ -497,6 +584,7 @@ Contraste: `ink-muted` sobre `surface-raised` ≈ 7:1; borde punteado `line-stro
 | Tarjeta por zona en celular, tabla desde `lg` | Sin desplazamiento horizontal a 360 px; mismos datos y orden que D3 |
 | Leyenda de promociones en `overline ink-muted` | Mismo rótulo de grupo que el resto del sitio; terracota reservada para origen y tueste |
 | Agotado con borde punteado, sin opacidad, y sin compra simulada | WCAG 1.4.1 y 1.4.3; no se muestra un precio ni una cantidad de algo que no se puede pedir |
+| QA-029: controles de selección en 14/600, títulos de bloque en 700, notas y cuerpo con su clase de marca | Los 12 px en 500 son del dato técnico (nivel 1), no de un control que se toca con el pulgar. Los títulos tienen que verse como títulos. Arreglo en el marcado ahora; la migración a `@layer components` queda como deuda, con sus riesgos de foco |
 
 ## TODO(dato)
 
