@@ -104,4 +104,11 @@ describe("BloqueCompra: píldoras de tamaño agotadas (diseño 2026-11-18, media
     expect(html).not.toContain('data-testid="aviso-agotado"');
     expect(html).toContain('250 g<small class="text-xs font-medium">Agotado</small>');
   });
+
+  it("un solo aria-live: la región oculta dice cantidad, tamaño, presentación y total; cantidad y precio visibles no la llevan", () => {
+    const cafe = crearCafe({ slug: "cafe-v", nombre: "Café V", presentaciones: [{ gramos: 250, precioCop: 25000, disponible: true }] });
+    const html = renderToStaticMarkup(<BloqueCompra cafe={cafe} />);
+    expect(html.match(/aria-live=/g)).toHaveLength(1);
+    expect(html).toMatch(/<p class="sr-only" aria-live="polite" data-testid="anuncio-compra">1 bolsa de 250 g, grano: \$\s?25\.000<\/p>/);
+  });
 });

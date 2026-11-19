@@ -102,18 +102,23 @@ export function BloqueCompra({ cafe }: { cafe: Cafe }) {
               <button type="button" aria-label="Una bolsa menos" disabled={cantidad <= 1} onClick={() => setCantidad((c) => Math.max(1, c - 1))} className="grid h-11 w-11 place-items-center rounded-pill hover:bg-surface-sunken disabled:opacity-40">
                 <IconoMenos />
               </button>
-              <span className="min-w-8 text-center font-bold tabular-nums" aria-live="polite">{cantidad}</span>
+              <span className="min-w-8 text-center font-bold tabular-nums">{cantidad}</span>
               <button type="button" aria-label="Una bolsa más" disabled={cantidad >= max} onClick={() => setCantidad((c) => Math.min(max, c + 1))} className="grid h-11 w-11 place-items-center rounded-pill hover:bg-surface-sunken disabled:opacity-40">
                 <IconoMas />
               </button>
             </div>
             <p className="text-right">
-              <span className="block text-3xl font-bold tabular-nums text-ink-title" aria-live="polite">{formatearCOP(total)}</span>
+              <span className="block text-3xl font-bold tabular-nums text-ink-title">{formatearCOP(total)}</span>
               <small className="caption text-ink-muted">
                 {cantidad} × {gramos} g · {ETIQUETA_MOLIENDA[molienda].toLowerCase()}
               </small>
             </p>
           </div>
+          {/* Un solo anuncio por cambio de cantidad, tamaño o presentación (antes cantidad y precio tenían cada uno su
+              aria-live y se leían dos veces). La región solo existe para lectores de pantalla; lo visible no cambia. */}
+          <p className="sr-only" aria-live="polite" data-testid="anuncio-compra">
+            {cantidad} {cantidad === 1 ? "bolsa" : "bolsas"} de {gramos} g, {ETIQUETA_MOLIENDA[molienda].toLowerCase()}: {formatearCOP(total)}
+          </p>
           {/* D5 §6.2: leyenda de IVA bajo el precio (la tarifa sale de data/config.csv). */}
           <p className="caption mt-1 text-right text-ink-muted" data-testid="leyenda-iva">{leyendaIva(catalogo.tienda.ivaTarifa)}</p>
         </>
