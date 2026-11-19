@@ -370,10 +370,12 @@ for (const ancho of [360, 1280])
 // QA-029 · las clases de marca.css y componentes.css (importadas sin capa en globals.css) anulan las utilidades de
 // Tailwind (que viven en @layer utilities): font-bold/font-semibold y text-sm no se aplican con .body, .small o .ds-tag.
 // Ejemplos: título de la tabla y «Zona n» de /envios/ a 400, enlaces de la navegación y chips a 500, chips a 12 px.
+// Verificación (5982339, diseño § QA-029): la expresión acepta el «!» delante o detrás (`font-bold!`, `!font-bold`), y
+// además todo elemento con `text-sm`/`text-sm!` debe pintarse a 14 px. Los elementos del grupo B ya no llevan la utilidad.
 // =====================================================================================================================
 const PESOS: Record<string, number> = { "font-normal": 400, "font-medium": 500, "font-semibold": 600, "font-bold": 700, "font-extrabold": 800 };
 for (const ancho of [360, 1280])
-  test(`QA-029: a ${ancho} px toda utilidad font-(peso) se pinta con su peso en /, ficha y /envios/`, async ({ page }) => {
+  test(`QA-029: a ${ancho} px toda utilidad font-(peso) se pinta con su peso y todo text-sm a 14 px en /, ficha y /envios/`, async ({ page }) => {
     await page.setViewportSize({ width: ancho, height: 900 });
     const mal: string[] = [];
     for (const ruta of ["/", "/cafes/cafe-casa-martinez/", "/envios/"]) {
@@ -381,13 +383,16 @@ for (const ancho of [360, 1280])
       await page.waitForLoadState("networkidle");
       const r = await page.evaluate((W) =>
         [...document.querySelectorAll("[class]")]
-          .map((e) => {
-            const m = (e.getAttribute("class") ?? "").match(/(?:^|\s)(font-(?:normal|medium|semibold|bold|extrabold))(?:\s|$)/);
-            if (!m) return null;
-            const pinta = +getComputedStyle(e).fontWeight;
-            return pinta === W[m[1]] ? null : `${m[1]} → ${pinta}: <${e.tagName.toLowerCase()}> «${(e.textContent ?? "").trim().slice(0, 30)}» (${(e.getAttribute("class") ?? "").split(" ").slice(0, 2).join(" ")})`;
-          })
-          .filter((x): x is string => x !== null), PESOS);
+          .flatMap((e) => {
+            const clase = e.getAttribute("class") ?? "";
+            const cs = getComputedStyle(e);
+            const id = `<${e.tagName.toLowerCase()}> «${(e.textContent ?? "").trim().slice(0, 30)}» (${clase.split(" ").slice(0, 2).join(" ")})`;
+            const fallos: string[] = [];
+            const m = clase.match(/(?:^|\s)!?(font-(?:normal|medium|semibold|bold|extrabold))!?(?:\s|$)/);
+            if (m && +cs.fontWeight !== W[m[1]]) fallos.push(`${m[1]} → ${cs.fontWeight}: ${id}`);
+            if (/(?:^|\s)!?text-sm!?(?:\s|$)/.test(clase) && cs.fontSize !== "14px") fallos.push(`text-sm → ${cs.fontSize}: ${id}`);
+            return fallos;
+          }), PESOS);
       mal.push(...[...new Set(r)].map((x) => `${ruta} ${x}`));
     }
     expect(mal).toEqual([]);
