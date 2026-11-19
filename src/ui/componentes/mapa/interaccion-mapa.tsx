@@ -117,17 +117,35 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
     clearTimeout(temporizador.current);
     temporizador.current = setTimeout(() => setAbierta(null), 180);
   }, []);
+  // QA-031: al cerrar a propósito (Escape, «Cerrar»), el puntero puede quedar quieto donde estaba la hoja. Al
+  // desaparecer, el navegador manda `pointerenter` a la provincia que queda debajo sin que el ratón se mueva; si eso
+  // reabre la hoja, vuelve a tapar el puntero y entra en un bucle. Se anota dónde estaba el puntero al cerrar y,
+  // mientras no se mueva de ahí, `pointerenter` no abre.
+  const puntero = useRef<{ x: number; y: number } | null>(null);
+  const quieto = useRef<{ x: number; y: number } | null>(null);
   const cerrar = useCallback(() => {
     clearTimeout(temporizador.current);
+    quieto.current = puntero.current;
     setAbierta(null);
   }, []);
   useEffect(() => () => clearTimeout(temporizador.current), []);
   useEffect(() => {
+    const alMover = (e: PointerEvent) => {
+      puntero.current = { x: e.clientX, y: e.clientY };
+      if (quieto.current && (quieto.current.x !== e.clientX || quieto.current.y !== e.clientY)) quieto.current = null;
+    };
+    // `pointerover` también: si la hoja se abrió sin mover el ratón desde que llegó la interacción, ya se sabe dónde está.
+    for (const tipo of ["pointermove", "pointerover"] as const) document.addEventListener(tipo, alMover, { capture: true, passive: true });
+    return () => {
+      for (const tipo of ["pointermove", "pointerover"] as const) document.removeEventListener(tipo, alMover, { capture: true });
+    };
+  }, []);
+  useEffect(() => {
     if (!abierta) return;
-    const alTeclear = (e: KeyboardEvent) => e.key === "Escape" && setAbierta(null);
+    const alTeclear = (e: KeyboardEvent) => e.key === "Escape" && cerrar();
     document.addEventListener("keydown", alTeclear);
     return () => document.removeEventListener("keydown", alTeclear);
-  }, [abierta]);
+  }, [abierta, cerrar]);
   useEffect(() => {
     const alPulsar = (e: PointerEvent) => {
       if (!(e.target instanceof Element) || e.target.closest("[data-mapa-interactivo]")) return;
@@ -163,7 +181,12 @@ export default function InteraccionMapa({ entrada, tomarPendiente }: { entrada: 
     en(nodos.mapa, "keydown", (e) => e.key === "Escape" && m().cerrar());
     for (const [slug, g] of nodos.grupos) {
       en(g, "pointerdown", (e) => (ultimoPuntero.current = e.pointerType));
-      en(g, "pointerenter", (e) => e.pointerType === "mouse" && m().abrir(slug));
+      en(g, "pointerenter", (e) => {
+        if (e.pointerType !== "mouse") return;
+        const q = quieto.current;
+        if (q && q.x === e.clientX && q.y === e.clientY) return; // el ratón no se ha movido desde que se cerró (QA-031)
+        m().abrir(slug);
+      });
       en(g, "pointerleave", (e) => e.pointerType === "mouse" && m().cerrarPronto());
       en(g, "focus", () => m().abrir(slug));
       en(g, "blur", (e) => {
